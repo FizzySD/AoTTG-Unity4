@@ -22,7 +22,7 @@ namespace ExitGames.Client.Photon
 
 		private Thread netSimThread;
 
-		public readonly ManualResetEvent NetSimManualResetEvent = new ManualResetEvent(false);
+		protected internal readonly ManualResetEvent NetSimManualResetEvent = new ManualResetEvent(false);
 
 		protected internal bool IsSimulationEnabled
 		{
@@ -34,13 +34,20 @@ namespace ExitGames.Client.Photon
 			{
 				lock (NetSimManualResetEvent)
 				{
+					if (value == isSimulationEnabled)
+					{
+						return;
+					}
 					if (!value)
 					{
 						lock (peerBase.NetSimListIncoming)
 						{
 							foreach (SimulationItem item in peerBase.NetSimListIncoming)
 							{
-								item.ActionToExecute();
+								if (peerBase.PhotonSocket != null && peerBase.PhotonSocket.Connected)
+								{
+									peerBase.ReceiveIncomingCommands(item.DelayedData, item.DelayedData.Length);
+								}
 							}
 							peerBase.NetSimListIncoming.Clear();
 						}
@@ -48,7 +55,10 @@ namespace ExitGames.Client.Photon
 						{
 							foreach (SimulationItem item2 in peerBase.NetSimListOutgoing)
 							{
-								item2.ActionToExecute();
+								if (peerBase.PhotonSocket != null && peerBase.PhotonSocket.Connected)
+								{
+									peerBase.PhotonSocket.Send(item2.DelayedData, item2.DelayedData.Length);
+								}
 							}
 							peerBase.NetSimListOutgoing.Clear();
 						}

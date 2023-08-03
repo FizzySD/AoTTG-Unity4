@@ -8,9 +8,9 @@ public class OnClickLoadSomething : MonoBehaviour
 		Web = 1
 	}
 
-	public ResourceTypeOption ResourceTypeToLoad;
-
 	public string ResourceToLoad;
+
+	public ResourceTypeOption ResourceTypeToLoad;
 
 	public void OnClick()
 	{

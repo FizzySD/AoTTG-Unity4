@@ -3,55 +3,55 @@ using UnityEngine;
 
 public class EffectNode
 {
-	protected int Type;
+	public float Acceleration;
 
-	public int Index;
+	protected ArrayList AffectorList;
 
 	public Transform ClientTrans;
 
-	public bool SyncClient;
-
-	public EffectLayer Owner;
+	public Color Color;
 
 	protected Vector3 CurDirection;
-
-	protected Vector3 LastWorldPos = Vector3.zero;
 
 	protected Vector3 CurWorldPos;
 
 	protected float ElapsedTime;
 
-	public Sprite Sprite;
+	public int Index;
 
-	public RibbonTrail Ribbon;
+	protected Vector3 LastWorldPos = Vector3.zero;
 
-	public Vector3 Position;
+	protected float LifeTime;
 
 	public Vector2 LowerLeftUV;
 
-	public Vector2 UVDimensions;
-
-	public Vector3 Velocity;
-
-	public float Acceleration;
-
-	public Vector2 Scale;
-
-	public float RotateAngle;
-
-	public Color Color;
-
-	protected ArrayList AffectorList;
-
 	protected Vector3 OriDirection;
-
-	protected float LifeTime;
 
 	protected int OriRotateAngle;
 
 	protected float OriScaleX;
 
 	protected float OriScaleY;
+
+	public EffectLayer Owner;
+
+	public Vector3 Position;
+
+	public RibbonTrail Ribbon;
+
+	public float RotateAngle;
+
+	public Vector2 Scale;
+
+	public Sprite Sprite;
+
+	public bool SyncClient;
+
+	protected int Type;
+
+	public Vector2 UVDimensions;
+
+	public Vector3 Velocity;
 
 	public EffectNode(int index, Transform clienttrans, bool sync, EffectLayer owner)
 	{
@@ -66,9 +66,19 @@ public class EffectNode
 		Color = Color.white;
 	}
 
-	public void SetAffectorList(ArrayList afts)
+	public float GetElapsedTime()
 	{
-		AffectorList = afts;
+		return ElapsedTime;
+	}
+
+	public float GetLifeTime()
+	{
+		return LifeTime;
+	}
+
+	public Vector3 GetLocalPosition()
+	{
+		return Position;
 	}
 
 	public void Init(Vector3 oriDir, float speed, float life, int oriRot, float oriScaleX, float oriScaleY, Color oriColor, Vector2 oriLowerUv, Vector2 oriUVDimension)
@@ -102,36 +112,9 @@ public class EffectNode
 		}
 	}
 
-	public float GetElapsedTime()
+	public void Remove()
 	{
-		return ElapsedTime;
-	}
-
-	public float GetLifeTime()
-	{
-		return LifeTime;
-	}
-
-	public void SetLocalPosition(Vector3 pos)
-	{
-		Position = pos;
-	}
-
-	public Vector3 GetLocalPosition()
-	{
-		return Position;
-	}
-
-	public void SetType(float width, float height, STYPE type, ORIPOINT orip, int uvStretch, float maxFps)
-	{
-		Type = 1;
-		Sprite = Owner.GetVertexPool().AddSprite(width, height, type, orip, Camera.main, uvStretch, maxFps);
-	}
-
-	public void SetType(float width, int maxelemnt, float len, Vector3 pos, int stretchType, float maxFps)
-	{
-		Type = 2;
-		Ribbon = Owner.GetVertexPool().AddRibbonTrail(width, maxelemnt, len, pos, stretchType, maxFps);
+		Owner.RemoveActiveNode(this);
 	}
 
 	public void Reset()
@@ -162,50 +145,26 @@ public class EffectNode
 		}
 	}
 
-	public void Remove()
+	public void SetAffectorList(ArrayList afts)
 	{
-		Owner.RemoveActiveNode(this);
+		AffectorList = afts;
 	}
 
-	public void UpdateSprite()
+	public void SetLocalPosition(Vector3 pos)
 	{
-		if (Owner.AlongVelocity)
-		{
-			Vector3 zero = Vector3.zero;
-			if (!(LastWorldPos != Vector3.zero))
-			{
-				return;
-			}
-			zero = CurWorldPos - LastWorldPos;
-			if (zero != Vector3.zero)
-			{
-				CurDirection = zero;
-				Sprite.SetRotationTo(CurDirection);
-			}
-		}
-		Sprite.SetScale(Scale.x * OriScaleX, Scale.y * OriScaleY);
-		if (Owner.ColorAffectorEnable)
-		{
-			Sprite.SetColor(Color);
-		}
-		if (Owner.UVAffectorEnable)
-		{
-			Sprite.SetUVCoord(LowerLeftUV, UVDimensions);
-		}
-		Sprite.SetRotation((float)OriRotateAngle + RotateAngle);
-		Sprite.SetPosition(CurWorldPos);
-		Sprite.Update(false);
+		Position = pos;
 	}
 
-	public void UpdateRibbonTrail()
+	public void SetType(float width, int maxelemnt, float len, Vector3 pos, int stretchType, float maxFps)
 	{
-		Ribbon.SetHeadPosition(CurWorldPos);
-		if (Owner.UVAffectorEnable)
-		{
-			Ribbon.SetUVCoord(LowerLeftUV, UVDimensions);
-		}
-		Ribbon.SetColor(Color);
-		Ribbon.Update();
+		Type = 2;
+		Ribbon = Owner.GetVertexPool().AddRibbonTrail(width, maxelemnt, len, pos, stretchType, maxFps);
+	}
+
+	public void SetType(float width, float height, STYPE type, ORIPOINT orip, int uvStretch, float maxFps)
+	{
+		Type = 1;
+		Sprite = Owner.GetVertexPool().AddSprite(width, height, type, orip, Camera.main, uvStretch, maxFps);
 	}
 
 	public void Update()
@@ -242,5 +201,46 @@ public class EffectNode
 			Reset();
 			Remove();
 		}
+	}
+
+	public void UpdateRibbonTrail()
+	{
+		Ribbon.SetHeadPosition(CurWorldPos);
+		if (Owner.UVAffectorEnable)
+		{
+			Ribbon.SetUVCoord(LowerLeftUV, UVDimensions);
+		}
+		Ribbon.SetColor(Color);
+		Ribbon.Update();
+	}
+
+	public void UpdateSprite()
+	{
+		if (Owner.AlongVelocity)
+		{
+			Vector3 zero = Vector3.zero;
+			if (!(LastWorldPos != Vector3.zero))
+			{
+				return;
+			}
+			zero = CurWorldPos - LastWorldPos;
+			if (zero != Vector3.zero)
+			{
+				CurDirection = zero;
+				Sprite.SetRotationTo(CurDirection);
+			}
+		}
+		Sprite.SetScale(Scale.x * OriScaleX, Scale.y * OriScaleY);
+		if (Owner.ColorAffectorEnable)
+		{
+			Sprite.SetColor(Color);
+		}
+		if (Owner.UVAffectorEnable)
+		{
+			Sprite.SetUVCoord(LowerLeftUV, UVDimensions);
+		}
+		Sprite.SetRotation((float)OriRotateAngle + RotateAngle);
+		Sprite.SetPosition(CurWorldPos);
+		Sprite.Update(false);
 	}
 }

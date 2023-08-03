@@ -3,13 +3,13 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Internal/Ignore TimeScale Behaviour")]
 public class IgnoreTimeScale : MonoBehaviour
 {
-	private float mRt;
+	private float mActual;
 
-	private float mTimeStart;
+	private float mRt;
 
 	private float mTimeDelta;
 
-	private float mActual;
+	private float mTimeStart;
 
 	private bool mTimeStarted;
 

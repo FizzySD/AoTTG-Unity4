@@ -2,19 +2,17 @@ using ExitGames.Client.Photon;
 
 public class RoomInfo
 {
+	protected bool autoCleanUpField = PhotonNetwork.autoCleanUpPlayerObjects;
+
 	private Hashtable customPropertiesField = new Hashtable();
 
 	protected byte maxPlayersField;
 
+	protected string nameField;
+
 	protected bool openField = true;
 
 	protected bool visibleField = true;
-
-	protected bool autoCleanUpField = PhotonNetwork.autoCleanUpPlayerObjects;
-
-	protected string nameField;
-
-	public bool removedFromList { get; internal set; }
 
 	public Hashtable customProperties
 	{
@@ -23,16 +21,6 @@ public class RoomInfo
 			return customPropertiesField;
 		}
 	}
-
-	public string name
-	{
-		get
-		{
-			return nameField;
-		}
-	}
-
-	public int playerCount { get; private set; }
 
 	public bool isLocalClientInside { get; set; }
 
@@ -44,6 +32,14 @@ public class RoomInfo
 		}
 	}
 
+	public string name
+	{
+		get
+		{
+			return nameField;
+		}
+	}
+
 	public bool open
 	{
 		get
@@ -51,6 +47,10 @@ public class RoomInfo
 			return openField;
 		}
 	}
+
+	public int playerCount { get; private set; }
+
+	public bool removedFromList { get; internal set; }
 
 	public bool visible
 	{
@@ -64,27 +64,6 @@ public class RoomInfo
 	{
 		CacheProperties(properties);
 		nameField = roomName;
-	}
-
-	public override bool Equals(object p)
-	{
-		Room room = p as Room;
-		return room != null && nameField.Equals(room.nameField);
-	}
-
-	public override int GetHashCode()
-	{
-		return nameField.GetHashCode();
-	}
-
-	public override string ToString()
-	{
-		return string.Format("Room: '{0}' {1},{2} {4}/{3} players.", nameField, (!visibleField) ? "hidden" : "visible", (!openField) ? "closed" : "open", maxPlayersField, playerCount);
-	}
-
-	public string ToStringFull()
-	{
-		return string.Format("Room: '{0}' {1},{2} {4}/{3} players.\ncustomProps: {5}", nameField, (!visibleField) ? "hidden" : "visible", (!openField) ? "closed" : "open", maxPlayersField, playerCount, customPropertiesField.ToStringFull());
 	}
 
 	protected internal void CacheProperties(Hashtable propertiesToCache)
@@ -122,5 +101,47 @@ public class RoomInfo
 			autoCleanUpField = (bool)propertiesToCache[(byte)249];
 		}
 		customPropertiesField.MergeStringKeys(propertiesToCache);
+	}
+
+	public override bool Equals(object p)
+	{
+		Room room = p as Room;
+		if (room != null)
+		{
+			return nameField.Equals(room.nameField);
+		}
+		return false;
+	}
+
+	public override int GetHashCode()
+	{
+		return nameField.GetHashCode();
+	}
+
+	public override string ToString()
+	{
+		object[] args = new object[5]
+		{
+			nameField,
+			(!visibleField) ? "hidden" : "visible",
+			(!openField) ? "closed" : "open",
+			maxPlayersField,
+			playerCount
+		};
+		return string.Format("Room: '{0}' {1},{2} {4}/{3} players.", args);
+	}
+
+	public string ToStringFull()
+	{
+		object[] args = new object[6]
+		{
+			nameField,
+			(!visibleField) ? "hidden" : "visible",
+			(!openField) ? "closed" : "open",
+			maxPlayersField,
+			playerCount,
+			customPropertiesField.ToStringFull()
+		};
+		return string.Format("Room: '{0}' {1},{2} {4}/{3} players.\ncustomProps: {5}", args);
 	}
 }

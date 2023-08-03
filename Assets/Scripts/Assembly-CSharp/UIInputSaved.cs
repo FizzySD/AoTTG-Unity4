@@ -27,16 +27,16 @@ public class UIInputSaved : UIInput
 		}
 	}
 
+	private void OnApplicationQuit()
+	{
+		SaveToPlayerPrefs(text);
+	}
+
 	private void SaveToPlayerPrefs(string val)
 	{
 		if (!string.IsNullOrEmpty(playerPrefsField))
 		{
 			PlayerPrefs.SetString(playerPrefsField, val);
 		}
-	}
-
-	private void OnApplicationQuit()
-	{
-		SaveToPlayerPrefs(text);
 	}
 }

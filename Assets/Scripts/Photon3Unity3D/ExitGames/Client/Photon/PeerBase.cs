@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -12,72 +11,29 @@ namespace ExitGames.Client.Photon
 	{
 		internal delegate void MyAction();
 
-		public enum ConnectionStateValue : byte
-		{
-			Disconnected = 0,
-			Connecting = 1,
-			Connected = 3,
-			Disconnecting = 4,
-			AcknowledgingDisconnect = 5,
-			Zombie = 6
-		}
+		internal PhotonPeer photonPeer;
 
-		internal enum EgMessageType : byte
-		{
-			Init = 0,
-			InitResponse = 1,
-			Operation = 2,
-			OperationResponse = 3,
-			Event = 4,
-			InternalOperationRequest = 6,
-			InternalOperationResponse = 7,
-			Message = 8,
-			RawMessage = 9
-		}
+		public IProtocol SerializationProtocol;
 
-		public const string ClientVersion = "4.0.0.0";
+		internal ConnectionProtocol usedTransportProtocol;
 
-		internal const int ENET_PEER_PACKET_LOSS_SCALE = 65536;
+		internal IPhotonSocket PhotonSocket;
 
-		internal const int ENET_PEER_DEFAULT_ROUND_TRIP_TIME = 300;
+		internal ConnectionStateValue peerConnectionState;
 
-		internal const int ENET_PEER_PACKET_THROTTLE_INTERVAL = 5000;
+		internal int ByteCountLastOperation;
 
-		protected internal Type SocketImplementation = null;
-
-		internal IPhotonSocket rt;
-
-		public int ByteCountLastOperation;
-
-		public int ByteCountCurrentDispatch;
+		internal int ByteCountCurrentDispatch;
 
 		internal NCommand CommandInCurrentDispatch;
 
-		internal int TrafficPackageHeaderSize;
-
-		public TrafficStats TrafficStatsIncoming;
-
-		public TrafficStats TrafficStatsOutgoing;
-
-		public TrafficStatsGameLevel TrafficStatsGameLevel;
-
-		private Stopwatch trafficStatsStopwatch;
-
-		private bool trafficStatsEnabled = false;
-
-		internal ConnectionProtocol usedProtocol;
-
-		internal bool crcEnabled = false;
-
 		internal int packetLossByCrc;
 
-		internal DebugLevel debugOut = DebugLevel.ERROR;
+		internal int packetLossByChallenge;
 
 		internal readonly Queue<MyAction> ActionQueue = new Queue<MyAction>();
 
 		internal short peerID = -1;
-
-		internal ConnectionStateValue peerConnectionState;
 
 		internal int serverTimeOffset;
 
@@ -91,13 +47,9 @@ namespace ExitGames.Client.Photon
 
 		internal int lowestRoundTripTime;
 
-		internal int lastRoundTripTimeVariance;
-
 		internal int highestRoundTripTimeVariance;
 
 		internal int timestampOfLastReceive;
-
-		internal int packetThrottleInterval;
 
 		internal static short peerCount;
 
@@ -105,21 +57,33 @@ namespace ExitGames.Client.Photon
 
 		internal long bytesIn;
 
-		internal int commandBufferSize = 100;
+		internal object CustomInitData;
 
-		internal int warningSize = 100;
+		public string AppId;
 
-		internal int sentCountAllowance = 5;
+		internal EventData reusableEventData;
 
-		internal int DisconnectTimeout = 10000;
+		internal int timeBase;
 
-		internal int timePingInterval = 1000;
+		internal int timeoutInt;
 
-		internal byte ChannelCount = 2;
+		internal int timeLastAckReceive;
 
-		internal int limitOfUnreliableCommands = 0;
+		internal int longestSentCall;
 
-		internal DiffieHellmanCryptoProvider CryptoProvider;
+		internal int timeLastSendAck;
+
+		internal int timeLastSendOutgoing;
+
+		internal bool ApplicationIsInitialized;
+
+		internal bool isEncryptionAvailable;
+
+		internal int outgoingCommandsInStream = 0;
+
+		protected internal static Queue<StreamBuffer> MessageBufferPool = new Queue<StreamBuffer>(32);
+
+		internal ICryptoProvider CryptoProvider;
 
 		private readonly Random lagRandomizer = new Random();
 
@@ -129,75 +93,63 @@ namespace ExitGames.Client.Photon
 
 		private readonly NetworkSimulationSet networkSimulationSettings = new NetworkSimulationSet();
 
-		internal byte[] INIT_BYTES = new byte[41];
+		internal int TrafficPackageHeaderSize;
 
-		internal int timeBase;
+		private int commandLogSize;
 
-		internal int timeInt;
+		internal Queue<CmdLogItem> CommandLog;
 
-		internal int timeoutInt;
+		internal Queue<CmdLogItem> InReliableLog;
 
-		internal int timeLastAckReceive;
-
-		internal bool ApplicationIsInitialized;
-
-		internal bool isEncryptionAvailable;
-
-		internal static int outgoingStreamBufferSize = 1200;
-
-		internal int outgoingCommandsInStream = 0;
-
-		internal int mtu = 1200;
-
-		internal int rhttpMinConnections = 2;
-
-		internal int rhttpMaxConnections = 6;
-
-		protected MemoryStream SerializeMemStream = new MemoryStream();
-
-		public long TrafficStatsEnabledTime
+		internal Type SocketImplementation
 		{
 			get
 			{
-				return (trafficStatsStopwatch != null) ? trafficStatsStopwatch.ElapsedMilliseconds : 0;
+				return photonPeer.SocketImplementation;
 			}
 		}
 
-		public bool TrafficStatsEnabled
+		public string ServerAddress { get; internal set; }
+
+		public string ProxyServerAddress { get; internal set; }
+
+		internal IPhotonPeerListener Listener
 		{
 			get
 			{
-				return trafficStatsEnabled;
-			}
-			set
-			{
-				trafficStatsEnabled = value;
-				if (value)
-				{
-					if (trafficStatsStopwatch == null)
-					{
-						InitializeTrafficStats();
-					}
-					trafficStatsStopwatch.Start();
-				}
-				else
-				{
-					trafficStatsStopwatch.Stop();
-				}
+				return photonPeer.Listener;
 			}
 		}
 
-		internal string ServerAddress { get; set; }
-
-		internal string HttpUrlParameters { get; set; }
-
-		internal IPhotonPeerListener Listener { get; set; }
-
-		public NetworkSimulationSet NetworkSimulationSettings
+		public DebugLevel debugOut
 		{
 			get
 			{
-				return networkSimulationSettings;
+				return photonPeer.DebugOut;
+			}
+		}
+
+		internal int DisconnectTimeout
+		{
+			get
+			{
+				return photonPeer.DisconnectTimeout;
+			}
+		}
+
+		internal int timePingInterval
+		{
+			get
+			{
+				return photonPeer.TimePingInterval;
+			}
+		}
+
+		internal byte ChannelCount
+		{
+			get
+			{
+				return photonPeer.ChannelCount;
 			}
 		}
 
@@ -221,33 +173,176 @@ namespace ExitGames.Client.Photon
 
 		internal abstract int QueuedOutgoingCommandsCount { get; }
 
+		internal virtual int SentReliableCommandsCount
+		{
+			get
+			{
+				return 0;
+			}
+		}
+
 		public virtual string PeerID
 		{
 			get
 			{
-				return peerID.ToString();
+				return ((ushort)peerID).ToString();
 			}
 		}
 
-		protected internal byte[] TcpConnectionPrefix { get; set; }
-
-		internal bool IsSendingOnlyAcks { get; set; }
-
-		internal void InitOnce()
+		internal int timeInt
 		{
-			networkSimulationSettings.peerBase = this;
-			INIT_BYTES[0] = 243;
-			INIT_BYTES[1] = 0;
-			INIT_BYTES[2] = 1;
-			INIT_BYTES[3] = 6;
-			INIT_BYTES[4] = 1;
-			INIT_BYTES[5] = 4;
-			INIT_BYTES[6] = 0;
-			INIT_BYTES[7] = 0;
-			INIT_BYTES[8] = 7;
+			get
+			{
+				return SupportClass.GetTickCount() - timeBase;
+			}
 		}
 
-		internal abstract bool Connect(string serverAddress, string appID);
+		internal static int outgoingStreamBufferSize
+		{
+			get
+			{
+				return PhotonPeer.OutgoingStreamBufferSize;
+			}
+		}
+
+		internal bool IsSendingOnlyAcks
+		{
+			get
+			{
+				return photonPeer.IsSendingOnlyAcks;
+			}
+		}
+
+		internal int mtu
+		{
+			get
+			{
+				return photonPeer.MaximumTransferUnit;
+			}
+		}
+
+		protected internal bool IsIpv6
+		{
+			get
+			{
+				return PhotonSocket != null && PhotonSocket.AddressResolvedAsIpv6;
+			}
+		}
+
+		public NetworkSimulationSet NetworkSimulationSettings
+		{
+			get
+			{
+				return networkSimulationSettings;
+			}
+		}
+
+		internal bool TrafficStatsEnabled
+		{
+			get
+			{
+				return photonPeer.TrafficStatsEnabled;
+			}
+		}
+
+		internal TrafficStats TrafficStatsIncoming
+		{
+			get
+			{
+				return photonPeer.TrafficStatsIncoming;
+			}
+		}
+
+		internal TrafficStats TrafficStatsOutgoing
+		{
+			get
+			{
+				return photonPeer.TrafficStatsOutgoing;
+			}
+		}
+
+		internal TrafficStatsGameLevel TrafficStatsGameLevel
+		{
+			get
+			{
+				return photonPeer.TrafficStatsGameLevel;
+			}
+		}
+
+		internal int CommandLogSize
+		{
+			get
+			{
+				return commandLogSize;
+			}
+			set
+			{
+				commandLogSize = value;
+				CommandLogResize();
+			}
+		}
+
+		protected PeerBase()
+		{
+			networkSimulationSettings.peerBase = this;
+			peerCount++;
+		}
+
+		public static StreamBuffer MessageBufferPoolGet()
+		{
+			lock (MessageBufferPool)
+			{
+				if (MessageBufferPool.Count > 0)
+				{
+					return MessageBufferPool.Dequeue();
+				}
+				return new StreamBuffer(75);
+			}
+		}
+
+		public static void MessageBufferPoolPut(StreamBuffer buff)
+		{
+			buff.Position = 0;
+			buff.SetLength(0L);
+			lock (MessageBufferPool)
+			{
+				MessageBufferPool.Enqueue(buff);
+			}
+		}
+
+		internal virtual void InitPeerBase()
+		{
+			SerializationProtocol = SerializationProtocolFactory.Create(photonPeer.SerializationProtocolType);
+			photonPeer.InitializeTrafficStats();
+			ByteCountLastOperation = 0;
+			ByteCountCurrentDispatch = 0;
+			bytesIn = 0L;
+			bytesOut = 0L;
+			packetLossByCrc = 0;
+			packetLossByChallenge = 0;
+			networkSimulationSettings.LostPackagesIn = 0;
+			networkSimulationSettings.LostPackagesOut = 0;
+			lock (NetSimListOutgoing)
+			{
+				NetSimListOutgoing.Clear();
+			}
+			lock (NetSimListIncoming)
+			{
+				NetSimListIncoming.Clear();
+			}
+			peerConnectionState = ConnectionStateValue.Disconnected;
+			timeBase = SupportClass.GetTickCount();
+			isEncryptionAvailable = false;
+			ApplicationIsInitialized = false;
+			roundTripTime = 200;
+			roundTripTimeVariance = 5;
+			serverTimeOffsetIsAvailable = false;
+			serverTimeOffset = 0;
+		}
+
+		internal abstract bool Connect(string serverAddress, string appID, object customData = null);
+
+		internal abstract bool Connect(string serverAddress, string proxyServerAddress, string appID, object customData);
 
 		private string GetHttpKeyValueString(Dictionary<string, string> dic)
 		{
@@ -260,103 +355,99 @@ namespace ExitGames.Client.Photon
 			return stringBuilder.ToString();
 		}
 
-		internal abstract void Disconnect();
-
-		internal abstract void StopConnection();
-
-		internal abstract void FetchServerTimestamp();
-
-		internal bool EnqueueOperation(Dictionary<byte, object> parameters, byte opCode, bool sendReliable, byte channelId, bool encrypted)
+		internal byte[] PrepareConnectData(string serverAddress, string appID, object custom)
 		{
-			return EnqueueOperation(parameters, opCode, sendReliable, channelId, encrypted, EgMessageType.Operation);
+			if (PhotonSocket == null || !PhotonSocket.Connected)
+			{
+				EnqueueDebugReturn(DebugLevel.WARNING, "The peer attempts to prepare an Init-Request but the socket is not connected!?");
+			}
+			if (custom == null)
+			{
+				byte[] array = new byte[41];
+				byte[] clientVersion = Version.clientVersion;
+				array[0] = 243;
+				array[1] = 0;
+				array[2] = SerializationProtocol.VersionBytes[0];
+				array[3] = SerializationProtocol.VersionBytes[1];
+				array[4] = photonPeer.ClientSdkIdShifted;
+				array[5] = (byte)((byte)(clientVersion[0] << 4) | clientVersion[1]);
+				array[6] = clientVersion[2];
+				array[7] = clientVersion[3];
+				array[8] = 0;
+				if (string.IsNullOrEmpty(appID))
+				{
+					appID = "LoadBalancing";
+				}
+				for (int i = 0; i < 32; i++)
+				{
+                    array[i + 9] = (byte)((i < appID.Length) ? ((byte)appID[i]) : (byte)0);
+
+                }
+                if (IsIpv6)
+				{
+					array[5] |= 128;
+				}
+				else
+				{
+					array[5] &= 127;
+				}
+				return array;
+			}
+			if (custom != null)
+			{
+				byte[] array2 = null;
+				Dictionary<string, string> dictionary = new Dictionary<string, string>();
+				dictionary["init"] = null;
+				dictionary["app"] = appID;
+				dictionary["clientversion"] = photonPeer.ClientVersion;
+				dictionary["protocol"] = SerializationProtocol.ProtocolType;
+				dictionary["sid"] = photonPeer.ClientSdkIdShifted.ToString();
+				byte[] array3 = null;
+				int num = 0;
+				if (custom != null)
+				{
+					array3 = SerializationProtocol.Serialize(custom);
+					num += array3.Length;
+				}
+				string text = GetHttpKeyValueString(dictionary);
+				if (IsIpv6)
+				{
+					text += "&IPv6";
+				}
+				string text2 = string.Format("POST /?{0} HTTP/1.1\r\nHost: {1}\r\nContent-Length: {2}\r\n\r\n", text, serverAddress, num);
+				array2 = new byte[text2.Length + num];
+				if (array3 != null)
+				{
+					Buffer.BlockCopy(array3, 0, array2, text2.Length, array3.Length);
+				}
+				Buffer.BlockCopy(Encoding.UTF8.GetBytes(text2), 0, array2, 0, text2.Length);
+				return array2;
+			}
+			return null;
 		}
 
-		internal abstract bool EnqueueOperation(Dictionary<byte, object> parameters, byte opCode, bool sendReliable, byte channelId, bool encrypted, EgMessageType messageType);
-
-		internal abstract bool DispatchIncomingCommands();
-
-		internal abstract bool SendOutgoingCommands();
-
-		internal virtual bool SendAcksOnly()
+		internal string PepareWebSocketUrl(string serverAddress, string appId, object customData)
 		{
-			return false;
+			StringBuilder stringBuilder = new StringBuilder(1024);
+			string empty = string.Empty;
+			if (customData != null)
+			{
+				byte[] array = SerializationProtocol.Serialize(customData);
+				if (array == null)
+				{
+					EnqueueDebugReturn(DebugLevel.ERROR, "Can not deserialize custom data");
+					return null;
+				}
+			}
+			stringBuilder.AppendFormat("app={0}&clientver={1}&sid={2}&{3}&initobj={4}", appId, photonPeer.ClientVersion, photonPeer.ClientSdkIdShifted, IsIpv6 ? "IPv6" : string.Empty, empty);
+			if (customData != null)
+			{
+				stringBuilder.Append("&xInit=");
+			}
+			return stringBuilder.ToString();
 		}
 
-		internal byte[] SerializeMessageToMessage(object message, bool encrypt, byte[] messageHeader, bool writeLength = true)
-		{
-			byte[] array;
-			lock (SerializeMemStream)
-			{
-				SerializeMemStream.Position = 0L;
-				SerializeMemStream.SetLength(0L);
-				if (!encrypt)
-				{
-					SerializeMemStream.Write(messageHeader, 0, messageHeader.Length);
-				}
-				Protocol.SerializeMessage(SerializeMemStream, message);
-				if (encrypt)
-				{
-					byte[] data = SerializeMemStream.ToArray();
-					data = CryptoProvider.Encrypt(data);
-					SerializeMemStream.Position = 0L;
-					SerializeMemStream.SetLength(0L);
-					SerializeMemStream.Write(messageHeader, 0, messageHeader.Length);
-					SerializeMemStream.Write(data, 0, data.Length);
-				}
-				array = SerializeMemStream.ToArray();
-			}
-			array[messageHeader.Length - 1] = 8;
-			if (encrypt)
-			{
-				array[messageHeader.Length - 1] = (byte)(array[messageHeader.Length - 1] | 0x80u);
-			}
-			if (writeLength)
-			{
-				int targetOffset = 1;
-				Protocol.Serialize(array.Length, array, ref targetOffset);
-			}
-			return array;
-		}
-
-		internal byte[] SerializeRawMessageToMessage(byte[] data, bool encrypt, byte[] messageHeader, bool writeLength = true)
-		{
-			byte[] array;
-			lock (SerializeMemStream)
-			{
-				SerializeMemStream.Position = 0L;
-				SerializeMemStream.SetLength(0L);
-				if (!encrypt)
-				{
-					SerializeMemStream.Write(messageHeader, 0, messageHeader.Length);
-				}
-				SerializeMemStream.Write(data, 0, data.Length);
-				if (encrypt)
-				{
-					byte[] data2 = SerializeMemStream.ToArray();
-					data2 = CryptoProvider.Encrypt(data2);
-					SerializeMemStream.Position = 0L;
-					SerializeMemStream.SetLength(0L);
-					SerializeMemStream.Write(messageHeader, 0, messageHeader.Length);
-					SerializeMemStream.Write(data2, 0, data2.Length);
-				}
-				array = SerializeMemStream.ToArray();
-			}
-			array[messageHeader.Length - 1] = 9;
-			if (encrypt)
-			{
-				array[messageHeader.Length - 1] = (byte)(array[messageHeader.Length - 1] | 0x80u);
-			}
-			if (writeLength)
-			{
-				int targetOffset = 1;
-				Protocol.Serialize(array.Length, array, ref targetOffset);
-			}
-			return array;
-		}
-
-		internal abstract byte[] SerializeOperationToMessage(byte opCode, Dictionary<byte, object> parameters, EgMessageType messageType, bool encrypt);
-
-		internal abstract void ReceiveIncomingCommands(byte[] inBuff, int dataLength);
+		public abstract void OnConnect();
 
 		internal void InitCallback()
 		{
@@ -369,13 +460,309 @@ namespace ExitGames.Client.Photon
 			Listener.OnStatusChanged(StatusCode.Connect);
 		}
 
-		internal bool ExchangeKeysForEncryption()
+		internal abstract void Disconnect();
+
+		internal abstract void StopConnection();
+
+		internal abstract void FetchServerTimestamp();
+
+		internal abstract bool EnqueueOperation(Dictionary<byte, object> parameters, byte opCode, SendOptions sendParams, EgMessageType messageType = EgMessageType.Operation);
+
+		internal abstract StreamBuffer SerializeOperationToMessage(byte opCode, Dictionary<byte, object> parameters, EgMessageType messageType, bool encrypt);
+
+		internal abstract bool EnqueueMessage(object message, SendOptions sendOptions);
+
+		internal StreamBuffer SerializeMessageToMessage(object message, bool encrypt, byte[] messageHeader, bool writeLength = true)
+		{
+			bool flag = encrypt && usedTransportProtocol != ConnectionProtocol.WebSocketSecure;
+			StreamBuffer streamBuffer = MessageBufferPoolGet();
+			streamBuffer.SetLength(0L);
+			if (!flag)
+			{
+				streamBuffer.Write(messageHeader, 0, messageHeader.Length);
+			}
+			if (message is byte[])
+			{
+				byte[] array = message as byte[];
+				streamBuffer.Write(array, 0, array.Length);
+			}
+			else
+			{
+				SerializationProtocol.SerializeMessage(streamBuffer, message);
+			}
+			if (flag)
+			{
+				byte[] array2 = CryptoProvider.Encrypt(streamBuffer.GetBuffer(), 0, streamBuffer.Length);
+				streamBuffer.SetLength(0L);
+				streamBuffer.Write(messageHeader, 0, messageHeader.Length);
+				streamBuffer.Write(array2, 0, array2.Length);
+			}
+			byte[] buffer = streamBuffer.GetBuffer();
+			buffer[messageHeader.Length - 1] = (byte)((message is byte[]) ? 9 : 8);
+			if (flag)
+			{
+				buffer[messageHeader.Length - 1] = (byte)(buffer[messageHeader.Length - 1] | 0x80u);
+			}
+			if (writeLength)
+			{
+				int targetOffset = 1;
+				Protocol.Serialize(streamBuffer.Length, buffer, ref targetOffset);
+			}
+			return streamBuffer;
+		}
+
+		internal abstract bool SendOutgoingCommands();
+
+		internal virtual bool SendAcksOnly()
+		{
+			return false;
+		}
+
+		internal abstract void ReceiveIncomingCommands(byte[] inBuff, int dataLength);
+
+		internal abstract bool DispatchIncomingCommands();
+
+		internal virtual bool DeserializeMessageAndCallback(StreamBuffer stream)
+		{
+			if (stream.Length < 2)
+			{
+				if ((int)debugOut >= 1)
+				{
+					Listener.DebugReturn(DebugLevel.ERROR, "Incoming UDP data too short! " + stream.Length);
+				}
+				return false;
+			}
+			byte b = stream.ReadByte();
+			if (b != 243 && b != 253)
+			{
+				if ((int)debugOut >= 1)
+				{
+					Listener.DebugReturn(DebugLevel.ALL, "No regular operation UDP message: " + b);
+				}
+				return false;
+			}
+			byte b2 = stream.ReadByte();
+			byte b3 = (byte)(b2 & 0x7Fu);
+			bool flag = (b2 & 0x80) > 0;
+			if (b3 != 1)
+			{
+				try
+				{
+					if (flag)
+					{
+						byte[] buf = CryptoProvider.Decrypt(stream.GetBuffer(), 2, stream.Length - 2);
+						stream = new StreamBuffer(buf);
+					}
+					else
+					{
+						stream.Seek(2L, SeekOrigin.Begin);
+					}
+				}
+				catch (Exception ex)
+				{
+					if ((int)debugOut >= 1)
+					{
+						Listener.DebugReturn(DebugLevel.ERROR, "msgType: " + b3 + " exception: " + ex.ToString());
+					}
+					SupportClass.WriteStackTrace(ex);
+					return false;
+				}
+			}
+			int num = 0;
+			switch (b3)
+			{
+			case 3:
+			{
+				OperationResponse operationResponse = null;
+				try
+				{
+					operationResponse = SerializationProtocol.DeserializeOperationResponse(stream);
+				}
+				catch (Exception ex4)
+				{
+					EnqueueDebugReturn(DebugLevel.ERROR, "Deserialization failed for Operation Response. " + ex4);
+					return false;
+				}
+				if (TrafficStatsEnabled)
+				{
+					TrafficStatsGameLevel.CountResult(ByteCountCurrentDispatch);
+					num = SupportClass.GetTickCount();
+				}
+				Listener.OnOperationResponse(operationResponse);
+				if (TrafficStatsEnabled)
+				{
+					TrafficStatsGameLevel.TimeForResponseCallback(operationResponse.OperationCode, SupportClass.GetTickCount() - num);
+				}
+				break;
+			}
+			case 4:
+			{
+				EventData eventData = null;
+				try
+				{
+					eventData = SerializationProtocol.DeserializeEventData(stream, reusableEventData);
+				}
+				catch (Exception ex2)
+				{
+					EnqueueDebugReturn(DebugLevel.ERROR, "Deserialization failed for Event. " + ex2);
+					return false;
+				}
+				if (TrafficStatsEnabled)
+				{
+					TrafficStatsGameLevel.CountEvent(ByteCountCurrentDispatch);
+					num = SupportClass.GetTickCount();
+				}
+				Listener.OnEvent(eventData);
+				if (TrafficStatsEnabled)
+				{
+					TrafficStatsGameLevel.TimeForEventCallback(eventData.Code, SupportClass.GetTickCount() - num);
+				}
+				if (photonPeer.ReuseEventInstance)
+				{
+					reusableEventData = eventData;
+				}
+				break;
+			}
+			case 1:
+				InitCallback();
+				break;
+			case 7:
+			{
+				OperationResponse operationResponse;
+				try
+				{
+					operationResponse = SerializationProtocol.DeserializeOperationResponse(stream);
+				}
+				catch (Exception ex3)
+				{
+					EnqueueDebugReturn(DebugLevel.ERROR, "Deserialization failed for internal Operation Response. " + ex3);
+					return false;
+				}
+				if (TrafficStatsEnabled)
+				{
+					TrafficStatsGameLevel.CountResult(ByteCountCurrentDispatch);
+					num = SupportClass.GetTickCount();
+				}
+				if (operationResponse.OperationCode == PhotonCodes.InitEncryption)
+				{
+					DeriveSharedKey(operationResponse);
+				}
+				else if (operationResponse.OperationCode == PhotonCodes.Ping)
+				{
+					TPeer tPeer = this as TPeer;
+					if (tPeer != null)
+					{
+						tPeer.ReadPingResult(operationResponse);
+					}
+				}
+				else
+				{
+					EnqueueDebugReturn(DebugLevel.ERROR, "Received unknown internal operation. " + operationResponse.ToStringFull());
+				}
+				if (TrafficStatsEnabled)
+				{
+					TrafficStatsGameLevel.TimeForResponseCallback(operationResponse.OperationCode, SupportClass.GetTickCount() - num);
+				}
+				break;
+			}
+			case 8:
+			{
+				object obj = SerializationProtocol.DeserializeMessage(stream);
+				if (TrafficStatsEnabled)
+				{
+					TrafficStatsGameLevel.CountEvent(ByteCountCurrentDispatch);
+					num = SupportClass.GetTickCount();
+				}
+				if (TrafficStatsEnabled)
+				{
+					TrafficStatsGameLevel.TimeForMessageCallback(SupportClass.GetTickCount() - num);
+				}
+				break;
+			}
+			case 9:
+			{
+				if (TrafficStatsEnabled)
+				{
+					TrafficStatsGameLevel.CountEvent(ByteCountCurrentDispatch);
+					num = SupportClass.GetTickCount();
+				}
+				byte[] array = stream.ToArrayFromPos();
+				if (TrafficStatsEnabled)
+				{
+					TrafficStatsGameLevel.TimeForRawMessageCallback(SupportClass.GetTickCount() - num);
+				}
+				break;
+			}
+			default:
+				EnqueueDebugReturn(DebugLevel.ERROR, "unexpected msgType " + b3);
+				break;
+			}
+			return true;
+		}
+
+		internal void UpdateRoundTripTimeAndVariance(int lastRoundtripTime)
+		{
+			if (lastRoundtripTime >= 0)
+			{
+				roundTripTimeVariance -= roundTripTimeVariance / 4;
+				if (lastRoundtripTime >= roundTripTime)
+				{
+					roundTripTime += (lastRoundtripTime - roundTripTime) / 8;
+					roundTripTimeVariance += (lastRoundtripTime - roundTripTime) / 4;
+				}
+				else
+				{
+					roundTripTime += (lastRoundtripTime - roundTripTime) / 8;
+					roundTripTimeVariance -= (lastRoundtripTime - roundTripTime) / 4;
+				}
+				if (roundTripTime < lowestRoundTripTime)
+				{
+					lowestRoundTripTime = roundTripTime;
+				}
+				if (roundTripTimeVariance > highestRoundTripTimeVariance)
+				{
+					highestRoundTripTimeVariance = roundTripTimeVariance;
+				}
+			}
+		}
+
+		internal bool ExchangeKeysForEncryption(object lockObject)
 		{
 			isEncryptionAvailable = false;
-			CryptoProvider = new DiffieHellmanCryptoProvider();
+			if (CryptoProvider != null)
+			{
+				CryptoProvider.Dispose();
+				CryptoProvider = null;
+			}
+			if (PhotonPeer.NativePayloadEncryptionLibAvailable)
+			{
+				CryptoProvider = new DiffieHellmanCryptoProviderNative();
+			}
+			if (CryptoProvider == null)
+			{
+				CryptoProvider = new DiffieHellmanCryptoProvider();
+			}
 			Dictionary<byte, object> dictionary = new Dictionary<byte, object>(1);
 			dictionary[PhotonCodes.ClientKey] = CryptoProvider.PublicKey;
-			return EnqueueOperation(dictionary, PhotonCodes.InitEncryption, true, 0, false, EgMessageType.InternalOperationRequest);
+			SendOptions sendOptions;
+			if (lockObject != null)
+			{
+				lock (lockObject)
+				{
+					sendOptions = default(SendOptions);
+					sendOptions.Channel = 0;
+					sendOptions.Encrypt = false;
+					sendOptions.DeliveryMode = DeliveryMode.Reliable;
+					SendOptions sendParams = sendOptions;
+					return EnqueueOperation(dictionary, PhotonCodes.InitEncryption, sendParams, EgMessageType.InternalOperationRequest);
+				}
+			}
+			sendOptions = default(SendOptions);
+			sendOptions.Channel = 0;
+			sendOptions.Encrypt = false;
+			sendOptions.DeliveryMode = DeliveryMode.Reliable;
+			SendOptions sendParams2 = sendOptions;
+			return EnqueueOperation(dictionary, PhotonCodes.InitEncryption, sendParams2, EgMessageType.InternalOperationRequest);
 		}
 
 		internal void DeriveSharedKey(OperationResponse operationResponse)
@@ -397,6 +784,20 @@ namespace ExitGames.Client.Photon
 				CryptoProvider.DeriveSharedKey(array);
 				isEncryptionAvailable = true;
 				EnqueueStatusCallback(StatusCode.EncryptionEstablished);
+			}
+		}
+
+		internal virtual void InitEncryption(byte[] secret)
+		{
+			if (PhotonPeer.NativePayloadEncryptionLibAvailable)
+			{
+				CryptoProvider = new DiffieHellmanCryptoProviderNative(secret);
+				isEncryptionAvailable = true;
+			}
+			if (CryptoProvider == null)
+			{
+				CryptoProvider = new DiffieHellmanCryptoProvider(secret);
+				isEncryptionAvailable = true;
 			}
 		}
 
@@ -430,156 +831,13 @@ namespace ExitGames.Client.Photon
 			}
 		}
 
-		internal virtual void InitPeerBase()
-		{
-			TrafficStatsIncoming = new TrafficStats(TrafficPackageHeaderSize);
-			TrafficStatsOutgoing = new TrafficStats(TrafficPackageHeaderSize);
-			TrafficStatsGameLevel = new TrafficStatsGameLevel();
-			ByteCountLastOperation = 0;
-			ByteCountCurrentDispatch = 0;
-			bytesIn = 0L;
-			bytesOut = 0L;
-			packetLossByCrc = 0;
-			networkSimulationSettings.LostPackagesIn = 0;
-			networkSimulationSettings.LostPackagesOut = 0;
-			lock (NetSimListOutgoing)
-			{
-				NetSimListOutgoing.Clear();
-			}
-			lock (NetSimListIncoming)
-			{
-				NetSimListIncoming.Clear();
-			}
-			peerConnectionState = ConnectionStateValue.Disconnected;
-			timeBase = SupportClass.GetTickCount();
-			isEncryptionAvailable = false;
-			ApplicationIsInitialized = false;
-			roundTripTime = 300;
-			roundTripTimeVariance = 0;
-			packetThrottleInterval = 5000;
-			serverTimeOffsetIsAvailable = false;
-			serverTimeOffset = 0;
-		}
-
-		internal virtual bool DeserializeMessageAndCallback(byte[] inBuff)
-		{
-			if (inBuff.Length < 2)
-			{
-				if ((int)debugOut >= 1)
-				{
-					Listener.DebugReturn(DebugLevel.ERROR, "Incoming UDP data too short! " + inBuff.Length);
-				}
-				return false;
-			}
-			if (inBuff[0] != 243 && inBuff[0] != 253)
-			{
-				if ((int)debugOut >= 1)
-				{
-					Listener.DebugReturn(DebugLevel.ALL, "No regular operation UDP message: " + inBuff[0]);
-				}
-				return false;
-			}
-			byte b = (byte)(inBuff[1] & 0x7Fu);
-			bool flag = (inBuff[1] & 0x80) > 0;
-			MemoryStream memoryStream = null;
-			if (b != 1)
-			{
-				try
-				{
-					if (flag)
-					{
-						inBuff = CryptoProvider.Decrypt(inBuff, 2, inBuff.Length - 2);
-						memoryStream = new MemoryStream(inBuff);
-					}
-					else
-					{
-						memoryStream = new MemoryStream(inBuff);
-						memoryStream.Seek(2L, SeekOrigin.Begin);
-					}
-				}
-				catch (Exception ex)
-				{
-					if ((int)debugOut >= 1)
-					{
-						Listener.DebugReturn(DebugLevel.ERROR, ex.ToString());
-					}
-					SupportClass.WriteStackTrace(ex);
-					return false;
-				}
-			}
-			int num = 0;
-			switch (b)
-			{
-			case 3:
-			{
-				OperationResponse operationResponse = Protocol.DeserializeOperationResponse(memoryStream);
-				if (TrafficStatsEnabled)
-				{
-					TrafficStatsGameLevel.CountResult(ByteCountCurrentDispatch);
-					num = SupportClass.GetTickCount();
-				}
-				Listener.OnOperationResponse(operationResponse);
-				if (TrafficStatsEnabled)
-				{
-					TrafficStatsGameLevel.TimeForResponseCallback(operationResponse.OperationCode, SupportClass.GetTickCount() - num);
-				}
-				break;
-			}
-			case 4:
-			{
-				EventData eventData = Protocol.DeserializeEventData(memoryStream);
-				if (TrafficStatsEnabled)
-				{
-					TrafficStatsGameLevel.CountEvent(ByteCountCurrentDispatch);
-					num = SupportClass.GetTickCount();
-				}
-				Listener.OnEvent(eventData);
-				if (TrafficStatsEnabled)
-				{
-					TrafficStatsGameLevel.TimeForEventCallback(eventData.Code, SupportClass.GetTickCount() - num);
-				}
-				break;
-			}
-			case 1:
-				InitCallback();
-				break;
-			case 7:
-			{
-				OperationResponse operationResponse = Protocol.DeserializeOperationResponse(memoryStream);
-				if (TrafficStatsEnabled)
-				{
-					TrafficStatsGameLevel.CountResult(ByteCountCurrentDispatch);
-					num = SupportClass.GetTickCount();
-				}
-				if (operationResponse.OperationCode == PhotonCodes.InitEncryption)
-				{
-					DeriveSharedKey(operationResponse);
-				}
-				else
-				{
-					EnqueueDebugReturn(DebugLevel.ERROR, "Received unknown internal operation. " + operationResponse.ToStringFull());
-				}
-				if (TrafficStatsEnabled)
-				{
-					TrafficStatsGameLevel.TimeForResponseCallback(operationResponse.OperationCode, SupportClass.GetTickCount() - num);
-				}
-				break;
-			}
-			default:
-				EnqueueDebugReturn(DebugLevel.ERROR, "unexpected msgType " + b);
-				break;
-			}
-			return true;
-		}
-
-		internal void SendNetworkSimulated(MyAction sendAction)
+		internal void SendNetworkSimulated(byte[] dataToSend)
 		{
 			if (!NetworkSimulationSettings.IsSimulationEnabled)
 			{
-				sendAction();
-				return;
+				throw new NotImplementedException("SendNetworkSimulated was called, despite NetworkSimulationSettings.IsSimulationEnabled == false.");
 			}
-			if (usedProtocol == ConnectionProtocol.Udp && NetworkSimulationSettings.OutgoingLossPercentage > 0 && lagRandomizer.Next(101) < NetworkSimulationSettings.OutgoingLossPercentage)
+			if (usedTransportProtocol == ConnectionProtocol.Udp && NetworkSimulationSettings.OutgoingLossPercentage > 0 && lagRandomizer.Next(101) < NetworkSimulationSettings.OutgoingLossPercentage)
 			{
 				networkSimulationSettings.LostPackagesOut++;
 				return;
@@ -587,14 +845,15 @@ namespace ExitGames.Client.Photon
 			int num = ((networkSimulationSettings.OutgoingJitter > 0) ? (lagRandomizer.Next(networkSimulationSettings.OutgoingJitter * 2) - networkSimulationSettings.OutgoingJitter) : 0);
 			int num2 = networkSimulationSettings.OutgoingLag + num;
 			int num3 = SupportClass.GetTickCount() + num2;
-			SimulationItem simulationItem = new SimulationItem();
-			simulationItem.ActionToExecute = sendAction;
-			simulationItem.TimeToExecute = num3;
-			simulationItem.Delay = num2;
-			SimulationItem value = simulationItem;
+			SimulationItem value = new SimulationItem
+			{
+				DelayedData = dataToSend,
+				TimeToExecute = num3,
+				Delay = num2
+			};
 			lock (NetSimListOutgoing)
 			{
-				if (NetSimListOutgoing.Count == 0 || usedProtocol == ConnectionProtocol.Tcp)
+				if (NetSimListOutgoing.Count == 0 || usedTransportProtocol == ConnectionProtocol.Tcp)
 				{
 					NetSimListOutgoing.AddLast(value);
 					return;
@@ -615,14 +874,13 @@ namespace ExitGames.Client.Photon
 			}
 		}
 
-		internal void ReceiveNetworkSimulated(MyAction receiveAction)
+		internal void ReceiveNetworkSimulated(byte[] dataReceived)
 		{
 			if (!networkSimulationSettings.IsSimulationEnabled)
 			{
-				receiveAction();
-				return;
+				throw new NotImplementedException("ReceiveNetworkSimulated was called, despite NetworkSimulationSettings.IsSimulationEnabled == false.");
 			}
-			if (usedProtocol == ConnectionProtocol.Udp && networkSimulationSettings.IncomingLossPercentage > 0 && lagRandomizer.Next(101) < networkSimulationSettings.IncomingLossPercentage)
+			if (usedTransportProtocol == ConnectionProtocol.Udp && networkSimulationSettings.IncomingLossPercentage > 0 && lagRandomizer.Next(101) < networkSimulationSettings.IncomingLossPercentage)
 			{
 				networkSimulationSettings.LostPackagesIn++;
 				return;
@@ -630,14 +888,15 @@ namespace ExitGames.Client.Photon
 			int num = ((networkSimulationSettings.IncomingJitter > 0) ? (lagRandomizer.Next(networkSimulationSettings.IncomingJitter * 2) - networkSimulationSettings.IncomingJitter) : 0);
 			int num2 = networkSimulationSettings.IncomingLag + num;
 			int num3 = SupportClass.GetTickCount() + num2;
-			SimulationItem simulationItem = new SimulationItem();
-			simulationItem.ActionToExecute = receiveAction;
-			simulationItem.TimeToExecute = num3;
-			simulationItem.Delay = num2;
-			SimulationItem value = simulationItem;
+			SimulationItem value = new SimulationItem
+			{
+				DelayedData = dataReceived,
+				TimeToExecute = num3,
+				Delay = num2
+			};
 			lock (NetSimListIncoming)
 			{
-				if (NetSimListIncoming.Count == 0 || usedProtocol == ConnectionProtocol.Tcp)
+				if (NetSimListIncoming.Count == 0 || usedTransportProtocol == ConnectionProtocol.Tcp)
 				{
 					NetSimListIncoming.AddLast(value);
 					return;
@@ -662,13 +921,12 @@ namespace ExitGames.Client.Photon
 		{
 			while (true)
 			{
-				bool flag = true;
-				bool flag2 = false;
+				bool flag = false;
 				lock (networkSimulationSettings.NetSimManualResetEvent)
 				{
-					flag2 = networkSimulationSettings.IsSimulationEnabled;
+					flag = networkSimulationSettings.IsSimulationEnabled;
 				}
-				if (!flag2)
+				if (!flag)
 				{
 					networkSimulationSettings.NetSimManualResetEvent.WaitOne();
 					continue;
@@ -683,21 +941,24 @@ namespace ExitGames.Client.Photon
 						{
 							break;
 						}
-						simulationItem.ActionToExecute();
+						ReceiveIncomingCommands(simulationItem.DelayedData, simulationItem.DelayedData.Length);
 						NetSimListIncoming.RemoveFirst();
 					}
 				}
 				lock (NetSimListOutgoing)
 				{
-					SimulationItem simulationItem = null;
+					SimulationItem simulationItem2 = null;
 					while (NetSimListOutgoing.First != null)
 					{
-						simulationItem = NetSimListOutgoing.First.Value;
-						if (simulationItem.stopw.ElapsedMilliseconds < simulationItem.Delay)
+						simulationItem2 = NetSimListOutgoing.First.Value;
+						if (simulationItem2.stopw.ElapsedMilliseconds < simulationItem2.Delay)
 						{
 							break;
 						}
-						simulationItem.ActionToExecute();
+						if (PhotonSocket != null && PhotonSocket.Connected)
+						{
+							PhotonSocket.Send(simulationItem2.DelayedData, simulationItem2.DelayedData.Length);
+						}
 						NetSimListOutgoing.RemoveFirst();
 					}
 				}
@@ -705,38 +966,66 @@ namespace ExitGames.Client.Photon
 			}
 		}
 
-		internal void UpdateRoundTripTimeAndVariance(int lastRoundtripTime)
+		internal void CommandLogResize()
 		{
-			if (lastRoundtripTime >= 0)
+			if (CommandLogSize <= 0)
 			{
-				roundTripTimeVariance -= roundTripTimeVariance / 4;
-				if (lastRoundtripTime >= roundTripTime)
-				{
-					roundTripTime += (lastRoundtripTime - roundTripTime) / 8;
-					roundTripTimeVariance += (lastRoundtripTime - roundTripTime) / 4;
-				}
-				else
-				{
-					roundTripTime += (lastRoundtripTime - roundTripTime) / 8;
-					roundTripTimeVariance -= (lastRoundtripTime - roundTripTime) / 4;
-				}
-				if (roundTripTime < lowestRoundTripTime)
-				{
-					lowestRoundTripTime = roundTripTime;
-				}
-				if (roundTripTimeVariance > highestRoundTripTimeVariance)
-				{
-					highestRoundTripTimeVariance = roundTripTimeVariance;
-				}
+				CommandLog = null;
+				InReliableLog = null;
+				return;
+			}
+			if (CommandLog == null || InReliableLog == null)
+			{
+				CommandLogInit();
+			}
+			while (CommandLog.Count > 0 && CommandLog.Count > CommandLogSize)
+			{
+				CommandLog.Dequeue();
+			}
+			while (InReliableLog.Count > 0 && InReliableLog.Count > CommandLogSize)
+			{
+				InReliableLog.Dequeue();
 			}
 		}
 
-		internal void InitializeTrafficStats()
+		internal void CommandLogInit()
 		{
-			TrafficStatsIncoming = new TrafficStats(TrafficPackageHeaderSize);
-			TrafficStatsOutgoing = new TrafficStats(TrafficPackageHeaderSize);
-			TrafficStatsGameLevel = new TrafficStatsGameLevel();
-			trafficStatsStopwatch = new Stopwatch();
+			if (CommandLogSize <= 0)
+			{
+				CommandLog = null;
+				InReliableLog = null;
+			}
+			else if (CommandLog == null || InReliableLog == null)
+			{
+				CommandLog = new Queue<CmdLogItem>(CommandLogSize);
+				InReliableLog = new Queue<CmdLogItem>(CommandLogSize);
+			}
+			else
+			{
+				CommandLog.Clear();
+				InReliableLog.Clear();
+			}
+		}
+
+		public string CommandLogToString()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			int num = ((usedTransportProtocol == ConnectionProtocol.Udp) ? ((EnetPeer)this).reliableCommandsRepeated : 0);
+			stringBuilder.AppendFormat("PeerId: {0} Now: {1} Server: {2} State: {3} Total Resends: {4} Received {5}ms ago.\n", PeerID, timeInt, ServerAddress, peerConnectionState, num, SupportClass.GetTickCount() - timestampOfLastReceive);
+			if (CommandLog == null)
+			{
+				return stringBuilder.ToString();
+			}
+			foreach (CmdLogItem item in CommandLog)
+			{
+				stringBuilder.AppendLine(item.ToString());
+			}
+			stringBuilder.AppendLine("Received Reliable Log: ");
+			foreach (CmdLogItem item2 in InReliableLog)
+			{
+				stringBuilder.AppendLine(item2.ToString());
+			}
+			return stringBuilder.ToString();
 		}
 	}
 }

@@ -9,19 +9,19 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1710575274984774}
+  m_RootGameObject: {fileID: 1607044640987784}
   m_IsPrefabParent: 1
   m_IsExploded: 0
---- !u!1 &1710575274984774
+--- !u!1 &1607044640987784
 GameObject:
   serializedVersion: 4
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_Component:
-  - 4: {fileID: 4816809414826954}
-  - 137: {fileID: 137586292962395007}
-  - 163: {fileID: 163590787223800147}
+  - 4: {fileID: 4945658927282495}
+  - 137: {fileID: 137119754386616741}
+  - 163: {fileID: 163324539963203192}
   m_Layer: 0
   m_Name: hair_sasha_cloth
   m_TagString: Untagged
@@ -29,32 +29,32 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4816809414826954
+--- !u!4 &4945658927282495
 Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1710575274984774}
+  m_GameObject: {fileID: 1607044640987784}
   m_LocalRotation: {x: 0, y: -0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.831348E-05, z: 0}
   m_LocalScale: {x: 0.23512985, y: 0.23512985, z: 0.23512985}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!137 &137586292962395007
+--- !u!137 &137119754386616741
 SkinnedMeshRenderer:
   serializedVersion: 2
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1710575274984774}
+  m_GameObject: {fileID: 1607044640987784}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_LightmapIndex: 255
   m_LightmapTilingOffset: {x: 1, y: 1, z: 0, w: 0}
   m_Materials:
-  - {fileID: 2100000, guid: b34f2af7042b6384696e4d055bf7a02e, type: 2}
+  - {fileID: 2100000, guid: a66b2d267699da042bba64f473a620fd, type: 2}
   m_SubsetIndices: []
   m_StaticBatchRoot: {fileID: 0}
   m_UseLightProbes: 0
@@ -64,7 +64,7 @@ SkinnedMeshRenderer:
   m_SortingOrder: 0
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
-  m_Mesh: {fileID: 4300000, guid: 623c2f79c7390bf42839133bf8bbb9d7, type: 2}
+  m_Mesh: {fileID: 4300000, guid: f526693901c0a8146bcf1bf1a7d2315c, type: 2}
   m_Bones:
   - {fileID: 0}
   - {fileID: 0}
@@ -102,12 +102,12 @@ SkinnedMeshRenderer:
     m_Center: {x: 0, y: 1, z: 0}
     m_Extent: {x: 1, y: 1, z: 1}
   m_DirtyAABB: 0
---- !u!163 &163590787223800147
+--- !u!163 &163324539963203192
 SkinnedCloth:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1710575274984774}
+  m_GameObject: {fileID: 1607044640987784}
   m_Enabled: 1
   m_BendingStiffness: 0
   m_StretchingStiffness: 0.001

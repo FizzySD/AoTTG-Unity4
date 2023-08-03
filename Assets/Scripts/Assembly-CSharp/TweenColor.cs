@@ -5,15 +5,15 @@ public class TweenColor : UITweener
 {
 	public Color from = Color.white;
 
-	public Color to = Color.white;
+	private Light mLight;
+
+	private Material mMat;
 
 	private Transform mTrans;
 
 	private UIWidget mWidget;
 
-	private Material mMat;
-
-	private Light mLight;
+	public Color to = Color.white;
 
 	public Color color
 	{
@@ -62,11 +62,6 @@ public class TweenColor : UITweener
 		mLight = base.light;
 	}
 
-	protected override void OnUpdate(float factor, bool isFinished)
-	{
-		color = Color.Lerp(from, to, factor);
-	}
-
 	public static TweenColor Begin(GameObject go, float duration, Color color)
 	{
 		TweenColor tweenColor = UITweener.Begin<TweenColor>(go, duration);
@@ -78,5 +73,10 @@ public class TweenColor : UITweener
 			tweenColor.enabled = false;
 		}
 		return tweenColor;
+	}
+
+	protected override void OnUpdate(float factor, bool isFinished)
+	{
+		color = Color.Lerp(from, to, factor);
 	}
 }

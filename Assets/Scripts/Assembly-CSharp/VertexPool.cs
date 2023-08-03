@@ -4,15 +4,15 @@ public class VertexPool
 {
 	public class VertexSegment
 	{
-		public int VertStart;
+		public int IndexCount;
 
 		public int IndexStart;
 
+		public VertexPool Pool;
+
 		public int VertCount;
 
-		public int IndexCount;
-
-		public VertexPool Pool;
+		public int VertStart;
 
 		public VertexSegment(int start, int count, int istart, int icount, VertexPool pool)
 		{
@@ -26,41 +26,41 @@ public class VertexPool
 
 	public const int BlockSize = 36;
 
-	public Vector3[] Vertices;
-
-	public int[] Indices;
-
-	public Vector2[] UVs;
-
-	public Color[] Colors;
-
-	public bool IndiceChanged;
+	public float BoundsScheduleTime = 1f;
 
 	public bool ColorChanged;
 
-	public bool UVChanged;
+	public Color[] Colors;
 
-	public bool VertChanged;
+	public float ElapsedTime;
 
-	public Mesh Mesh;
-
-	public Material Material;
-
-	protected int VertexTotal;
-
-	protected int VertexUsed;
+	protected bool FirstUpdate = true;
 
 	protected int IndexTotal;
 
 	protected int IndexUsed;
 
-	protected bool FirstUpdate = true;
+	public bool IndiceChanged;
+
+	public int[] Indices;
+
+	public Material Material;
+
+	public Mesh Mesh;
+
+	public bool UVChanged;
+
+	public Vector2[] UVs;
+
+	public bool VertChanged;
 
 	protected bool VertCountChanged;
 
-	public float BoundsScheduleTime = 1f;
+	protected int VertexTotal;
 
-	public float ElapsedTime;
+	protected int VertexUsed;
+
+	public Vector3[] Vertices;
 
 	public VertexPool(Mesh mesh, Material material)
 	{
@@ -76,21 +76,35 @@ public class VertexPool
 		IndiceChanged = (ColorChanged = (UVChanged = (VertChanged = true)));
 	}
 
-	public void RecalculateBounds()
+	public RibbonTrail AddRibbonTrail(float width, int maxelemnt, float len, Vector3 pos, int stretchType, float maxFps)
 	{
-		Mesh.RecalculateBounds();
+		return new RibbonTrail(GetVertices(maxelemnt * 2, (maxelemnt - 1) * 6), width, maxelemnt, len, pos, stretchType, maxFps);
 	}
 
 	public Sprite AddSprite(float width, float height, STYPE type, ORIPOINT ori, Camera cam, int uvStretch, float maxFps)
 	{
-		VertexSegment vertices = GetVertices(4, 6);
-		return new Sprite(vertices, width, height, type, ori, cam, uvStretch, maxFps);
+		return new Sprite(GetVertices(4, 6), width, height, type, ori, cam, uvStretch, maxFps);
 	}
 
-	public RibbonTrail AddRibbonTrail(float width, int maxelemnt, float len, Vector3 pos, int stretchType, float maxFps)
+	public void EnlargeArrays(int count, int icount)
 	{
-		VertexSegment vertices = GetVertices(maxelemnt * 2, (maxelemnt - 1) * 6);
-		return new RibbonTrail(vertices, width, maxelemnt, len, pos, stretchType, maxFps);
+		Vector3[] vertices = Vertices;
+		Vertices = new Vector3[Vertices.Length + count];
+		vertices.CopyTo(Vertices, 0);
+		Vector2[] uVs = UVs;
+		UVs = new Vector2[UVs.Length + count];
+		uVs.CopyTo(UVs, 0);
+		Color[] colors = Colors;
+		Colors = new Color[Colors.Length + count];
+		colors.CopyTo(Colors, 0);
+		int[] indices = Indices;
+		Indices = new int[Indices.Length + icount];
+		indices.CopyTo(Indices, 0);
+		VertCountChanged = true;
+		IndiceChanged = true;
+		ColorChanged = true;
+		UVChanged = true;
+		VertChanged = true;
 	}
 
 	public Material GetMaterial()
@@ -131,27 +145,6 @@ public class VertexPool
 		IndexTotal = 6;
 	}
 
-	public void EnlargeArrays(int count, int icount)
-	{
-		Vector3[] vertices = Vertices;
-		Vertices = new Vector3[Vertices.Length + count];
-		vertices.CopyTo(Vertices, 0);
-		Vector2[] uVs = UVs;
-		UVs = new Vector2[UVs.Length + count];
-		uVs.CopyTo(UVs, 0);
-		Color[] colors = Colors;
-		Colors = new Color[Colors.Length + count];
-		colors.CopyTo(Colors, 0);
-		int[] indices = Indices;
-		Indices = new int[Indices.Length + icount];
-		indices.CopyTo(Indices, 0);
-		VertCountChanged = true;
-		IndiceChanged = true;
-		ColorChanged = true;
-		UVChanged = true;
-		VertChanged = true;
-	}
-
 	public void LateUpdate()
 	{
 		if (VertCountChanged)
@@ -186,5 +179,10 @@ public class VertexPool
 		ColorChanged = false;
 		UVChanged = false;
 		VertChanged = false;
+	}
+
+	public void RecalculateBounds()
+	{
+		Mesh.RecalculateBounds();
 	}
 }

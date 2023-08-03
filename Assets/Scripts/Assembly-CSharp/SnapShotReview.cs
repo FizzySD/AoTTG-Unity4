@@ -1,38 +1,48 @@
 using System;
+using ApplicationManagers;
 using UnityEngine;
 
 public class SnapShotReview : MonoBehaviour
 {
-	public GameObject labelPage;
-
-	public GameObject texture;
-
 	public GameObject labelDMG;
 
 	public GameObject labelInfo;
 
-	private float textureW = 960f;
-
-	private float textureH = 600f;
+	public GameObject labelPage;
 
 	private UILabel page;
 
-	private void Start()
+	public GameObject texture;
+
+	private float textureH = 600f;
+
+	private float textureW = 960f;
+
+	private int _currentIndex;
+
+	private void freshInfo()
 	{
-		QualitySettings.SetQualityLevel(5, true);
-		page = labelPage.GetComponent<UILabel>();
-		if (SnapShotSaves.getLength() > 0)
+		if (SnapshotManager.GetLength() == 0)
 		{
-			texture.GetComponent<UITexture>().mainTexture = SnapShotSaves.getCurrentIMG();
+			page.text = "0/0";
 		}
-		labelInfo.GetComponent<UILabel>().text = LoginFengKAI.player.name + " " + DateTime.Today.ToShortDateString();
-		freshInfo();
-		setTextureWH();
+		else
+		{
+			page.text = _currentIndex + 1 + "/" + SnapshotManager.GetLength();
+		}
+		if (SnapshotManager.GetDamage(_currentIndex) > 0)
+		{
+			labelDMG.GetComponent<UILabel>().text = SnapshotManager.GetDamage(_currentIndex).ToString();
+		}
+		else
+		{
+			labelDMG.GetComponent<UILabel>().text = string.Empty;
+		}
 	}
 
 	private void setTextureWH()
 	{
-		if (SnapShotSaves.getLength() != 0)
+		if (SnapshotManager.GetLength() != 0)
 		{
 			float num = 1.6f;
 			float num2 = (float)texture.GetComponent<UITexture>().mainTexture.width / (float)texture.GetComponent<UITexture>().mainTexture.height;
@@ -51,37 +61,38 @@ public class SnapShotReview : MonoBehaviour
 		}
 	}
 
-	private void freshInfo()
-	{
-		if (SnapShotSaves.getLength() == 0)
-		{
-			page.text = "0/0";
-		}
-		else
-		{
-			page.text = SnapShotSaves.getCurrentIndex() + 1 + "/" + SnapShotSaves.getLength();
-		}
-		if (SnapShotSaves.getCurrentDMG() > 0)
-		{
-			labelDMG.GetComponent<UILabel>().text = SnapShotSaves.getCurrentDMG().ToString();
-		}
-		else
-		{
-			labelDMG.GetComponent<UILabel>().text = string.Empty;
-		}
-	}
-
 	public void ShowNextIMG()
 	{
-		texture.GetComponent<UITexture>().mainTexture = SnapShotSaves.GetNextIMG();
-		setTextureWH();
-		freshInfo();
+		if (_currentIndex < SnapshotManager.GetLength() - 1)
+		{
+			_currentIndex++;
+			texture.GetComponent<UITexture>().mainTexture = SnapshotManager.GetSnapshot(_currentIndex);
+			setTextureWH();
+			freshInfo();
+		}
 	}
 
 	public void ShowPrevIMG()
 	{
-		texture.GetComponent<UITexture>().mainTexture = SnapShotSaves.GetPrevIMG();
-		setTextureWH();
+		if (_currentIndex > 0)
+		{
+			_currentIndex--;
+			texture.GetComponent<UITexture>().mainTexture = SnapshotManager.GetSnapshot(_currentIndex);
+			setTextureWH();
+			freshInfo();
+		}
+	}
+
+	private void Start()
+	{
+		page = labelPage.GetComponent<UILabel>();
+		_currentIndex = 0;
+		if (SnapshotManager.GetLength() > 0)
+		{
+			texture.GetComponent<UITexture>().mainTexture = SnapshotManager.GetSnapshot(_currentIndex);
+		}
+		labelInfo.GetComponent<UILabel>().text = LoginFengKAI.player.name + " " + DateTime.Today.ToShortDateString();
 		freshInfo();
+		setTextureWH();
 	}
 }

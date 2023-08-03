@@ -2,24 +2,24 @@ using UnityEngine;
 
 public class RotateAffector : Affector
 {
+	protected float Delta;
+
 	protected AnimationCurve RotateCurve;
 
 	protected RSTYPE Type;
-
-	protected float Delta;
-
-	public RotateAffector(AnimationCurve curve, EffectNode node)
-		: base(node)
-	{
-		Type = RSTYPE.CURVE;
-		RotateCurve = curve;
-	}
 
 	public RotateAffector(float delta, EffectNode node)
 		: base(node)
 	{
 		Type = RSTYPE.SIMPLE;
 		Delta = delta;
+	}
+
+	public RotateAffector(AnimationCurve curve, EffectNode node)
+		: base(node)
+	{
+		Type = RSTYPE.CURVE;
+		RotateCurve = curve;
 	}
 
 	public override void Update()

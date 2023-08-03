@@ -1,75 +1,26 @@
 using UnityEngine;
 
-[AddComponentMenu("NGUI/UI/Texture")]
 [ExecuteInEditMode]
+[AddComponentMenu("NGUI/UI/Texture")]
 public class UITexture : UIWidget
 {
-	[SerializeField]
+	private bool mCreatingMat;
+
+	private Material mDynamicMat;
+
+	private int mPMA = -1;
+
 	[HideInInspector]
+	[SerializeField]
 	private Rect mRect = new Rect(0f, 0f, 1f, 1f);
 
 	[SerializeField]
 	[HideInInspector]
 	private Shader mShader;
 
-	[HideInInspector]
 	[SerializeField]
+	[HideInInspector]
 	private Texture mTexture;
-
-	private Material mDynamicMat;
-
-	private bool mCreatingMat;
-
-	private int mPMA = -1;
-
-	public Rect uvRect
-	{
-		get
-		{
-			return mRect;
-		}
-		set
-		{
-			if (mRect != value)
-			{
-				mRect = value;
-				MarkAsChanged();
-			}
-		}
-	}
-
-	public Shader shader
-	{
-		get
-		{
-			if (mShader == null)
-			{
-				Material material = this.material;
-				if (material != null)
-				{
-					mShader = material.shader;
-				}
-				if (mShader == null)
-				{
-					mShader = Shader.Find("Unlit/Texture");
-				}
-			}
-			return mShader;
-		}
-		set
-		{
-			if (mShader != value)
-			{
-				mShader = value;
-				Material material = this.material;
-				if (material != null)
-				{
-					material.shader = value;
-				}
-				mPMA = -1;
-			}
-		}
-	}
 
 	public bool hasDynamicMaterial
 	{
@@ -84,6 +35,39 @@ public class UITexture : UIWidget
 		get
 		{
 			return true;
+		}
+	}
+
+	public override Texture mainTexture
+	{
+		get
+		{
+			if (!(mTexture == null))
+			{
+				return mTexture;
+			}
+			return base.mainTexture;
+		}
+		set
+		{
+			if (mPanel != null && mMat != null)
+			{
+				mPanel.RemoveWidget(this);
+			}
+			if (mMat == null)
+			{
+				mDynamicMat = new Material(shader);
+				mDynamicMat.hideFlags = HideFlags.DontSave;
+				mMat = mDynamicMat;
+			}
+			mPanel = null;
+			mTex = value;
+			mTexture = value;
+			mMat.mainTexture = value;
+			if (base.enabled)
+			{
+				CreatePanel();
+			}
 		}
 	}
 
@@ -129,44 +113,59 @@ public class UITexture : UIWidget
 			if (mPMA == -1)
 			{
 				Material material = this.material;
-				mPMA = ((material != null && material.shader != null && material.shader.name.Contains("Premultiplied")) ? 1 : 0);
+				mPMA = ((!(material == null) && !(material.shader == null) && material.shader.name.Contains("Premultiplied")) ? 1 : 0);
 			}
 			return mPMA == 1;
 		}
 	}
 
-	public override Texture mainTexture
+	public Shader shader
 	{
 		get
 		{
-			return (!(mTexture != null)) ? base.mainTexture : mTexture;
+			if (mShader == null)
+			{
+				Material material = this.material;
+				if (material != null)
+				{
+					mShader = material.shader;
+				}
+				if (mShader == null)
+				{
+					mShader = Shader.Find("Unlit/Texture");
+				}
+			}
+			return mShader;
 		}
 		set
 		{
-			if (mPanel != null && mMat != null)
+			if (mShader != value)
 			{
-				mPanel.RemoveWidget(this);
-			}
-			if (mMat == null)
-			{
-				mDynamicMat = new Material(shader);
-				mDynamicMat.hideFlags = HideFlags.DontSave;
-				mMat = mDynamicMat;
-			}
-			mPanel = null;
-			mTex = value;
-			mTexture = value;
-			mMat.mainTexture = value;
-			if (base.enabled)
-			{
-				CreatePanel();
+				mShader = value;
+				Material material = this.material;
+				if (material != null)
+				{
+					material.shader = value;
+				}
+				mPMA = -1;
 			}
 		}
 	}
 
-	private void OnDestroy()
+	public Rect uvRect
 	{
-		NGUITools.Destroy(mDynamicMat);
+		get
+		{
+			return mRect;
+		}
+		set
+		{
+			if (mRect != value)
+			{
+				mRect = value;
+				MarkAsChanged();
+			}
+		}
 	}
 
 	public override void MakePixelPerfect()
@@ -181,6 +180,11 @@ public class UITexture : UIWidget
 			base.cachedTransform.localScale = localScale;
 		}
 		base.MakePixelPerfect();
+	}
+
+	private void OnDestroy()
+	{
+		NGUITools.Destroy(mDynamicMat);
 	}
 
 	public override void OnFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)

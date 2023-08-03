@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class StyledComboBoxPrefab : MonoBehaviour
 {
-	public RectTransform menuItem;
+	public CanvasGroup itemPanel;
 
 	public RectTransform itemRoot;
 
-	public CanvasGroup itemPanel;
+	public RectTransform menuItem;
 }

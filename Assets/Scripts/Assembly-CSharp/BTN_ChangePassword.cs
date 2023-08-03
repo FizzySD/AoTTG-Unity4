@@ -2,15 +2,15 @@ using UnityEngine;
 
 public class BTN_ChangePassword : MonoBehaviour
 {
+	public GameObject logincomponent;
+
 	public GameObject oldpassword;
+
+	public GameObject output;
 
 	public GameObject password;
 
 	public GameObject password2;
-
-	public GameObject logincomponent;
-
-	public GameObject output;
 
 	private void OnClick()
 	{

@@ -1,16 +1,31 @@
 using UnityEngine;
 
-[RequireComponent(typeof(UIInput))]
 [AddComponentMenu("NGUI/Examples/Chat Input")]
+[RequireComponent(typeof(UIInput))]
 public class ChatInput : MonoBehaviour
 {
-	public UITextList textList;
-
 	public bool fillWithDummyData;
+
+	private bool mIgnoreNextEnter;
 
 	private UIInput mInput;
 
-	private bool mIgnoreNextEnter;
+	public UITextList textList;
+
+	private void OnSubmit()
+	{
+		if (textList != null)
+		{
+			string text = NGUITools.StripSymbols(mInput.text);
+			if (!string.IsNullOrEmpty(text))
+			{
+				textList.Add(text);
+				mInput.text = string.Empty;
+				mInput.selected = false;
+			}
+		}
+		mIgnoreNextEnter = true;
+	}
 
 	private void Start()
 	{
@@ -34,20 +49,5 @@ public class ChatInput : MonoBehaviour
 			}
 			mIgnoreNextEnter = false;
 		}
-	}
-
-	private void OnSubmit()
-	{
-		if (textList != null)
-		{
-			string text = NGUITools.StripSymbols(mInput.text);
-			if (!string.IsNullOrEmpty(text))
-			{
-				textList.Add(text);
-				mInput.text = string.Empty;
-				mInput.selected = false;
-			}
-		}
-		mIgnoreNextEnter = true;
 	}
 }

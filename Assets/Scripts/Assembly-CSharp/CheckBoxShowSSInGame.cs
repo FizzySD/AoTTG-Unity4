@@ -4,6 +4,21 @@ public class CheckBoxShowSSInGame : MonoBehaviour
 {
 	private bool init;
 
+	private void OnActivate(bool yes)
+	{
+		if (init)
+		{
+			if (yes)
+			{
+				PlayerPrefs.SetInt("showSSInGame", 1);
+			}
+			else
+			{
+				PlayerPrefs.SetInt("showSSInGame", 0);
+			}
+		}
+	}
+
 	private void Start()
 	{
 		init = true;
@@ -22,21 +37,6 @@ public class CheckBoxShowSSInGame : MonoBehaviour
 		{
 			GetComponent<UICheckbox>().isChecked = true;
 			PlayerPrefs.SetInt("showSSInGame", 1);
-		}
-	}
-
-	private void OnActivate(bool yes)
-	{
-		if (init)
-		{
-			if (yes)
-			{
-				PlayerPrefs.SetInt("showSSInGame", 1);
-			}
-			else
-			{
-				PlayerPrefs.SetInt("showSSInGame", 0);
-			}
 		}
 	}
 }

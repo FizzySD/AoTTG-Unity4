@@ -4,11 +4,9 @@ using UnityEngine;
 [Serializable]
 public class BMSymbol
 {
-	public string sequence;
+	private int mAdvance;
 
-	public string spriteName;
-
-	private UIAtlas.Sprite mSprite;
+	private int mHeight;
 
 	private bool mIsValid;
 
@@ -18,13 +16,31 @@ public class BMSymbol
 
 	private int mOffsetY;
 
-	private int mWidth;
-
-	private int mHeight;
-
-	private int mAdvance;
+	private UIAtlas.Sprite mSprite;
 
 	private Rect mUV;
+
+	private int mWidth;
+
+	public string sequence;
+
+	public string spriteName;
+
+	public int advance
+	{
+		get
+		{
+			return mAdvance;
+		}
+	}
+
+	public int height
+	{
+		get
+		{
+			return mHeight;
+		}
+	}
 
 	public int length
 	{
@@ -54,35 +70,19 @@ public class BMSymbol
 		}
 	}
 
-	public int width
-	{
-		get
-		{
-			return mWidth;
-		}
-	}
-
-	public int height
-	{
-		get
-		{
-			return mHeight;
-		}
-	}
-
-	public int advance
-	{
-		get
-		{
-			return mAdvance;
-		}
-	}
-
 	public Rect uvRect
 	{
 		get
 		{
 			return mUV;
+		}
+	}
+
+	public int width
+	{
+		get
+		{
+			return mWidth;
 		}
 	}
 
@@ -103,7 +103,7 @@ public class BMSymbol
 			{
 				return false;
 			}
-			mSprite = ((!(atlas != null)) ? null : atlas.GetSprite(spriteName));
+			mSprite = ((atlas == null) ? null : atlas.GetSprite(spriteName));
 			if (mSprite != null)
 			{
 				Texture texture = atlas.texture;

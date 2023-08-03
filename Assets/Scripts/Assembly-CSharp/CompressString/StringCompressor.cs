@@ -26,7 +26,6 @@ namespace CompressString
 
 		public static string DecompressString(string compressedText)
 		{
-			//Discarded unreachable code: IL_006d
 			byte[] array = Convert.FromBase64String(compressedText);
 			using (MemoryStream memoryStream = new MemoryStream())
 			{

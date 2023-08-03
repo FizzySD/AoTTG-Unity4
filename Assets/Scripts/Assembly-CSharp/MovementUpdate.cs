@@ -2,13 +2,13 @@ using UnityEngine;
 
 public class MovementUpdate : MonoBehaviour
 {
-	private Vector3 lastPosition;
+	public bool disabled;
 
-	private Vector3 lastVelocity;
+	private Vector3 lastPosition;
 
 	private Quaternion lastRotation;
 
-	public bool disabled;
+	private Vector3 lastVelocity;
 
 	private Vector3 targetPosition;
 
@@ -21,7 +21,14 @@ public class MovementUpdate : MonoBehaviour
 		}
 		else if (base.networkView.isMine)
 		{
-			base.networkView.RPC("updateMovement", RPCMode.OthersBuffered, base.transform.position, base.transform.rotation, base.transform.localScale, Vector3.zero);
+			object[] args = new object[4]
+			{
+				base.transform.position,
+				base.transform.rotation,
+				base.transform.localScale,
+				Vector3.zero
+			};
+			base.networkView.RPC("updateMovement", RPCMode.OthersBuffered, args);
 		}
 		else
 		{
@@ -40,17 +47,38 @@ public class MovementUpdate : MonoBehaviour
 			if (Vector3.Distance(base.transform.position, lastPosition) >= 0.5f)
 			{
 				lastPosition = base.transform.position;
-				base.networkView.RPC("updateMovement", RPCMode.Others, base.transform.position, base.transform.rotation, base.transform.localScale, base.rigidbody.velocity);
+				object[] args = new object[4]
+				{
+					base.transform.position,
+					base.transform.rotation,
+					base.transform.localScale,
+					base.rigidbody.velocity
+				};
+				base.networkView.RPC("updateMovement", RPCMode.Others, args);
 			}
 			else if (Vector3.Distance(base.transform.rigidbody.velocity, lastVelocity) >= 0.1f)
 			{
 				lastVelocity = base.transform.rigidbody.velocity;
-				base.networkView.RPC("updateMovement", RPCMode.Others, base.transform.position, base.transform.rotation, base.transform.localScale, base.rigidbody.velocity);
+				object[] args2 = new object[4]
+				{
+					base.transform.position,
+					base.transform.rotation,
+					base.transform.localScale,
+					base.rigidbody.velocity
+				};
+				base.networkView.RPC("updateMovement", RPCMode.Others, args2);
 			}
 			else if (Quaternion.Angle(base.transform.rotation, lastRotation) >= 1f)
 			{
 				lastRotation = base.transform.rotation;
-				base.networkView.RPC("updateMovement", RPCMode.Others, base.transform.position, base.transform.rotation, base.transform.localScale, base.rigidbody.velocity);
+				object[] args3 = new object[4]
+				{
+					base.transform.position,
+					base.transform.rotation,
+					base.transform.localScale,
+					base.rigidbody.velocity
+				};
+				base.networkView.RPC("updateMovement", RPCMode.Others, args3);
 			}
 		}
 		else

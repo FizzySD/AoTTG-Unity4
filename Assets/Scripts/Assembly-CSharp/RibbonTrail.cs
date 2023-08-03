@@ -17,41 +17,41 @@ public class RibbonTrail
 
 	public const int CHAIN_EMPTY = 99999;
 
-	protected VertexPool.VertexSegment Vertexsegment;
+	protected Color Color = Color.white;
 
-	public int MaxElements;
+	protected float ElapsedTime;
+
+	public int ElemCount;
 
 	public Element[] ElementArray;
 
-	public int Head;
-
-	public int Tail;
-
-	protected Vector3 HeadPosition;
-
-	protected float TrailLength;
-
 	protected float ElemLength;
 
-	public float SquaredElemLength;
+	protected float Fps;
 
-	protected float UnitWidth;
+	public int Head;
+
+	protected Vector3 HeadPosition;
 
 	protected bool IndexDirty;
 
 	protected Vector2 LowerLeftUV;
 
-	protected Vector2 UVDimensions;
+	public int MaxElements;
 
-	protected Color Color = Color.white;
-
-	public int ElemCount;
+	public float SquaredElemLength;
 
 	protected int StretchType;
 
-	protected float ElapsedTime;
+	public int Tail;
 
-	protected float Fps;
+	protected float TrailLength;
+
+	protected float UnitWidth;
+
+	protected Vector2 UVDimensions;
+
+	protected VertexPool.VertexSegment Vertexsegment;
 
 	public RibbonTrail(VertexPool.VertexSegment segment, float width, int maxelemnt, float len, Vector3 pos, int stretchType, float maxFps)
 	{
@@ -75,6 +75,50 @@ public class RibbonTrail
 		AddElememt(dtls2);
 	}
 
+	public void AddElememt(Element dtls)
+	{
+		if (Head == 99999)
+		{
+			Tail = MaxElements - 1;
+			Head = Tail;
+			IndexDirty = true;
+			ElemCount++;
+		}
+		else
+		{
+			if (Head == 0)
+			{
+				Head = MaxElements - 1;
+			}
+			else
+			{
+				Head--;
+			}
+			if (Head == Tail)
+			{
+				if (Tail == 0)
+				{
+					Tail = MaxElements - 1;
+				}
+				else
+				{
+					Tail--;
+				}
+			}
+			else
+			{
+				ElemCount++;
+			}
+		}
+		ElementArray[Head] = dtls;
+		IndexDirty = true;
+	}
+
+	public void Reset()
+	{
+		ResetElementsPos();
+	}
+
 	public void ResetElementsPos()
 	{
 		if (Head == 99999 || Head == Tail)
@@ -90,28 +134,23 @@ public class RibbonTrail
 				num2 = 0;
 			}
 			ElementArray[num2].Position = HeadPosition;
-			if (num2 == Tail)
+			if (num2 != Tail)
 			{
-				break;
+				num = num2 + 1;
+				continue;
 			}
-			num = num2 + 1;
+			break;
 		}
-	}
-
-	public void Reset()
-	{
-		ResetElementsPos();
-	}
-
-	public void SetUVCoord(Vector2 lowerleft, Vector2 dimensions)
-	{
-		LowerLeftUV = lowerleft;
-		UVDimensions = dimensions;
 	}
 
 	public void SetColor(Color color)
 	{
 		Color = color;
+	}
+
+	public void SetHeadPosition(Vector3 pos)
+	{
+		HeadPosition = pos;
 	}
 
 	public void SetTrailLen(float len)
@@ -121,9 +160,10 @@ public class RibbonTrail
 		SquaredElemLength = ElemLength * ElemLength;
 	}
 
-	public void SetHeadPosition(Vector3 pos)
+	public void SetUVCoord(Vector2 lowerleft, Vector2 dimensions)
 	{
-		HeadPosition = pos;
+		LowerLeftUV = lowerleft;
+		UVDimensions = dimensions;
 	}
 
 	public void Smooth()
@@ -160,7 +200,7 @@ public class RibbonTrail
 	public void Update()
 	{
 		ElapsedTime += Time.deltaTime;
-		if (ElapsedTime < Fps)
+		if (!(ElapsedTime >= Fps))
 		{
 			return;
 		}
@@ -177,8 +217,7 @@ public class RibbonTrail
 			Element element2 = ElementArray[num];
 			Vector3 headPosition = HeadPosition;
 			Vector3 vector = headPosition - element2.Position;
-			float sqrMagnitude = vector.sqrMagnitude;
-			if (sqrMagnitude >= SquaredElemLength)
+			if (vector.sqrMagnitude >= SquaredElemLength)
 			{
 				Vector3 vector2 = vector * (ElemLength / vector.magnitude);
 				element.Position = element2.Position + vector2;
@@ -333,44 +372,5 @@ public class RibbonTrail
 		Vertexsegment.Pool.UVChanged = true;
 		Vertexsegment.Pool.VertChanged = true;
 		Vertexsegment.Pool.ColorChanged = true;
-	}
-
-	public void AddElememt(Element dtls)
-	{
-		if (Head == 99999)
-		{
-			Tail = MaxElements - 1;
-			Head = Tail;
-			IndexDirty = true;
-			ElemCount++;
-		}
-		else
-		{
-			if (Head == 0)
-			{
-				Head = MaxElements - 1;
-			}
-			else
-			{
-				Head--;
-			}
-			if (Head == Tail)
-			{
-				if (Tail == 0)
-				{
-					Tail = MaxElements - 1;
-				}
-				else
-				{
-					Tail--;
-				}
-			}
-			else
-			{
-				ElemCount++;
-			}
-		}
-		ElementArray[Head] = dtls;
-		IndexDirty = true;
 	}
 }

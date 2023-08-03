@@ -13,7 +13,6 @@ public class BTN_RESULT_TO_MAIN : MonoBehaviour
 		GameObject.Find("MultiplayerManager").GetComponent<FengGameManagerMKII>().gameStart = false;
 		Screen.lockCursor = false;
 		Screen.showCursor = true;
-		GameObject.Find("InputManagerController").GetComponent<FengCustomInputs>().menuOn = false;
 		Object.Destroy(GameObject.Find("MultiplayerManager"));
 		Application.LoadLevel("menu");
 	}

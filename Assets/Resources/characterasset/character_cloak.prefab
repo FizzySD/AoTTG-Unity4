@@ -9,18 +9,18 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1334191133952561}
+  m_RootGameObject: {fileID: 1691686140896626}
   m_IsPrefabParent: 1
   m_IsExploded: 0
---- !u!1 &1334191133952561
+--- !u!1 &1691686140896626
 GameObject:
   serializedVersion: 4
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_Component:
-  - 4: {fileID: 4181764996790946}
-  - 137: {fileID: 137692135034120118}
+  - 4: {fileID: 4045516042056284}
+  - 137: {fileID: 137227842184251991}
   m_Layer: 0
   m_Name: character_cloak
   m_TagString: Untagged
@@ -28,32 +28,32 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4181764996790946
+--- !u!4 &4045516042056284
 Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1334191133952561}
+  m_GameObject: {fileID: 1691686140896626}
   m_LocalRotation: {x: 0, y: -0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.00045783698, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!137 &137692135034120118
+--- !u!137 &137227842184251991
 SkinnedMeshRenderer:
   serializedVersion: 2
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1334191133952561}
+  m_GameObject: {fileID: 1691686140896626}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_LightmapIndex: 255
   m_LightmapTilingOffset: {x: 1, y: 1, z: 0, w: 0}
   m_Materials:
-  - {fileID: 2100000, guid: df4d71dcbb242e84dbca66dcee8164dd, type: 2}
+  - {fileID: 2100000, guid: 6d08e459da6aa2040a2fe7b5c8052c59, type: 2}
   m_SubsetIndices: []
   m_StaticBatchRoot: {fileID: 0}
   m_UseLightProbes: 0

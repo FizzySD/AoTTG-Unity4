@@ -7,7 +7,7 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: toon blood
-  m_Shader: {fileID: 4800000, guid: 42025b1b0cb5377489462ea98a58dc6d, type: 3}
+  m_Shader: {fileID: 4800000, guid: 5ee3d9815f8acb149a492f0829ed2051, type: 3}
   m_ShaderKeywords: []
   m_CustomRenderQueue: -1
   m_SavedProperties:
@@ -16,7 +16,7 @@ Material:
     - first:
         name: _MainTex
       second:
-        m_Texture: {fileID: 2800000, guid: adcff6da2e948cb4ab5a80ec51302755, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2a83544d19ffed544a2d8ae47cc0eda3, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:

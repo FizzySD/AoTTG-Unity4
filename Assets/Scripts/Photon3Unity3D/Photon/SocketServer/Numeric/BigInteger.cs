@@ -56,7 +56,7 @@ namespace Photon.SocketServer.Numeric
 			data = new uint[70];
 			long num = value;
 			dataLength = 0;
-			while (value != 0 && dataLength < 70)
+			while (value != 0L && dataLength < 70)
 			{
 				data[dataLength] = (uint)(value & 0xFFFFFFFFu);
 				value >>= 32;
@@ -64,7 +64,7 @@ namespace Photon.SocketServer.Numeric
 			}
 			if (num > 0)
 			{
-				if (value != 0 || (data[69] & 0x80000000u) != 0)
+				if (value != 0L || (data[69] & 0x80000000u) != 0)
 				{
 					throw new ArithmeticException("Positive overflow in constructor.");
 				}
@@ -83,13 +83,13 @@ namespace Photon.SocketServer.Numeric
 		{
 			data = new uint[70];
 			dataLength = 0;
-			while (value != 0 && dataLength < 70)
+			while (value != 0L && dataLength < 70)
 			{
 				data[dataLength] = (uint)(value & 0xFFFFFFFFu);
 				value >>= 32;
 				dataLength++;
 			}
-			if (value != 0 || (data[69] & 0x80000000u) != 0)
+			if (value != 0L || (data[69] & 0x80000000u) != 0)
 			{
 				throw new ArithmeticException("Positive overflow in constructor.");
 			}
@@ -149,9 +149,9 @@ namespace Photon.SocketServer.Numeric
 				throw new ArithmeticException("Positive overflow in constructor.");
 			}
 			data = new uint[70];
-			for (int num2 = 0; num2 < bigInteger2.dataLength; num2++)
+			for (int i = 0; i < bigInteger2.dataLength; i++)
 			{
-				data[num2] = bigInteger2.data[num2];
+				data[i] = bigInteger2.data[i];
 			}
 			dataLength = bigInteger2.dataLength;
 		}
@@ -291,7 +291,7 @@ namespace Photon.SocketServer.Numeric
 				num = num2 >> 32;
 				bigInteger.data[i] = (uint)(num2 & 0xFFFFFFFFu);
 			}
-			if (num != 0 && bigInteger.dataLength < 70)
+			if (num != 0L && bigInteger.dataLength < 70)
 			{
 				bigInteger.data[bigInteger.dataLength] = (uint)num;
 				bigInteger.dataLength++;
@@ -313,7 +313,7 @@ namespace Photon.SocketServer.Numeric
 			BigInteger bigInteger = new BigInteger(bi1);
 			long num = 1L;
 			int num2 = 0;
-			while (num != 0 && num2 < 70)
+			while (num != 0L && num2 < 70)
 			{
 				long num3 = bigInteger.data[num2];
 				num3++;
@@ -353,9 +353,9 @@ namespace Photon.SocketServer.Numeric
 			}
 			if (num != 0)
 			{
-				for (int i = bigInteger.dataLength; i < 70; i++)
+				for (int j = bigInteger.dataLength; j < 70; j++)
 				{
-					bigInteger.data[i] = uint.MaxValue;
+					bigInteger.data[j] = uint.MaxValue;
 				}
 				bigInteger.dataLength = 70;
 			}
@@ -471,13 +471,9 @@ namespace Photon.SocketServer.Numeric
 						return bigInteger;
 					}
 					bool flag3 = true;
-					for (int i = 0; i < bigInteger.dataLength - 1; i++)
+					for (int j = 0; j < bigInteger.dataLength - 1 && flag3; j++)
 					{
-						if (!flag3)
-						{
-							break;
-						}
-						if (bigInteger.data[i] != 0)
+						if (bigInteger.data[j] != 0)
 						{
 							flag3 = false;
 						}
@@ -545,7 +541,7 @@ namespace Photon.SocketServer.Numeric
 					bigInteger.data[num] = uint.MaxValue;
 				}
 				uint num2 = 2147483648u;
-				for (int num = 0; num < 32; num++)
+				for (int i = 0; i < 32; i++)
 				{
 					if ((bigInteger.data[bigInteger.dataLength - 1] & num2) != 0)
 					{
@@ -619,7 +615,7 @@ namespace Photon.SocketServer.Numeric
 			}
 			long num = 1L;
 			int num2 = 0;
-			while (num != 0 && num2 < 70)
+			while (num != 0L && num2 < 70)
 			{
 				long num3 = bigInteger.data[num2];
 				num3++;
@@ -793,26 +789,26 @@ namespace Photon.SocketServer.Numeric
 					num12--;
 				}
 				BigInteger bigInteger3 = bigInteger - bigInteger2;
-				for (int j = 0; j < num10; j++)
+				for (int k = 0; k < num10; k++)
 				{
-					array2[num7 - j] = bigInteger3.data[bi2.dataLength - j];
+					array2[num7 - k] = bigInteger3.data[bi2.dataLength - k];
 				}
 				array[num5++] = (uint)num12;
 				num7--;
 				num6--;
 			}
 			outQuotient.dataLength = num5;
-			int k = 0;
+			int l = 0;
 			int num14 = outQuotient.dataLength - 1;
 			while (num14 >= 0)
 			{
-				outQuotient.data[k] = array[num14];
+				outQuotient.data[l] = array[num14];
 				num14--;
-				k++;
+				l++;
 			}
-			for (; k < 70; k++)
+			for (; l < 70; l++)
 			{
-				outQuotient.data[k] = 0u;
+				outQuotient.data[l] = 0u;
 			}
 			while (outQuotient.dataLength > 1 && outQuotient.data[outQuotient.dataLength - 1] == 0)
 			{
@@ -823,13 +819,13 @@ namespace Photon.SocketServer.Numeric
 				outQuotient.dataLength = 1;
 			}
 			outRemainder.dataLength = shiftRight(array2, num4);
-			for (k = 0; k < outRemainder.dataLength; k++)
+			for (l = 0; l < outRemainder.dataLength; l++)
 			{
-				outRemainder.data[k] = array2[k];
+				outRemainder.data[l] = array2[l];
 			}
-			for (; k < 70; k++)
+			for (; l < 70; l++)
 			{
-				outRemainder.data[k] = 0u;
+				outRemainder.data[l] = 0u;
 			}
 		}
 
@@ -837,8 +833,7 @@ namespace Photon.SocketServer.Numeric
 		{
 			uint[] array = new uint[70];
 			int num = 0;
-			int i;
-			for (i = 0; i < 70; i++)
+			for (int i = 0; i < 70; i++)
 			{
 				outRemainder.data[i] = bi1.data[i];
 			}
@@ -860,18 +855,18 @@ namespace Photon.SocketServer.Numeric
 			while (num3 >= 0)
 			{
 				num4 = ((ulong)outRemainder.data[num3 + 1] << 32) + outRemainder.data[num3];
-				ulong num5 = num4 / num2;
-				array[num++] = (uint)num5;
+				ulong num6 = num4 / num2;
+				array[num++] = (uint)num6;
 				outRemainder.data[num3 + 1] = 0u;
 				outRemainder.data[num3--] = (uint)(num4 % num2);
 			}
 			outQuotient.dataLength = num;
 			int j = 0;
-			i = outQuotient.dataLength - 1;
-			while (i >= 0)
+			int num7 = outQuotient.dataLength - 1;
+			while (num7 >= 0)
 			{
-				outQuotient.data[j] = array[i];
-				i--;
+				outQuotient.data[j] = array[num7];
+				num7--;
 				j++;
 			}
 			for (; j < 70; j++)
@@ -1182,13 +1177,13 @@ namespace Photon.SocketServer.Numeric
 			}
 			BigInteger bigInteger2 = bigInteger * constant;
 			BigInteger bigInteger3 = new BigInteger();
-			num4 = num2;
-			num5 = 0;
-			while (num4 < bigInteger2.dataLength)
+			int num6 = num2;
+			int num7 = 0;
+			while (num6 < bigInteger2.dataLength)
 			{
-				bigInteger3.data[num5] = bigInteger2.data[num4];
-				num4++;
-				num5++;
+				bigInteger3.data[num7] = bigInteger2.data[num6];
+				num6++;
+				num7++;
 			}
 			bigInteger3.dataLength = bigInteger2.dataLength - num2;
 			if (bigInteger3.dataLength <= 0)
@@ -1196,31 +1191,31 @@ namespace Photon.SocketServer.Numeric
 				bigInteger3.dataLength = 1;
 			}
 			BigInteger bigInteger4 = new BigInteger();
-			int num6 = ((x.dataLength > num2) ? num2 : x.dataLength);
-			for (num4 = 0; num4 < num6; num4++)
+			int num8 = ((x.dataLength > num2) ? num2 : x.dataLength);
+			for (int i = 0; i < num8; i++)
 			{
-				bigInteger4.data[num4] = x.data[num4];
+				bigInteger4.data[i] = x.data[i];
 			}
-			bigInteger4.dataLength = num6;
+			bigInteger4.dataLength = num8;
 			BigInteger bigInteger5 = new BigInteger();
-			for (num4 = 0; num4 < bigInteger3.dataLength; num4++)
+			for (int j = 0; j < bigInteger3.dataLength; j++)
 			{
-				if (bigInteger3.data[num4] != 0)
+				if (bigInteger3.data[j] != 0)
 				{
-					ulong num7 = 0uL;
-					int num8 = num4;
-					num5 = 0;
-					while (num5 < n.dataLength && num8 < num2)
+					ulong num9 = 0uL;
+					int num10 = j;
+					int num11 = 0;
+					while (num11 < n.dataLength && num10 < num2)
 					{
-						ulong num9 = (ulong)((long)bigInteger3.data[num4] * (long)n.data[num5] + bigInteger5.data[num8]) + num7;
-						bigInteger5.data[num8] = (uint)(num9 & 0xFFFFFFFFu);
-						num7 = num9 >> 32;
-						num5++;
-						num8++;
+						ulong num12 = (ulong)((long)bigInteger3.data[j] * (long)n.data[num11] + bigInteger5.data[num10]) + num9;
+						bigInteger5.data[num10] = (uint)(num12 & 0xFFFFFFFFu);
+						num9 = num12 >> 32;
+						num11++;
+						num10++;
 					}
-					if (num8 < num2)
+					if (num10 < num2)
 					{
-						bigInteger5.data[num8] = (uint)num7;
+						bigInteger5.data[num10] = (uint)num9;
 					}
 				}
 			}
@@ -1280,9 +1275,9 @@ namespace Photon.SocketServer.Numeric
 			{
 				data[i] = (uint)(rand.NextDouble() * 4294967296.0);
 			}
-			for (int i = num; i < 70; i++)
+			for (int j = num; j < 70; j++)
 			{
-				data[i] = 0u;
+				data[j] = 0u;
 			}
 			if (num2 != 0)
 			{
@@ -1594,7 +1589,7 @@ namespace Photon.SocketServer.Numeric
 			{
 				flag2 = true;
 			}
-			for (int j = 1; j < num5; j++)
+			for (int l = 1; l < num5; l++)
 			{
 				if (!flag2)
 				{
@@ -1614,8 +1609,8 @@ namespace Photon.SocketServer.Numeric
 				{
 					if ((array[2].data[69] & 0x80000000u) != 0)
 					{
-						BigInteger[] array2 = null;
-						(array2 = array)[2] = array2[2] + thisVal;
+						BigInteger[] array2 = array;
+						array2[2] += thisVal;
 					}
 					BigInteger bigInteger5 = num4 * Jacobi(num4, thisVal) % thisVal;
 					if ((bigInteger5.data[69] & 0x80000000u) != 0)
@@ -2079,7 +2074,7 @@ namespace Photon.SocketServer.Numeric
 				bigInteger2 = n.BarrettReduction(bigInteger2 * bigInteger2, n, constant);
 			}
 			bigInteger2 = bigInteger2 * Q % n;
-			for (int num3 = 0; num3 < s; num3++)
+			for (int i = 0; i < s; i++)
 			{
 				bigInteger4 = bigInteger4 * bigInteger % n;
 				bigInteger = (bigInteger * bigInteger - (bigInteger2 << 1)) % n;
@@ -2136,17 +2131,17 @@ namespace Photon.SocketServer.Numeric
 				flag = false;
 				while (!flag)
 				{
-					for (int j = 0; j < 64; j++)
+					for (int k = 0; k < 64; k++)
 					{
-						if (j < num2)
+						if (k < num2)
 						{
-							array2[j] = (byte)(random.NextDouble() * 256.0);
+							array2[k] = (byte)(random.NextDouble() * 256.0);
 						}
 						else
 						{
-							array2[j] = 0;
+							array2[k] = 0;
 						}
-						if (array2[j] != 0)
+						if (array2[k] != 0)
 						{
 							flag = true;
 						}

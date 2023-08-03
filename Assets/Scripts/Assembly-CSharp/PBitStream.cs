@@ -3,19 +3,11 @@ using System.Collections.Generic;
 
 public class PBitStream
 {
-	private List<byte> streamBytes;
-
 	private int currentByte;
 
-	private int totalBits;
+	private List<byte> streamBytes;
 
-	public int ByteCount
-	{
-		get
-		{
-			return BytesForBits(totalBits);
-		}
-	}
+	private int totalBits;
 
 	public int BitCount
 	{
@@ -26,6 +18,14 @@ public class PBitStream
 		private set
 		{
 			totalBits = value;
+		}
+	}
+
+	public int ByteCount
+	{
+		get
+		{
+			return BytesForBits(totalBits);
 		}
 	}
 
@@ -47,15 +47,6 @@ public class PBitStream
 		BitCount = bitCount;
 	}
 
-	public static int BytesForBits(int bitCount)
-	{
-		if (bitCount <= 0)
-		{
-			return 0;
-		}
-		return (bitCount - 1) / 8 + 1;
-	}
-
 	public void Add(bool val)
 	{
 		int num = totalBits / 8;
@@ -66,19 +57,25 @@ public class PBitStream
 		if (val)
 		{
 			int num2 = 7 - totalBits % 8;
-			List<byte> list;
-			List<byte> list2 = (list = streamBytes);
-			int index;
-			int index2 = (index = num);
-			byte b = list[index];
-			list2[index2] = (byte)(b | (byte)(1 << num2));
+			streamBytes[num] |= (byte)(1 << num2);
 		}
 		totalBits++;
 	}
 
-	public byte[] ToBytes()
+	public static int BytesForBits(int bitCount)
 	{
-		return streamBytes.ToArray();
+		if (bitCount <= 0)
+		{
+			return 0;
+		}
+		return (bitCount - 1) / 8 + 1;
+	}
+
+	public bool Get(int bitIndex)
+	{
+		int index = bitIndex / 8;
+		int num = 7 - bitIndex % 8;
+		return (streamBytes[index] & (byte)(1 << num)) > 0;
 	}
 
 	public bool GetNext()
@@ -90,22 +87,15 @@ public class PBitStream
 		return Get(Position++);
 	}
 
-	public bool Get(int bitIndex)
+	public void Set(int bitIndex, bool value)
 	{
 		int index = bitIndex / 8;
 		int num = 7 - bitIndex % 8;
-		return (streamBytes[index] & (byte)(1 << num)) > 0;
+		streamBytes[index] |= (byte)(1 << num);
 	}
 
-	public void Set(int bitIndex, bool value)
+	public byte[] ToBytes()
 	{
-		int num = bitIndex / 8;
-		int num2 = 7 - bitIndex % 8;
-		List<byte> list;
-		List<byte> list2 = (list = streamBytes);
-		int index;
-		int index2 = (index = num);
-		byte b = list[index];
-		list2[index2] = (byte)(b | (byte)(1 << num2));
+		return streamBytes.ToArray();
 	}
 }

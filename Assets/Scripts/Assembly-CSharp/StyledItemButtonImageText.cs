@@ -5,9 +5,9 @@ public class StyledItemButtonImageText : StyledItem
 {
 	public class Data
 	{
-		public string text;
-
 		public Texture2D image;
+
+		public string text;
 
 		public Data(string t, Texture2D tex)
 		{
@@ -16,25 +16,25 @@ public class StyledItemButtonImageText : StyledItem
 		}
 	}
 
+	public Button buttonCtrl;
+
 	public RawImage rawImageCtrl;
 
 	public Text textCtrl;
-
-	public Button buttonCtrl;
 
 	public override Button GetButton()
 	{
 		return buttonCtrl;
 	}
 
-	public override Text GetText()
-	{
-		return textCtrl;
-	}
-
 	public override RawImage GetRawImage()
 	{
 		return rawImageCtrl;
+	}
+
+	public override Text GetText()
+	{
+		return textCtrl;
 	}
 
 	public override void Populate(object o)

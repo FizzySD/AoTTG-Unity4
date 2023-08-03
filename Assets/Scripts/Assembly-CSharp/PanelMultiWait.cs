@@ -2,21 +2,21 @@ using UnityEngine;
 
 public class PanelMultiWait : MonoBehaviour
 {
-	public GameObject label_START;
-
 	public GameObject label_BACK;
-
-	public GameObject label_READY;
 
 	public GameObject label_camera;
 
+	public GameObject label_character;
+
 	public GameObject label_original;
 
-	public GameObject label_wow;
+	public GameObject label_READY;
+
+	public GameObject label_START;
 
 	public GameObject label_tps;
 
-	public GameObject label_character;
+	public GameObject label_wow;
 
 	private int lang = -1;
 

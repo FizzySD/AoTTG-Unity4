@@ -4,6 +4,21 @@ public class CheckBoxEnableSS : MonoBehaviour
 {
 	private bool init;
 
+	private void OnActivate(bool yes)
+	{
+		if (init)
+		{
+			if (yes)
+			{
+				PlayerPrefs.SetInt("EnableSS", 1);
+			}
+			else
+			{
+				PlayerPrefs.SetInt("EnableSS", 0);
+			}
+		}
+	}
+
 	private void Start()
 	{
 		init = true;
@@ -22,21 +37,6 @@ public class CheckBoxEnableSS : MonoBehaviour
 		{
 			GetComponent<UICheckbox>().isChecked = true;
 			PlayerPrefs.SetInt("EnableSS", 1);
-		}
-	}
-
-	private void OnActivate(bool yes)
-	{
-		if (init)
-		{
-			if (yes)
-			{
-				PlayerPrefs.SetInt("EnableSS", 1);
-			}
-			else
-			{
-				PlayerPrefs.SetInt("EnableSS", 0);
-			}
 		}
 	}
 }

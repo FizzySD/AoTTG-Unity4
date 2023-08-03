@@ -3,29 +3,25 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Examples/Drag and Drop Item")]
 public class DragDropItem : MonoBehaviour
 {
-	public GameObject prefab;
-
-	private Transform mTrans;
-
 	private bool mIsDragging;
-
-	private bool mSticky;
 
 	private Transform mParent;
 
-	private void UpdateTable()
+	private bool mSticky;
+
+	private Transform mTrans;
+
+	public GameObject prefab;
+
+	private void Awake()
 	{
-		UITable uITable = NGUITools.FindInParents<UITable>(base.gameObject);
-		if (uITable != null)
-		{
-			uITable.repositionNow = true;
-		}
+		mTrans = base.transform;
 	}
 
 	private void Drop()
 	{
 		Collider collider = UICamera.lastHit.collider;
-		DragDropContainer dragDropContainer = ((!(collider != null)) ? null : collider.gameObject.GetComponent<DragDropContainer>());
+		DragDropContainer dragDropContainer = ((collider == null) ? null : collider.gameObject.GetComponent<DragDropContainer>());
 		if (dragDropContainer != null)
 		{
 			mTrans.parent = dragDropContainer.transform;
@@ -39,11 +35,6 @@ public class DragDropItem : MonoBehaviour
 		}
 		UpdateTable();
 		NGUITools.MarkParentAsChanged(base.gameObject);
-	}
-
-	private void Awake()
-	{
-		mTrans = base.transform;
 	}
 
 	private void OnDrag(Vector2 delta)
@@ -95,6 +86,15 @@ public class DragDropItem : MonoBehaviour
 		if (!isPressed)
 		{
 			Drop();
+		}
+	}
+
+	private void UpdateTable()
+	{
+		UITable uITable = NGUITools.FindInParents<UITable>(base.gameObject);
+		if (uITable != null)
+		{
+			uITable.repositionNow = true;
 		}
 	}
 }

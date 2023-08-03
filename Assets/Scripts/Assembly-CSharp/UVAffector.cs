@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class UVAffector : Affector
 {
-	protected UVAnimation Frames;
-
 	protected float ElapsedTime;
+
+	protected UVAnimation Frames;
 
 	protected float UVTime;
 

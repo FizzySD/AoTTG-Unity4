@@ -3,20 +3,28 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Examples/UI Storage Slot")]
 public class UIStorageSlot : UIItemSlot
 {
-	public UIItemStorage storage;
-
 	public int slot;
+
+	public UIItemStorage storage;
 
 	protected override InvGameItem observedItem
 	{
 		get
 		{
-			return (!(storage != null)) ? null : storage.GetItem(slot);
+			if (!(storage == null))
+			{
+				return storage.GetItem(slot);
+			}
+			return null;
 		}
 	}
 
 	protected override InvGameItem Replace(InvGameItem item)
 	{
-		return (!(storage != null)) ? item : storage.Replace(slot, item);
+		if (!(storage == null))
+		{
+			return storage.Replace(slot, item);
+		}
+		return item;
 	}
 }

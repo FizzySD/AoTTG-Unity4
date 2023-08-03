@@ -4,39 +4,21 @@ using UnityEngine;
 [RequireComponent(typeof(PhotonView))]
 public class ShowInfoOfPlayer : Photon.MonoBehaviour
 {
+	public bool DisableOnOwnObjects;
+
+	public Font font;
+
 	private const int FontSize3D = 0;
 
 	private GameObject textGo;
 
 	private TextMesh tm;
 
-	public Font font;
-
-	public bool DisableOnOwnObjects;
-
-	private void Start()
+	private void OnDisable()
 	{
-		if (font == null)
+		if (textGo != null)
 		{
-			font = (Font)Resources.FindObjectsOfTypeAll(typeof(Font))[0];
-			Debug.LogWarning("No font defined. Found font: " + font);
-		}
-		if (tm == null)
-		{
-			textGo = new GameObject("3d text");
-			textGo.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-			textGo.transform.parent = base.gameObject.transform;
-			textGo.transform.localPosition = Vector3.zero;
-			MeshRenderer meshRenderer = textGo.AddComponent<MeshRenderer>();
-			meshRenderer.material = font.material;
-			tm = textGo.AddComponent<TextMesh>();
-			tm.font = font;
-			tm.fontSize = 0;
-			tm.anchor = TextAnchor.MiddleCenter;
-		}
-		if (!DisableOnOwnObjects && base.photonView.isMine)
-		{
-			base.enabled = false;
+			textGo.SetActive(false);
 		}
 	}
 
@@ -48,11 +30,29 @@ public class ShowInfoOfPlayer : Photon.MonoBehaviour
 		}
 	}
 
-	private void OnDisable()
+	private void Start()
 	{
-		if (textGo != null)
+		if (font == null)
 		{
-			textGo.SetActive(false);
+			font = (Font)Resources.FindObjectsOfTypeAll(typeof(Font))[0];
+			Font obj = font;
+			Debug.LogWarning("No font defined. Found font: " + (((object)obj != null) ? obj.ToString() : null));
+		}
+		if (tm == null)
+		{
+			textGo = new GameObject("3d text");
+			textGo.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+			textGo.transform.parent = base.gameObject.transform;
+			textGo.transform.localPosition = Vector3.zero;
+			textGo.AddComponent<MeshRenderer>().material = font.material;
+			tm = textGo.AddComponent<TextMesh>();
+			tm.font = font;
+			tm.fontSize = 0;
+			tm.anchor = TextAnchor.MiddleCenter;
+		}
+		if (!DisableOnOwnObjects && base.photonView.isMine)
+		{
+			base.enabled = false;
 		}
 	}
 

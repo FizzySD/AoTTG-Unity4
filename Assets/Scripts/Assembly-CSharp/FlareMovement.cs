@@ -2,17 +2,23 @@ using UnityEngine;
 
 public class FlareMovement : MonoBehaviour
 {
-	private GameObject hint;
+	public string color;
 
 	private GameObject hero;
 
-	public string color;
-
-	private Vector3 offY;
+	private GameObject hint;
 
 	private bool nohint;
 
+	private Vector3 offY;
+
 	private float timer;
+
+	public void dontShowHint()
+	{
+		Object.Destroy(hint);
+		nohint = true;
+	}
 
 	private void Start()
 	{
@@ -34,15 +40,37 @@ public class FlareMovement : MonoBehaviour
 			float num = Mathf.Atan2(0f - vector.z, vector.x) * 57.29578f;
 			hint.transform.rotation = Quaternion.Euler(-90f, num + 180f, 0f);
 			hint.transform.localScale = Vector3.zero;
-			iTween.ScaleTo(hint, iTween.Hash("x", 1f, "y", 1f, "z", 1f, "easetype", iTween.EaseType.easeOutElastic, "time", 1f));
-			iTween.ScaleTo(hint, iTween.Hash("x", 0, "y", 0, "z", 0, "easetype", iTween.EaseType.easeInBounce, "time", 0.5f, "delay", 2.5f));
+			object[] args = new object[10]
+			{
+				"x",
+				1f,
+				"y",
+				1f,
+				"z",
+				1f,
+				"easetype",
+				iTween.EaseType.easeOutElastic,
+				"time",
+				1f
+			};
+			iTween.ScaleTo(hint, iTween.Hash(args));
+			object[] args2 = new object[12]
+			{
+				"x",
+				0,
+				"y",
+				0,
+				"z",
+				0,
+				"easetype",
+				iTween.EaseType.easeInBounce,
+				"time",
+				0.5f,
+				"delay",
+				2.5f
+			};
+			iTween.ScaleTo(hint, iTween.Hash(args2));
 		}
-	}
-
-	public void dontShowHint()
-	{
-		Object.Destroy(hint);
-		nohint = true;
 	}
 
 	private void Update()

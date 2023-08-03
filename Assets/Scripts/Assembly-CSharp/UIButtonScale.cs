@@ -3,40 +3,19 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Button Scale")]
 public class UIButtonScale : MonoBehaviour
 {
-	public Transform tweenTarget;
+	public float duration = 0.2f;
 
 	public Vector3 hover = new Vector3(1.1f, 1.1f, 1.1f);
 
-	public Vector3 pressed = new Vector3(1.05f, 1.05f, 1.05f);
-
-	public float duration = 0.2f;
+	private bool mHighlighted;
 
 	private Vector3 mScale;
 
 	private bool mStarted;
 
-	private bool mHighlighted;
+	public Vector3 pressed = new Vector3(1.05f, 1.05f, 1.05f);
 
-	private void Start()
-	{
-		if (!mStarted)
-		{
-			mStarted = true;
-			if (tweenTarget == null)
-			{
-				tweenTarget = base.transform;
-			}
-			mScale = tweenTarget.localScale;
-		}
-	}
-
-	private void OnEnable()
-	{
-		if (mStarted && mHighlighted)
-		{
-			OnHover(UICamera.IsHighlighted(base.gameObject));
-		}
-	}
+	public Transform tweenTarget;
 
 	private void OnDisable()
 	{
@@ -48,6 +27,27 @@ public class UIButtonScale : MonoBehaviour
 				component.scale = mScale;
 				component.enabled = false;
 			}
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (mStarted && mHighlighted)
+		{
+			OnHover(UICamera.IsHighlighted(base.gameObject));
+		}
+	}
+
+	private void OnHover(bool isOver)
+	{
+		if (base.enabled)
+		{
+			if (!mStarted)
+			{
+				Start();
+			}
+			TweenScale.Begin(tweenTarget.gameObject, duration, (!isOver) ? mScale : Vector3.Scale(mScale, hover)).method = UITweener.Method.EaseInOut;
+			mHighlighted = isOver;
 		}
 	}
 
@@ -63,16 +63,16 @@ public class UIButtonScale : MonoBehaviour
 		}
 	}
 
-	private void OnHover(bool isOver)
+	private void Start()
 	{
-		if (base.enabled)
+		if (!mStarted)
 		{
-			if (!mStarted)
+			mStarted = true;
+			if (tweenTarget == null)
 			{
-				Start();
+				tweenTarget = base.transform;
 			}
-			TweenScale.Begin(tweenTarget.gameObject, duration, (!isOver) ? mScale : Vector3.Scale(mScale, hover)).method = UITweener.Method.EaseInOut;
-			mHighlighted = isOver;
+			mScale = tweenTarget.localScale;
 		}
 	}
 }

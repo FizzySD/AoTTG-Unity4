@@ -1,24 +1,42 @@
 using UnityEngine;
 
-[AddComponentMenu("NGUI/Internal/Spring Panel")]
 [RequireComponent(typeof(UIPanel))]
+[AddComponentMenu("NGUI/Internal/Spring Panel")]
 public class SpringPanel : IgnoreTimeScale
 {
 	public delegate void OnFinished();
 
-	public Vector3 target = Vector3.zero;
-
-	public float strength = 10f;
-
-	public OnFinished onFinished;
+	private UIDraggablePanel mDrag;
 
 	private UIPanel mPanel;
 
-	private Transform mTrans;
-
 	private float mThreshold;
 
-	private UIDraggablePanel mDrag;
+	private Transform mTrans;
+
+	public OnFinished onFinished;
+
+	public float strength = 10f;
+
+	public Vector3 target = Vector3.zero;
+
+	public static SpringPanel Begin(GameObject go, Vector3 pos, float strength)
+	{
+		SpringPanel springPanel = go.GetComponent<SpringPanel>();
+		if (springPanel == null)
+		{
+			springPanel = go.AddComponent<SpringPanel>();
+		}
+		springPanel.target = pos;
+		springPanel.strength = strength;
+		springPanel.onFinished = null;
+		if (!springPanel.enabled)
+		{
+			springPanel.mThreshold = 0f;
+			springPanel.enabled = true;
+		}
+		return springPanel;
+	}
 
 	private void Start()
 	{
@@ -57,23 +75,5 @@ public class SpringPanel : IgnoreTimeScale
 		{
 			onFinished();
 		}
-	}
-
-	public static SpringPanel Begin(GameObject go, Vector3 pos, float strength)
-	{
-		SpringPanel springPanel = go.GetComponent<SpringPanel>();
-		if (springPanel == null)
-		{
-			springPanel = go.AddComponent<SpringPanel>();
-		}
-		springPanel.target = pos;
-		springPanel.strength = strength;
-		springPanel.onFinished = null;
-		if (!springPanel.enabled)
-		{
-			springPanel.mThreshold = 0f;
-			springPanel.enabled = true;
-		}
-		return springPanel;
 	}
 }

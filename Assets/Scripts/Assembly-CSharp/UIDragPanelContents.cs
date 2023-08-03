@@ -6,8 +6,8 @@ public class UIDragPanelContents : MonoBehaviour
 {
 	public UIDraggablePanel draggablePanel;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private UIPanel panel;
 
 	private void Awake()
@@ -27,11 +27,11 @@ public class UIDragPanelContents : MonoBehaviour
 		panel = null;
 	}
 
-	private void Start()
+	private void OnDrag(Vector2 delta)
 	{
-		if (draggablePanel == null)
+		if (base.enabled && NGUITools.GetActive(base.gameObject) && draggablePanel != null)
 		{
-			draggablePanel = NGUITools.FindInParents<UIDraggablePanel>(base.gameObject);
+			draggablePanel.Drag();
 		}
 	}
 
@@ -43,19 +43,19 @@ public class UIDragPanelContents : MonoBehaviour
 		}
 	}
 
-	private void OnDrag(Vector2 delta)
-	{
-		if (base.enabled && NGUITools.GetActive(base.gameObject) && draggablePanel != null)
-		{
-			draggablePanel.Drag();
-		}
-	}
-
 	private void OnScroll(float delta)
 	{
 		if (base.enabled && NGUITools.GetActive(base.gameObject) && draggablePanel != null)
 		{
 			draggablePanel.Scroll(delta);
+		}
+	}
+
+	private void Start()
+	{
+		if (draggablePanel == null)
+		{
+			draggablePanel = NGUITools.FindInParents<UIDraggablePanel>(base.gameObject);
 		}
 	}
 }

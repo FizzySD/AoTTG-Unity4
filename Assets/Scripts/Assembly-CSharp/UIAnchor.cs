@@ -1,7 +1,7 @@
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("NGUI/UI/Anchor")]
+[ExecuteInEditMode]
 public class UIAnchor : MonoBehaviour
 {
 	public enum Side
@@ -17,29 +17,29 @@ public class UIAnchor : MonoBehaviour
 		Center = 8
 	}
 
+	public bool halfPixelOffset = true;
+
+	private Animation mAnim;
+
 	private bool mNeedsHalfPixelOffset;
+
+	private Rect mRect;
+
+	private UIRoot mRoot;
+
+	private Transform mTrans;
+
+	public UIPanel panelContainer;
+
+	public Vector2 relativeOffset = Vector2.zero;
+
+	public bool runOnlyOnce;
+
+	public Side side = Side.Center;
 
 	public Camera uiCamera;
 
 	public UIWidget widgetContainer;
-
-	public UIPanel panelContainer;
-
-	public Side side = Side.Center;
-
-	public bool halfPixelOffset = true;
-
-	public bool runOnlyOnce;
-
-	public Vector2 relativeOffset = Vector2.zero;
-
-	private Transform mTrans;
-
-	private Animation mAnim;
-
-	private Rect mRect = default(Rect);
-
-	private UIRoot mRoot;
 
 	private void Awake()
 	{
@@ -64,7 +64,7 @@ public class UIAnchor : MonoBehaviour
 
 	private void Update()
 	{
-		if (mAnim != null && mAnim.enabled && mAnim.isPlaying)
+		if (!(mAnim == null) && mAnim.enabled && mAnim.isPlaying)
 		{
 			return;
 		}
@@ -73,7 +73,7 @@ public class UIAnchor : MonoBehaviour
 		{
 			if (panelContainer.clipping == UIDrawCall.Clipping.None)
 			{
-				float num = ((!(mRoot != null)) ? 0.5f : ((float)mRoot.activeHeight / (float)Screen.height * 0.5f));
+				float num = ((mRoot == null) ? 0.5f : ((float)mRoot.activeHeight / (float)Screen.height * 0.5f));
 				mRect.xMin = (float)(-Screen.width) * num;
 				mRect.yMin = (float)(-Screen.height) * num;
 				mRect.xMax = 0f - mRect.xMin;

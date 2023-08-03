@@ -3,33 +3,19 @@ using UnityEngine;
 
 public class PhotonStatsGui : MonoBehaviour
 {
-	public bool statsWindowOn = true;
-
-	public bool statsOn = true;
+	public bool buttonsOn;
 
 	public bool healthStatsVisible;
 
-	public bool trafficStatsOn;
-
-	public bool buttonsOn;
+	public bool statsOn = true;
 
 	public Rect statsRect = new Rect(0f, 100f, 200f, 50f);
 
+	public bool statsWindowOn = true;
+
+	public bool trafficStatsOn;
+
 	public int WindowId = 100;
-
-	public void Start()
-	{
-		statsRect.x = (float)Screen.width - statsRect.width;
-	}
-
-	public void Update()
-	{
-		if (Input.GetKeyDown(KeyCode.Tab) && Input.GetKey(KeyCode.LeftShift))
-		{
-			statsWindowOn = !statsWindowOn;
-			statsOn = true;
-		}
-	}
 
 	public void OnGUI()
 	{
@@ -41,6 +27,11 @@ public class PhotonStatsGui : MonoBehaviour
 		{
 			statsRect = GUILayout.Window(WindowId, statsRect, TrafficStatsWindow, "Messages (shift+tab)");
 		}
+	}
+
+	public void Start()
+	{
+		statsRect.x = (float)Screen.width - statsRect.width;
 	}
 
 	public void TrafficStatsWindow(int windowID)
@@ -87,18 +78,38 @@ public class PhotonStatsGui : MonoBehaviour
 		string text6 = string.Empty;
 		if (healthStatsVisible)
 		{
-			text6 = string.Format("ping: {6}[+/-{7}]ms\nlongest delta between\nsend: {0,4}ms disp: {1,4}ms\nlongest time for:\nev({3}):{2,3}ms op({5}):{4,3}ms", trafficStatsGameLevel.LongestDeltaBetweenSending, trafficStatsGameLevel.LongestDeltaBetweenDispatching, trafficStatsGameLevel.LongestEventCallback, trafficStatsGameLevel.LongestEventCallbackCode, trafficStatsGameLevel.LongestOpResponseCallback, trafficStatsGameLevel.LongestOpResponseCallbackOpCode, PhotonNetwork.networkingPeer.RoundTripTime, PhotonNetwork.networkingPeer.RoundTripTimeVariance);
+			object[] args = new object[8]
+			{
+				trafficStatsGameLevel.LongestDeltaBetweenSending,
+				trafficStatsGameLevel.LongestDeltaBetweenDispatching,
+				trafficStatsGameLevel.LongestEventCallback,
+				trafficStatsGameLevel.LongestEventCallbackCode,
+				trafficStatsGameLevel.LongestOpResponseCallback,
+				trafficStatsGameLevel.LongestOpResponseCallbackOpCode,
+				PhotonNetwork.networkingPeer.RoundTripTime,
+				PhotonNetwork.networkingPeer.RoundTripTimeVariance
+			};
+			text6 = string.Format("ping: {6}[+/-{7}]ms\nlongest delta between\nsend: {0,4}ms disp: {1,4}ms\nlongest time for:\nev({3}):{2,3}ms op({5}):{4,3}ms", args);
 			GUILayout.Label(text6);
 		}
 		if (flag)
 		{
-			string message = string.Format("{0}\n{1}\n{2}\n{3}\n{4}\n{5}", text, text2, text3, text4, text5, text6);
-			Debug.Log(message);
+			object[] args2 = new object[6] { text, text2, text3, text4, text5, text6 };
+			Debug.Log(string.Format("{0}\n{1}\n{2}\n{3}\n{4}\n{5}", args2));
 		}
 		if (GUI.changed)
 		{
 			statsRect.height = 100f;
 		}
 		GUI.DragWindow();
+	}
+
+	public void Update()
+	{
+		if (Input.GetKeyDown(KeyCode.Tab) && Input.GetKey(KeyCode.LeftShift))
+		{
+			statsWindowOn = !statsWindowOn;
+			statsOn = true;
+		}
 	}
 }

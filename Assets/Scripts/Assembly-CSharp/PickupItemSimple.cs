@@ -4,9 +4,9 @@ using UnityEngine;
 [RequireComponent(typeof(PhotonView))]
 public class PickupItemSimple : Photon.MonoBehaviour
 {
-	public float SecondsBeforeRespawn = 2f;
-
 	public bool PickupOnCollide;
+
+	public float SecondsBeforeRespawn = 2f;
 
 	public bool SentPickup;
 
@@ -31,13 +31,15 @@ public class PickupItemSimple : Photon.MonoBehaviour
 	[RPC]
 	public void PunPickupSimple(PhotonMessageInfo msgInfo)
 	{
-		if (!SentPickup || !msgInfo.sender.isLocal || base.gameObject.GetActive())
+		if (SentPickup && msgInfo.sender.isLocal)
 		{
+			base.gameObject.GetActive();
 		}
 		SentPickup = false;
 		if (!base.gameObject.GetActive())
 		{
-			Debug.Log("Ignored PU RPC, cause item is inactive. " + base.gameObject);
+			GameObject obj = base.gameObject;
+			Debug.Log("Ignored PU RPC, cause item is inactive. " + (((object)obj != null) ? obj.ToString() : null));
 			return;
 		}
 		double num = PhotonNetwork.time - msgInfo.timestamp;

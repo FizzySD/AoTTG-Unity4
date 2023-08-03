@@ -3,74 +3,21 @@ using UnityEngine;
 
 public class UVAnimation
 {
-	public Vector2[] frames;
-
-	public Vector2[] UVDimensions;
-
 	public int curFrame;
 
-	protected int stepDir = 1;
-
-	protected int numLoops;
-
-	public string name;
+	public Vector2[] frames;
 
 	public int loopCycles;
 
 	public bool loopReverse;
 
-	public void Reset()
-	{
-		curFrame = 0;
-		stepDir = 1;
-		numLoops = 0;
-	}
+	public string name;
 
-	public void PlayInReverse()
-	{
-		stepDir = -1;
-		curFrame = frames.Length - 1;
-	}
+	protected int numLoops;
 
-	public bool GetNextFrame(ref Vector2 uv, ref Vector2 dm)
-	{
-		if (curFrame + stepDir >= frames.Length || curFrame + stepDir < 0)
-		{
-			if (stepDir > 0 && loopReverse)
-			{
-				stepDir = -1;
-				curFrame += stepDir;
-				uv = frames[curFrame];
-				dm = UVDimensions[curFrame];
-			}
-			else
-			{
-				if (numLoops + 1 > loopCycles && loopCycles != -1)
-				{
-					return false;
-				}
-				numLoops++;
-				if (loopReverse)
-				{
-					stepDir *= -1;
-					curFrame += stepDir;
-				}
-				else
-				{
-					curFrame = 0;
-				}
-				uv = frames[curFrame];
-				dm = UVDimensions[curFrame];
-			}
-		}
-		else
-		{
-			curFrame += stepDir;
-			uv = frames[curFrame];
-			dm = UVDimensions[curFrame];
-		}
-		return true;
-	}
+	protected int stepDir = 1;
+
+	public Vector2[] UVDimensions;
 
 	public void BuildFromFile(string path, int index, float uvTime, Texture mainTex)
 	{
@@ -134,6 +81,59 @@ public class UVAnimation
 			}
 		}
 		return frames;
+	}
+
+	public bool GetNextFrame(ref Vector2 uv, ref Vector2 dm)
+	{
+		if (curFrame + stepDir >= frames.Length || curFrame + stepDir < 0)
+		{
+			if (stepDir > 0 && loopReverse)
+			{
+				stepDir = -1;
+				curFrame += stepDir;
+				uv = frames[curFrame];
+				dm = UVDimensions[curFrame];
+			}
+			else
+			{
+				if (numLoops + 1 > loopCycles && loopCycles != -1)
+				{
+					return false;
+				}
+				numLoops++;
+				if (loopReverse)
+				{
+					stepDir *= -1;
+					curFrame += stepDir;
+				}
+				else
+				{
+					curFrame = 0;
+				}
+				uv = frames[curFrame];
+				dm = UVDimensions[curFrame];
+			}
+		}
+		else
+		{
+			curFrame += stepDir;
+			uv = frames[curFrame];
+			dm = UVDimensions[curFrame];
+		}
+		return true;
+	}
+
+	public void PlayInReverse()
+	{
+		stepDir = -1;
+		curFrame = frames.Length - 1;
+	}
+
+	public void Reset()
+	{
+		curFrame = 0;
+		stepDir = 1;
+		numLoops = 0;
 	}
 
 	public void SetAnim(Vector2[] anim)

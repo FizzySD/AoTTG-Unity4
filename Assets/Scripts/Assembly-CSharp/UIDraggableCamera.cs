@@ -1,36 +1,36 @@
 using UnityEngine;
 
-[AddComponentMenu("NGUI/Interaction/Draggable Camera")]
 [RequireComponent(typeof(Camera))]
+[AddComponentMenu("NGUI/Interaction/Draggable Camera")]
 public class UIDraggableCamera : IgnoreTimeScale
 {
+	public UIDragObject.DragEffect dragEffect = UIDragObject.DragEffect.MomentumAndSpring;
+
+	private Bounds mBounds;
+
+	private Camera mCam;
+
+	private bool mDragStarted;
+
+	private Vector2 mMomentum = Vector2.zero;
+
+	public float momentumAmount = 35f;
+
+	private bool mPressed;
+
+	private UIRoot mRoot;
+
+	private float mScroll;
+
+	private Transform mTrans;
+
 	public Transform rootForBounds;
 
 	public Vector2 scale = Vector2.one;
 
 	public float scrollWheelFactor;
 
-	public UIDragObject.DragEffect dragEffect = UIDragObject.DragEffect.MomentumAndSpring;
-
 	public bool smoothDragStart = true;
-
-	public float momentumAmount = 35f;
-
-	private Camera mCam;
-
-	private Transform mTrans;
-
-	private bool mPressed;
-
-	private Vector2 mMomentum = Vector2.zero;
-
-	private Bounds mBounds;
-
-	private float mScroll;
-
-	private UIRoot mRoot;
-
-	private bool mDragStarted;
 
 	public Vector2 currentMomentum
 	{
@@ -53,11 +53,6 @@ public class UIDraggableCamera : IgnoreTimeScale
 			Debug.LogError(NGUITools.GetHierarchy(base.gameObject) + " needs the 'Root For Bounds' parameter to be set", this);
 			base.enabled = false;
 		}
-	}
-
-	private void Start()
-	{
-		mRoot = NGUITools.FindInParents<UIRoot>(base.gameObject);
 	}
 
 	private Vector3 CalculateConstrainOffset()
@@ -98,6 +93,28 @@ public class UIDraggableCamera : IgnoreTimeScale
 		return false;
 	}
 
+	public void Drag(Vector2 delta)
+	{
+		if (smoothDragStart && !mDragStarted)
+		{
+			mDragStarted = true;
+			return;
+		}
+		UICamera.currentTouch.clickNotification = UICamera.ClickNotification.BasedOnDelta;
+		if (mRoot != null)
+		{
+			delta *= mRoot.pixelSizeAdjustment;
+		}
+		Vector2 vector = Vector2.Scale(delta, -scale);
+		mTrans.localPosition += (Vector3)vector;
+		mMomentum = Vector2.Lerp(mMomentum, mMomentum + vector * (0.01f * momentumAmount), 0.67f);
+		if (dragEffect != UIDragObject.DragEffect.MomentumAndSpring && ConstrainToBounds(true))
+		{
+			mMomentum = Vector2.zero;
+			mScroll = 0f;
+		}
+	}
+
 	public void Press(bool isPressed)
 	{
 		if (isPressed)
@@ -126,28 +143,6 @@ public class UIDraggableCamera : IgnoreTimeScale
 		}
 	}
 
-	public void Drag(Vector2 delta)
-	{
-		if (smoothDragStart && !mDragStarted)
-		{
-			mDragStarted = true;
-			return;
-		}
-		UICamera.currentTouch.clickNotification = UICamera.ClickNotification.BasedOnDelta;
-		if (mRoot != null)
-		{
-			delta *= mRoot.pixelSizeAdjustment;
-		}
-		Vector2 vector = Vector2.Scale(delta, -scale);
-		mTrans.localPosition += (Vector3)vector;
-		mMomentum = Vector2.Lerp(mMomentum, mMomentum + vector * (0.01f * momentumAmount), 0.67f);
-		if (dragEffect != UIDragObject.DragEffect.MomentumAndSpring && ConstrainToBounds(true))
-		{
-			mMomentum = Vector2.zero;
-			mScroll = 0f;
-		}
-	}
-
 	public void Scroll(float delta)
 	{
 		if (base.enabled && NGUITools.GetActive(base.gameObject))
@@ -158,6 +153,11 @@ public class UIDraggableCamera : IgnoreTimeScale
 			}
 			mScroll += delta * scrollWheelFactor;
 		}
+	}
+
+	private void Start()
+	{
+		mRoot = NGUITools.FindInParents<UIRoot>(base.gameObject);
 	}
 
 	private void Update()

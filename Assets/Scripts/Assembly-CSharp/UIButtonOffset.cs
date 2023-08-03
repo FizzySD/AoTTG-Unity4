@@ -3,40 +3,19 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Button Offset")]
 public class UIButtonOffset : MonoBehaviour
 {
-	public Transform tweenTarget;
+	public float duration = 0.2f;
 
 	public Vector3 hover = Vector3.zero;
 
-	public Vector3 pressed = new Vector3(2f, -2f);
-
-	public float duration = 0.2f;
+	private bool mHighlighted;
 
 	private Vector3 mPos;
 
 	private bool mStarted;
 
-	private bool mHighlighted;
+	public Vector3 pressed = new Vector3(2f, -2f);
 
-	private void Start()
-	{
-		if (!mStarted)
-		{
-			mStarted = true;
-			if (tweenTarget == null)
-			{
-				tweenTarget = base.transform;
-			}
-			mPos = tweenTarget.localPosition;
-		}
-	}
-
-	private void OnEnable()
-	{
-		if (mStarted && mHighlighted)
-		{
-			OnHover(UICamera.IsHighlighted(base.gameObject));
-		}
-	}
+	public Transform tweenTarget;
 
 	private void OnDisable()
 	{
@@ -48,6 +27,27 @@ public class UIButtonOffset : MonoBehaviour
 				component.position = mPos;
 				component.enabled = false;
 			}
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (mStarted && mHighlighted)
+		{
+			OnHover(UICamera.IsHighlighted(base.gameObject));
+		}
+	}
+
+	private void OnHover(bool isOver)
+	{
+		if (base.enabled)
+		{
+			if (!mStarted)
+			{
+				Start();
+			}
+			TweenPosition.Begin(tweenTarget.gameObject, duration, (!isOver) ? mPos : (mPos + hover)).method = UITweener.Method.EaseInOut;
+			mHighlighted = isOver;
 		}
 	}
 
@@ -63,16 +63,16 @@ public class UIButtonOffset : MonoBehaviour
 		}
 	}
 
-	private void OnHover(bool isOver)
+	private void Start()
 	{
-		if (base.enabled)
+		if (!mStarted)
 		{
-			if (!mStarted)
+			mStarted = true;
+			if (tweenTarget == null)
 			{
-				Start();
+				tweenTarget = base.transform;
 			}
-			TweenPosition.Begin(tweenTarget.gameObject, duration, (!isOver) ? mPos : (mPos + hover)).method = UITweener.Method.EaseInOut;
-			mHighlighted = isOver;
+			mPos = tweenTarget.localPosition;
 		}
 	}
 }

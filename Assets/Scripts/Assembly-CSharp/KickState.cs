@@ -2,22 +2,15 @@ using System.Collections;
 
 public class KickState
 {
-	public string name;
-
 	public int id;
-
-	private string kickers;
 
 	private int kickCount;
 
+	private string kickers;
+
 	private ArrayList kickers2;
 
-	public void init(string n)
-	{
-		name = n;
-		kickers = string.Empty;
-		kickCount = 0;
-	}
+	public string name;
 
 	public void addKicker(string n)
 	{
@@ -31,5 +24,12 @@ public class KickState
 	public int getKickCount()
 	{
 		return kickCount;
+	}
+
+	public void init(string n)
+	{
+		name = n;
+		kickers = string.Empty;
+		kickCount = 0;
 	}
 }

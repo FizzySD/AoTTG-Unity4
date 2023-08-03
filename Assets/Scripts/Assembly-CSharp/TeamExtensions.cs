@@ -17,16 +17,13 @@ internal static class TeamExtensions
 	{
 		if (!PhotonNetwork.connectedAndReady)
 		{
-			Debug.LogWarning(string.Concat("JoinTeam was called in state: ", PhotonNetwork.connectionStateDetailed, ". Not connectedAndReady."));
+			Debug.LogWarning("JoinTeam was called in state: " + PhotonNetwork.connectionStateDetailed.ToString() + ". Not connectedAndReady.");
 		}
-		PunTeams.Team team2 = PhotonNetwork.player.GetTeam();
-		if (team2 != team)
+		if (PhotonNetwork.player.GetTeam() != team)
 		{
-			PhotonNetwork.player.SetCustomProperties(new Hashtable { 
-			{
-				"team",
-				(byte)team
-			} });
+			Hashtable hashtable = new Hashtable();
+			hashtable.Add("team", (byte)team);
+			PhotonNetwork.player.SetCustomProperties(hashtable);
 		}
 	}
 }

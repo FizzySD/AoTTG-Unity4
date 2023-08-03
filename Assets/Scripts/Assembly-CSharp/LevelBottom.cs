@@ -6,10 +6,6 @@ public class LevelBottom : MonoBehaviour
 
 	public BottomType type;
 
-	private void Start()
-	{
-	}
-
 	private void OnTriggerStay(Collider other)
 	{
 		if (!(other.gameObject.tag == "Player"))
@@ -18,7 +14,7 @@ public class LevelBottom : MonoBehaviour
 		}
 		if (type == BottomType.Die)
 		{
-			if (!other.gameObject.GetComponent<HERO>())
+			if (!(other.gameObject.GetComponent<HERO>() != null))
 			{
 				return;
 			}
@@ -26,7 +22,7 @@ public class LevelBottom : MonoBehaviour
 			{
 				if (other.gameObject.GetPhotonView().isMine)
 				{
-					other.gameObject.GetComponent<HERO>().netDie(base.rigidbody.velocity * 50f, false, -1, string.Empty);
+					other.gameObject.GetComponent<HERO>().netDieLocal(base.rigidbody.velocity * 50f, false, -1, string.Empty);
 				}
 			}
 			else
@@ -45,6 +41,10 @@ public class LevelBottom : MonoBehaviour
 				other.gameObject.transform.position = Vector3.zero;
 			}
 		}
+	}
+
+	private void Start()
+	{
 	}
 
 	private void Update()

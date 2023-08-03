@@ -1,20 +1,18 @@
-using ExitGames.Client.Photon.Lite;
-
 public class RaiseEventOptions
 {
-	public static readonly RaiseEventOptions Default = new RaiseEventOptions();
+	public int CacheSliceIndex;
 
 	public EventCaching CachingOption;
 
-	public byte InterestGroup;
+	public static readonly RaiseEventOptions Default = new RaiseEventOptions();
 
-	public int[] TargetActors;
+	public bool ForwardToWebhook;
+
+	public byte InterestGroup;
 
 	public ReceiverGroup Receivers;
 
 	public byte SequenceChannel;
 
-	public bool ForwardToWebhook;
-
-	public int CacheSliceIndex;
+	public int[] TargetActors;
 }

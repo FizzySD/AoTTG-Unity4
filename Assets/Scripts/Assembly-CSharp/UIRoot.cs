@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("NGUI/UI/Root")]
+[ExecuteInEditMode]
 public class UIRoot : MonoBehaviour
 {
 	public enum Scaling
@@ -12,28 +12,20 @@ public class UIRoot : MonoBehaviour
 		FixedSizeOnMobiles = 2
 	}
 
-	private static List<UIRoot> mRoots = new List<UIRoot>();
-
-	public Scaling scalingStyle = Scaling.FixedSize;
-
 	[HideInInspector]
 	public bool automatic;
 
 	public int manualHeight = 720;
 
+	public int maximumHeight = 1536;
+
 	public int minimumHeight = 320;
 
-	public int maximumHeight = 1536;
+	private static List<UIRoot> mRoots = new List<UIRoot>();
 
 	private Transform mTrans;
 
-	public static List<UIRoot> list
-	{
-		get
-		{
-			return mRoots;
-		}
-	}
+	public Scaling scalingStyle = Scaling.FixedSize;
 
 	public int activeHeight
 	{
@@ -56,6 +48,14 @@ public class UIRoot : MonoBehaviour
 		}
 	}
 
+	public static List<UIRoot> list
+	{
+		get
+		{
+			return mRoots;
+		}
+	}
+
 	public float pixelSizeAdjustment
 	{
 		get
@@ -64,10 +64,46 @@ public class UIRoot : MonoBehaviour
 		}
 	}
 
-	public static float GetPixelSizeAdjustment(GameObject go)
+	private void Awake()
 	{
-		UIRoot uIRoot = NGUITools.FindInParents<UIRoot>(go);
-		return (!(uIRoot != null)) ? 1f : uIRoot.pixelSizeAdjustment;
+		mTrans = base.transform;
+		mRoots.Add(this);
+		if (automatic)
+		{
+			scalingStyle = Scaling.PixelPerfect;
+			automatic = false;
+		}
+	}
+
+	public static void Broadcast(string funcName)
+	{
+		int i = 0;
+		for (int count = mRoots.Count; i < count; i++)
+		{
+			UIRoot uIRoot = mRoots[i];
+			if (uIRoot != null)
+			{
+				uIRoot.BroadcastMessage(funcName, SendMessageOptions.DontRequireReceiver);
+			}
+		}
+	}
+
+	public static void Broadcast(string funcName, object param)
+	{
+		if (param == null)
+		{
+			Debug.LogError("SendMessage is bugged when you try to pass 'null' in the parameter field. It behaves as if no parameter was specified.");
+			return;
+		}
+		int i = 0;
+		for (int count = mRoots.Count; i < count; i++)
+		{
+			UIRoot uIRoot = mRoots[i];
+			if (uIRoot != null)
+			{
+				uIRoot.BroadcastMessage(funcName, param, SendMessageOptions.DontRequireReceiver);
+			}
+		}
 	}
 
 	public float GetPixelSizeAdjustment(int height)
@@ -88,15 +124,14 @@ public class UIRoot : MonoBehaviour
 		return 1f;
 	}
 
-	private void Awake()
+	public static float GetPixelSizeAdjustment(GameObject go)
 	{
-		mTrans = base.transform;
-		mRoots.Add(this);
-		if (automatic)
+		UIRoot uIRoot = NGUITools.FindInParents<UIRoot>(go);
+		if (!(uIRoot == null))
 		{
-			scalingStyle = Scaling.PixelPerfect;
-			automatic = false;
+			return uIRoot.pixelSizeAdjustment;
 		}
+		return 1f;
 	}
 
 	private void OnDestroy()
@@ -130,40 +165,9 @@ public class UIRoot : MonoBehaviour
 		{
 			float num2 = 2f / num;
 			Vector3 localScale = mTrans.localScale;
-			if (!(Mathf.Abs(localScale.x - num2) <= float.Epsilon) || !(Mathf.Abs(localScale.y - num2) <= float.Epsilon) || !(Mathf.Abs(localScale.z - num2) <= float.Epsilon))
+			if (Mathf.Abs(localScale.x - num2) > float.Epsilon || Mathf.Abs(localScale.y - num2) > float.Epsilon || Mathf.Abs(localScale.z - num2) > float.Epsilon)
 			{
 				mTrans.localScale = new Vector3(num2, num2, num2);
-			}
-		}
-	}
-
-	public static void Broadcast(string funcName)
-	{
-		int i = 0;
-		for (int count = mRoots.Count; i < count; i++)
-		{
-			UIRoot uIRoot = mRoots[i];
-			if (uIRoot != null)
-			{
-				uIRoot.BroadcastMessage(funcName, SendMessageOptions.DontRequireReceiver);
-			}
-		}
-	}
-
-	public static void Broadcast(string funcName, object param)
-	{
-		if (param == null)
-		{
-			Debug.LogError("SendMessage is bugged when you try to pass 'null' in the parameter field. It behaves as if no parameter was specified.");
-			return;
-		}
-		int i = 0;
-		for (int count = mRoots.Count; i < count; i++)
-		{
-			UIRoot uIRoot = mRoots[i];
-			if (uIRoot != null)
-			{
-				uIRoot.BroadcastMessage(funcName, param, SendMessageOptions.DontRequireReceiver);
 			}
 		}
 	}

@@ -14,7 +14,8 @@ public class ManualPhotonViewAllocator : MonoBehaviour
 			return;
 		}
 		int num = PhotonNetwork.AllocateViewID();
-		photonView.RPC("InstantiateRpc", PhotonTargets.AllBuffered, num);
+		object[] parameters = new object[1] { num };
+		photonView.RPC("InstantiateRpc", PhotonTargets.AllBuffered, parameters);
 	}
 
 	[RPC]
@@ -22,7 +23,6 @@ public class ManualPhotonViewAllocator : MonoBehaviour
 	{
 		GameObject gameObject = Object.Instantiate(Prefab, InputToEvent.inputHitPos + new Vector3(0f, 5f, 0f), Quaternion.identity) as GameObject;
 		gameObject.GetPhotonView().viewID = viewID;
-		OnClickDestroy component = gameObject.GetComponent<OnClickDestroy>();
-		component.DestroyByRpc = true;
+		gameObject.GetComponent<OnClickDestroy>().DestroyByRpc = true;
 	}
 }

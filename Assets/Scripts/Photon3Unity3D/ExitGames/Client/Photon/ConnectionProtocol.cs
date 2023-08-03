@@ -4,6 +4,7 @@ namespace ExitGames.Client.Photon
 	{
 		Udp = 0,
 		Tcp = 1,
-		RHttp = 3
+		WebSocket = 4,
+		WebSocketSecure = 5
 	}
 }

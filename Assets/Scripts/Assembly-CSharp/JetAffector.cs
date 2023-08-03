@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class JetAffector : Affector
 {
-	protected float MinAcceleration;
-
 	protected float MaxAcceleration;
+
+	protected float MinAcceleration;
 
 	public JetAffector(float min, float max, EffectNode node)
 		: base(node)

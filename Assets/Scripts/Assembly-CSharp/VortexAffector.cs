@@ -2,21 +2,13 @@ using UnityEngine;
 
 public class VortexAffector : Affector
 {
-	private AnimationCurve VortexCurve;
-
 	protected Vector3 Direction;
-
-	private bool UseCurve;
 
 	private float Magnitude;
 
-	public VortexAffector(AnimationCurve vortexCurve, Vector3 dir, EffectNode node)
-		: base(node)
-	{
-		VortexCurve = vortexCurve;
-		Direction = dir;
-		UseCurve = true;
-	}
+	private bool UseCurve;
+
+	private AnimationCurve VortexCurve;
 
 	public VortexAffector(float mag, Vector3 dir, EffectNode node)
 		: base(node)
@@ -26,11 +18,18 @@ public class VortexAffector : Affector
 		UseCurve = false;
 	}
 
+	public VortexAffector(AnimationCurve vortexCurve, Vector3 dir, EffectNode node)
+		: base(node)
+	{
+		VortexCurve = vortexCurve;
+		Direction = dir;
+		UseCurve = true;
+	}
+
 	public override void Update()
 	{
 		Vector3 vector = Node.GetLocalPosition() - Node.Owner.EmitPoint;
-		float magnitude = vector.magnitude;
-		if (magnitude != 0f)
+		if (vector.magnitude != 0f)
 		{
 			float num = Vector3.Dot(Direction, vector);
 			vector -= num * Direction;

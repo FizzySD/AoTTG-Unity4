@@ -9,19 +9,19 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1271121647576127}
+  m_RootGameObject: {fileID: 1001897798837014}
   m_IsPrefabParent: 1
   m_IsExploded: 0
---- !u!1 &1271121647576127
+--- !u!1 &1001897798837014
 GameObject:
   serializedVersion: 4
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_Component:
-  - 4: {fileID: 4751832085232399}
-  - 33: {fileID: 33260797622572903}
-  - 23: {fileID: 23905633343767964}
+  - 4: {fileID: 4149404768641826}
+  - 33: {fileID: 33079028436223225}
+  - 23: {fileID: 23634546879432767}
   m_Layer: 0
   m_Name: GreenFlareHint
   m_TagString: Untagged
@@ -29,38 +29,38 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4751832085232399
+--- !u!4 &4149404768641826
 Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1271121647576127}
+  m_GameObject: {fileID: 1001897798837014}
   m_LocalRotation: {x: -0.7071069, y: 0, z: -0, w: 0.70710677}
   m_LocalPosition: {x: 153.95833, y: 0.5592768, z: 231.3832}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!33 &33260797622572903
+--- !u!33 &33079028436223225
 MeshFilter:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1271121647576127}
-  m_Mesh: {fileID: 4300000, guid: 2efd5ae43e850194398934bc156d0b0a, type: 2}
---- !u!23 &23905633343767964
+  m_GameObject: {fileID: 1001897798837014}
+  m_Mesh: {fileID: 4300000, guid: 49d161e063b293a46915e01a9fa820c1, type: 2}
+--- !u!23 &23634546879432767
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1271121647576127}
+  m_GameObject: {fileID: 1001897798837014}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_LightmapIndex: 255
   m_LightmapTilingOffset: {x: 1, y: 1, z: 0, w: 0}
   m_Materials:
-  - {fileID: 2100000, guid: 4d6c628029833294a848397a90b5c71a, type: 2}
+  - {fileID: 2100000, guid: babea3fe6b9503f4cbff979d248a6458, type: 2}
   m_SubsetIndices: []
   m_StaticBatchRoot: {fileID: 0}
   m_UseLightProbes: 0

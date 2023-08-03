@@ -4,19 +4,17 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Checkbox Controlled Component")]
 public class UICheckboxControlledComponent : MonoBehaviour
 {
-	public MonoBehaviour target;
-
 	public bool inverse;
 
 	private bool mUsingDelegates;
 
-	private void Start()
+	public MonoBehaviour target;
+
+	private void OnActivate(bool isActive)
 	{
-		UICheckbox component = GetComponent<UICheckbox>();
-		if (component != null)
+		if (!mUsingDelegates)
 		{
-			mUsingDelegates = true;
-			component.onStateChange = (UICheckbox.OnStateChange)Delegate.Combine(component.onStateChange, new UICheckbox.OnStateChange(OnActivateDelegate));
+			OnActivateDelegate(isActive);
 		}
 	}
 
@@ -28,11 +26,13 @@ public class UICheckboxControlledComponent : MonoBehaviour
 		}
 	}
 
-	private void OnActivate(bool isActive)
+	private void Start()
 	{
-		if (!mUsingDelegates)
+		UICheckbox component = GetComponent<UICheckbox>();
+		if (component != null)
 		{
-			OnActivateDelegate(isActive);
+			mUsingDelegates = true;
+			component.onStateChange = (UICheckbox.OnStateChange)Delegate.Combine(component.onStateChange, new UICheckbox.OnStateChange(OnActivateDelegate));
 		}
 	}
 }

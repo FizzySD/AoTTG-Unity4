@@ -2,13 +2,13 @@ using UnityEngine;
 
 public class PanelServerList : MonoBehaviour
 {
-	public GameObject label_name;
-
-	public GameObject label_refresh;
-
 	public GameObject label_back;
 
 	public GameObject label_create;
+
+	public GameObject label_name;
+
+	public GameObject label_refresh;
 
 	private int lang = -1;
 

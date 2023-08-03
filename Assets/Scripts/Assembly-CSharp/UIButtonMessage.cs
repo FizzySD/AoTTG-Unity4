@@ -13,21 +13,32 @@ public class UIButtonMessage : MonoBehaviour
 		OnDoubleClick = 5
 	}
 
-	public GameObject target;
-
 	public string functionName;
-
-	public Trigger trigger;
 
 	public bool includeChildren;
 
-	private bool mStarted;
-
 	private bool mHighlighted;
 
-	private void Start()
+	private bool mStarted;
+
+	public GameObject target;
+
+	public Trigger trigger;
+
+	private void OnClick()
 	{
-		mStarted = true;
+		if (base.enabled && trigger == Trigger.OnClick)
+		{
+			Send();
+		}
+	}
+
+	private void OnDoubleClick()
+	{
+		if (base.enabled && trigger == Trigger.OnDoubleClick)
+		{
+			Send();
+		}
 	}
 
 	private void OnEnable()
@@ -58,22 +69,6 @@ public class UIButtonMessage : MonoBehaviour
 		}
 	}
 
-	private void OnClick()
-	{
-		if (base.enabled && trigger == Trigger.OnClick)
-		{
-			Send();
-		}
-	}
-
-	private void OnDoubleClick()
-	{
-		if (base.enabled && trigger == Trigger.OnDoubleClick)
-		{
-			Send();
-		}
-	}
-
 	private void Send()
 	{
 		if (string.IsNullOrEmpty(functionName))
@@ -98,5 +93,10 @@ public class UIButtonMessage : MonoBehaviour
 		{
 			target.SendMessage(functionName, base.gameObject, SendMessageOptions.DontRequireReceiver);
 		}
+	}
+
+	private void Start()
+	{
+		mStarted = true;
 	}
 }

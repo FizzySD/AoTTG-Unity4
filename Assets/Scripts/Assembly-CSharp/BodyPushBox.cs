@@ -11,26 +11,23 @@ public class BodyPushBox : MonoBehaviour
 			return;
 		}
 		BodyPushBox component = other.gameObject.GetComponent<BodyPushBox>();
-		if ((bool)component && (bool)component.parent)
+		if (component != null && component.parent != null)
 		{
 			Vector3 vector = component.parent.transform.position - parent.transform.position;
 			float radius = base.gameObject.GetComponent<CapsuleCollider>().radius;
 			float radius2 = base.gameObject.GetComponent<CapsuleCollider>().radius;
 			vector.y = 0f;
-			float num;
 			if (vector.magnitude > 0f)
 			{
-				num = radius + radius2 - vector.magnitude;
+				float num = radius + radius2 - vector.magnitude;
 				vector.Normalize();
 			}
 			else
 			{
-				num = radius + radius2;
+				float num = radius + radius2;
 				vector.x = 1f;
 			}
-			if (!(num < 0.1f))
-			{
-			}
+			float num2 = 0.1f;
 		}
 	}
 }

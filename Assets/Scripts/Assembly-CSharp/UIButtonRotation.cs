@@ -3,40 +3,19 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Button Rotation")]
 public class UIButtonRotation : MonoBehaviour
 {
-	public Transform tweenTarget;
+	public float duration = 0.2f;
 
 	public Vector3 hover = Vector3.zero;
 
-	public Vector3 pressed = Vector3.zero;
-
-	public float duration = 0.2f;
+	private bool mHighlighted;
 
 	private Quaternion mRot;
 
 	private bool mStarted;
 
-	private bool mHighlighted;
+	public Vector3 pressed = Vector3.zero;
 
-	private void Start()
-	{
-		if (!mStarted)
-		{
-			mStarted = true;
-			if (tweenTarget == null)
-			{
-				tweenTarget = base.transform;
-			}
-			mRot = tweenTarget.localRotation;
-		}
-	}
-
-	private void OnEnable()
-	{
-		if (mStarted && mHighlighted)
-		{
-			OnHover(UICamera.IsHighlighted(base.gameObject));
-		}
-	}
+	public Transform tweenTarget;
 
 	private void OnDisable()
 	{
@@ -48,6 +27,27 @@ public class UIButtonRotation : MonoBehaviour
 				component.rotation = mRot;
 				component.enabled = false;
 			}
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (mStarted && mHighlighted)
+		{
+			OnHover(UICamera.IsHighlighted(base.gameObject));
+		}
+	}
+
+	private void OnHover(bool isOver)
+	{
+		if (base.enabled)
+		{
+			if (!mStarted)
+			{
+				Start();
+			}
+			TweenRotation.Begin(tweenTarget.gameObject, duration, (!isOver) ? mRot : (mRot * Quaternion.Euler(hover))).method = UITweener.Method.EaseInOut;
+			mHighlighted = isOver;
 		}
 	}
 
@@ -63,16 +63,16 @@ public class UIButtonRotation : MonoBehaviour
 		}
 	}
 
-	private void OnHover(bool isOver)
+	private void Start()
 	{
-		if (base.enabled)
+		if (!mStarted)
 		{
-			if (!mStarted)
+			mStarted = true;
+			if (tweenTarget == null)
 			{
-				Start();
+				tweenTarget = base.transform;
 			}
-			TweenRotation.Begin(tweenTarget.gameObject, duration, (!isOver) ? mRot : (mRot * Quaternion.Euler(hover))).method = UITweener.Method.EaseInOut;
-			mHighlighted = isOver;
+			mRot = tweenTarget.localRotation;
 		}
 	}
 }

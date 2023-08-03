@@ -2,45 +2,45 @@ using UnityEngine;
 
 public class PlayerInfoPHOTON
 {
-	public string name = "Guest";
-
-	public string guildname = string.Empty;
-
-	public string id;
-
-	public PhotonPlayer networkplayer;
-
-	public int kills;
-
-	public int die;
-
-	public int maxDamage;
-
-	public int totalDamage;
+	public int airKills;
 
 	public int assistancePt;
 
 	public bool dead;
 
+	public int die;
+
+	public string guildname = string.Empty;
+
+	public string id;
+
+	public int kills;
+
+	public int maxDamage;
+
+	public string name = "Guest";
+
+	public PhotonPlayer networkplayer;
+
 	public string resourceId = "not choose";
 
 	public bool SET;
 
-	public int totalKills;
+	public int totalCrawlerKills;
+
+	public int totalDamage;
 
 	public int totalDeaths;
 
-	public int totalKillsInOneLifeNormal;
+	public int totalJumperKills;
 
-	public int totalKillsInOneLifeHard;
+	public int totalKills;
 
 	public int totalKillsInOneLifeAB;
 
-	public int airKills;
+	public int totalKillsInOneLifeHard;
 
-	public int totalCrawlerKills;
-
-	public int totalJumperKills;
+	public int totalKillsInOneLifeNormal;
 
 	public int totalNonAIKills;
 

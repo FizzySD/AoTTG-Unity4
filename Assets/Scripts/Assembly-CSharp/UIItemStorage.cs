@@ -4,21 +4,21 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Examples/UI Item Storage")]
 public class UIItemStorage : MonoBehaviour
 {
+	public UIWidget background;
+
+	public int maxColumns = 4;
+
 	public int maxItemCount = 8;
 
 	public int maxRows = 4;
 
-	public int maxColumns = 4;
-
-	public GameObject template;
-
-	public UIWidget background;
-
-	public int spacing = 128;
+	private List<InvGameItem> mItems = new List<InvGameItem>();
 
 	public int padding = 10;
 
-	private List<InvGameItem> mItems = new List<InvGameItem>();
+	public int spacing = 128;
+
+	public GameObject template;
 
 	public List<InvGameItem> items
 	{
@@ -34,7 +34,11 @@ public class UIItemStorage : MonoBehaviour
 
 	public InvGameItem GetItem(int slot)
 	{
-		return (slot >= items.Count) ? null : mItems[slot];
+		if (slot < items.Count)
+		{
+			return mItems[slot];
+		}
+		return null;
 	}
 
 	public InvGameItem Replace(int slot, InvGameItem item)
@@ -61,8 +65,7 @@ public class UIItemStorage : MonoBehaviour
 			for (int j = 0; j < maxColumns; j++)
 			{
 				GameObject gameObject = NGUITools.AddChild(base.gameObject, template);
-				Transform transform = gameObject.transform;
-				transform.localPosition = new Vector3((float)padding + ((float)j + 0.5f) * (float)spacing, (float)(-padding) - ((float)i + 0.5f) * (float)spacing, 0f);
+				gameObject.transform.localPosition = new Vector3((float)padding + ((float)j + 0.5f) * (float)spacing, (float)(-padding) - ((float)i + 0.5f) * (float)spacing, 0f);
 				UIStorageSlot component = gameObject.GetComponent<UIStorageSlot>();
 				if (component != null)
 				{

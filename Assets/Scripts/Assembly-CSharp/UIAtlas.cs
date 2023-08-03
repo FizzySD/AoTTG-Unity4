@@ -5,16 +5,22 @@ using UnityEngine;
 [AddComponentMenu("NGUI/UI/Atlas")]
 public class UIAtlas : MonoBehaviour
 {
+	public enum Coordinates
+	{
+		Pixels = 0,
+		TexCoords = 1
+	}
+
 	[Serializable]
 	public class Sprite
 	{
+		public Rect inner = new Rect(0f, 0f, 1f, 1f);
+
 		public string name = "Unity Bug";
 
 		public Rect outer = new Rect(0f, 0f, 1f, 1f);
 
-		public Rect inner = new Rect(0f, 0f, 1f, 1f);
-
-		public bool rotated;
+		public float paddingBottom;
 
 		public float paddingLeft;
 
@@ -22,30 +28,24 @@ public class UIAtlas : MonoBehaviour
 
 		public float paddingTop;
 
-		public float paddingBottom;
+		public bool rotated;
 
 		public bool hasPadding
 		{
 			get
 			{
-				return paddingLeft != 0f || paddingRight != 0f || paddingTop != 0f || paddingBottom != 0f;
+				if (paddingLeft == 0f && paddingRight == 0f && paddingTop == 0f)
+				{
+					return paddingBottom != 0f;
+				}
+				return true;
 			}
 		}
-	}
-
-	public enum Coordinates
-	{
-		Pixels = 0,
-		TexCoords = 1
 	}
 
 	[SerializeField]
 	[HideInInspector]
 	private Material material;
-
-	[SerializeField]
-	[HideInInspector]
-	private List<Sprite> sprites = new List<Sprite>();
 
 	[HideInInspector]
 	[SerializeField]
@@ -55,87 +55,25 @@ public class UIAtlas : MonoBehaviour
 	[SerializeField]
 	private float mPixelSize = 1f;
 
-	[SerializeField]
-	[HideInInspector]
-	private UIAtlas mReplacement;
-
 	private int mPMA = -1;
 
-	public Material spriteMaterial
-	{
-		get
-		{
-			return (!(mReplacement != null)) ? material : mReplacement.spriteMaterial;
-		}
-		set
-		{
-			if (mReplacement != null)
-			{
-				mReplacement.spriteMaterial = value;
-				return;
-			}
-			if (material == null)
-			{
-				mPMA = 0;
-				material = value;
-				return;
-			}
-			MarkAsDirty();
-			mPMA = -1;
-			material = value;
-			MarkAsDirty();
-		}
-	}
+	[HideInInspector]
+	[SerializeField]
+	private UIAtlas mReplacement;
 
-	public bool premultipliedAlpha
-	{
-		get
-		{
-			if (mReplacement != null)
-			{
-				return mReplacement.premultipliedAlpha;
-			}
-			if (mPMA == -1)
-			{
-				Material material = spriteMaterial;
-				mPMA = ((material != null && material.shader != null && material.shader.name.Contains("Premultiplied")) ? 1 : 0);
-			}
-			return mPMA == 1;
-		}
-	}
-
-	public List<Sprite> spriteList
-	{
-		get
-		{
-			return (!(mReplacement != null)) ? sprites : mReplacement.spriteList;
-		}
-		set
-		{
-			if (mReplacement != null)
-			{
-				mReplacement.spriteList = value;
-			}
-			else
-			{
-				sprites = value;
-			}
-		}
-	}
-
-	public Texture texture
-	{
-		get
-		{
-			return (mReplacement != null) ? mReplacement.texture : ((!(material != null)) ? null : material.mainTexture);
-		}
-	}
+	[SerializeField]
+	[HideInInspector]
+	private List<Sprite> sprites = new List<Sprite>();
 
 	public Coordinates coordinates
 	{
 		get
 		{
-			return (!(mReplacement != null)) ? mCoordinates : mReplacement.coordinates;
+			if (!(mReplacement == null))
+			{
+				return mReplacement.coordinates;
+			}
+			return mCoordinates;
 		}
 		set
 		{
@@ -179,7 +117,11 @@ public class UIAtlas : MonoBehaviour
 	{
 		get
 		{
-			return (!(mReplacement != null)) ? mPixelSize : mReplacement.pixelSize;
+			if (!(mReplacement == null))
+			{
+				return mReplacement.pixelSize;
+			}
+			return mPixelSize;
 		}
 		set
 		{
@@ -194,6 +136,23 @@ public class UIAtlas : MonoBehaviour
 				mPixelSize = num;
 				MarkAsDirty();
 			}
+		}
+	}
+
+	public bool premultipliedAlpha
+	{
+		get
+		{
+			if (mReplacement != null)
+			{
+				return mReplacement.premultipliedAlpha;
+			}
+			if (mPMA == -1)
+			{
+				Material material = spriteMaterial;
+				mPMA = ((!(material == null) && !(material.shader == null) && material.shader.name.Contains("Premultiplied")) ? 1 : 0);
+			}
+			return mPMA == 1;
 		}
 	}
 
@@ -226,25 +185,86 @@ public class UIAtlas : MonoBehaviour
 		}
 	}
 
-	public Sprite GetSprite(string name)
+	public List<Sprite> spriteList
 	{
-		if (mReplacement != null)
+		get
 		{
-			return mReplacement.GetSprite(name);
-		}
-		if (!string.IsNullOrEmpty(name))
-		{
-			int i = 0;
-			for (int count = sprites.Count; i < count; i++)
+			if (!(mReplacement == null))
 			{
-				Sprite sprite = sprites[i];
-				if (!string.IsNullOrEmpty(sprite.name) && name == sprite.name)
-				{
-					return sprite;
-				}
+				return mReplacement.spriteList;
+			}
+			return sprites;
+		}
+		set
+		{
+			if (mReplacement != null)
+			{
+				mReplacement.spriteList = value;
+			}
+			else
+			{
+				sprites = value;
 			}
 		}
-		return null;
+	}
+
+	public Material spriteMaterial
+	{
+		get
+		{
+			if (!(mReplacement == null))
+			{
+				return mReplacement.spriteMaterial;
+			}
+			return material;
+		}
+		set
+		{
+			if (mReplacement != null)
+			{
+				mReplacement.spriteMaterial = value;
+				return;
+			}
+			if (material == null)
+			{
+				mPMA = 0;
+				material = value;
+				return;
+			}
+			MarkAsDirty();
+			mPMA = -1;
+			material = value;
+			MarkAsDirty();
+		}
+	}
+
+	public Texture texture
+	{
+		get
+		{
+			if (!(mReplacement == null))
+			{
+				return mReplacement.texture;
+			}
+			if (!(material == null))
+			{
+				return material.mainTexture;
+			}
+			return null;
+		}
+	}
+
+	public static bool CheckIfRelated(UIAtlas a, UIAtlas b)
+	{
+		if (a == null || b == null)
+		{
+			return false;
+		}
+		if (!(a == b) && !a.References(b))
+		{
+			return b.References(a);
+		}
+		return true;
 	}
 
 	private static int CompareString(string a, string b)
@@ -292,7 +312,8 @@ public class UIAtlas : MonoBehaviour
 				return betterList;
 			}
 		}
-		string[] array = match.Split(new char[1] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+		char[] separator = new char[1] { ' ' };
+		string[] array = match.Split(separator, StringSplitOptions.RemoveEmptyEntries);
 		for (int j = 0; j < array.Length; j++)
 		{
 			array[j] = array[j].ToLower();
@@ -322,26 +343,25 @@ public class UIAtlas : MonoBehaviour
 		return betterList;
 	}
 
-	private bool References(UIAtlas atlas)
+	public Sprite GetSprite(string name)
 	{
-		if (atlas == null)
+		if (mReplacement != null)
 		{
-			return false;
+			return mReplacement.GetSprite(name);
 		}
-		if (atlas == this)
+		if (!string.IsNullOrEmpty(name))
 		{
-			return true;
+			int i = 0;
+			for (int count = sprites.Count; i < count; i++)
+			{
+				Sprite sprite = sprites[i];
+				if (!string.IsNullOrEmpty(sprite.name) && name == sprite.name)
+				{
+					return sprite;
+				}
+			}
 		}
-		return mReplacement != null && mReplacement.References(atlas);
-	}
-
-	public static bool CheckIfRelated(UIAtlas a, UIAtlas b)
-	{
-		if (a == null || b == null)
-		{
-			return false;
-		}
-		return a == b || a.References(b) || b.References(a);
+		return null;
 	}
 
 	public void MarkAsDirty()
@@ -386,5 +406,22 @@ public class UIAtlas : MonoBehaviour
 				uILabel.font = font;
 			}
 		}
+	}
+
+	private bool References(UIAtlas atlas)
+	{
+		if (atlas == null)
+		{
+			return false;
+		}
+		if (!(atlas == this))
+		{
+			if (mReplacement != null)
+			{
+				return mReplacement.References(atlas);
+			}
+			return false;
+		}
+		return true;
 	}
 }

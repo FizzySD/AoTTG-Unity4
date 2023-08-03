@@ -1,29 +1,45 @@
 using UnityEngine;
 
-[AddComponentMenu("NGUI/Examples/UI Cursor")]
 [RequireComponent(typeof(UISprite))]
+[AddComponentMenu("NGUI/Examples/UI Cursor")]
 public class UICursor : MonoBehaviour
 {
+	private UIAtlas mAtlas;
+
 	private static UICursor mInstance;
-
-	public Camera uiCamera;
-
-	private Transform mTrans;
 
 	private UISprite mSprite;
 
-	private UIAtlas mAtlas;
-
 	private string mSpriteName;
+
+	private Transform mTrans;
+
+	public Camera uiCamera;
 
 	private void Awake()
 	{
 		mInstance = this;
 	}
 
+	public static void Clear()
+	{
+		Set(mInstance.mAtlas, mInstance.mSpriteName);
+	}
+
 	private void OnDestroy()
 	{
 		mInstance = null;
+	}
+
+	public static void Set(UIAtlas atlas, string sprite)
+	{
+		if (mInstance != null)
+		{
+			mInstance.mSprite.atlas = atlas;
+			mInstance.mSprite.spriteName = sprite;
+			mInstance.mSprite.MakePixelPerfect();
+			mInstance.Update();
+		}
 	}
 
 	private void Start()
@@ -61,22 +77,6 @@ public class UICursor : MonoBehaviour
 			mousePosition.x -= (float)Screen.width * 0.5f;
 			mousePosition.y -= (float)Screen.height * 0.5f;
 			mTrans.localPosition = NGUIMath.ApplyHalfPixelOffset(mousePosition, mTrans.localScale);
-		}
-	}
-
-	public static void Clear()
-	{
-		Set(mInstance.mAtlas, mInstance.mSpriteName);
-	}
-
-	public static void Set(UIAtlas atlas, string sprite)
-	{
-		if (mInstance != null)
-		{
-			mInstance.mSprite.atlas = atlas;
-			mInstance.mSprite.spriteName = sprite;
-			mInstance.mSprite.MakePixelPerfect();
-			mInstance.Update();
 		}
 	}
 }

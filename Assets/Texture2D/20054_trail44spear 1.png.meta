@@ -1,11 +1,14 @@
 fileFormatVersion: 2
-guid: 46024f3027fc86c4fa10b02bb92b8aba
+guid: d06be7adaa36d7944845c2162a3894a0
+timeCreated: 1691025429
+licenseType: Free
 TextureImporter:
-  fileIDToRecycleName: {}
   serializedVersion: 2
+  name:
+  fileIDToRecycleName: {}
   mipmaps:
     mipMapMode: 0
-    enableMipMap: 1
+    enableMipMap: 0
     linearTexture: 0
     correctGamma: 0
     fadeOut: 0
@@ -15,11 +18,11 @@ TextureImporter:
   bumpmap:
     convertToNormalMap: 0
     externalNormalMap: 0
-    heightScale: .25
+    heightScale: 0.25
     normalMapFilter: 0
   isReadable: 0
   grayScaleToAlpha: 0
-  generateCubemap: 0
+  generateCubemap: 6
   seamlessCubemap: 0
   textureFormat: 10
   maxTextureSize: 2048
@@ -28,14 +31,14 @@ TextureImporter:
     aniso: 1
     mipBias: 0
     wrapMode: 0
-  nPOTScale: 1
+  nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 0
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 0
-  spritePivot: {x: .5, y: .5}
+  spritePivot: {x: 0.5, y: 0.5}
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spritePixelsToUnits: 100
   alphaIsTransparency: 1
@@ -47,5 +50,21 @@ TextureImporter:
     compressionQuality: 50
   spriteSheet:
     sprites: []
-  spritePackingTag: 
-  userData: 
+  spritePackingTag:
+  output:
+    textureImportInstructions:
+      compressedFormat: 0
+      uncompressedFormat: 0
+      recommendedFormat: 0
+      desiredFormat: 0
+      usageMode: 0
+      colorSpace: 0
+      width: 0
+      height: 0
+      compressionQuality: 0
+    sourceTextureInformation:
+      width: 0
+      height: 0
+      doesTextureContainAlpha: 0
+      doesTextureContainColor: 0
+  userData:

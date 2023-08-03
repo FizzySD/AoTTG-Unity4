@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace ExitGames.Client.Photon
@@ -8,19 +9,39 @@ namespace ExitGames.Client.Photon
 	{
 		private const int CRC_LENGTH = 4;
 
-		private Dictionary<byte, EnetChannel> channels = new Dictionary<byte, EnetChannel>();
+		protected internal const int HMAC_SIZE = 32;
+
+		protected internal const int BLOCK_SIZE = 16;
+
+		protected internal const int IV_SIZE = 16;
+
+		private const int EncryptedDataGramHeaderSize = 7;
+
+		private const int EncryptedHeaderSize = 5;
 
 		private List<NCommand> sentReliableCommands = new List<NCommand>();
 
-		private Queue<NCommand> outgoingAcknowledgementsList = new Queue<NCommand>();
+		private StreamBuffer outgoingAcknowledgementsPool;
 
-		internal readonly int windowSize = 128;
+		internal const int UnsequencedWindowSize = 128;
+
+		internal readonly int[] unsequencedWindow = new int[4];
+
+		internal int outgoingUnsequencedGroupNumber;
+
+		internal int incomingUnsequencedGroupNumber;
 
 		private byte udpCommandCount;
 
 		private byte[] udpBuffer;
 
 		private int udpBufferIndex;
+
+		private int udpBufferLength;
+
+		private byte[] bufferForEncryption;
+
+		private int commandBufferSize = 100;
 
 		internal int challenge;
 
@@ -34,17 +55,40 @@ namespace ExitGames.Client.Photon
 
 		internal static readonly byte[] messageHeader = udpHeader0xF3;
 
+		protected bool datagramEncryptedConnection;
+
+		private EnetChannel[] channelArray = new EnetChannel[0];
+
+		private const byte ControlChannelNumber = byte.MaxValue;
+
+		protected internal const short PeerIdForConnect = -1;
+
+		protected internal const short PeerIdForConnectTrace = -2;
+
+		private Queue<int> commandsToRemove = new Queue<int>();
+
+		private int fragmentLength = 0;
+
+		private int fragmentLengthDatagramEncrypt = 0;
+
+		private int fragmentLengthMtuValue = 0;
+
+		private Queue<NCommand> commandsToResend = new Queue<NCommand>();
+
+		private Queue<NCommand> CommandQueue = new Queue<NCommand>();
+
 		internal override int QueuedIncomingCommandsCount
 		{
 			get
 			{
 				int num = 0;
-				lock (channels)
+				lock (channelArray)
 				{
-					foreach (EnetChannel value in channels.Values)
+					for (int i = 0; i < channelArray.Length; i++)
 					{
-						num += value.incomingReliableCommandsList.Count;
-						num += value.incomingUnreliableCommandsList.Count;
+						EnetChannel enetChannel = channelArray[i];
+						num += enetChannel.incomingReliableCommandsList.Count;
+						num += enetChannel.incomingUnreliableCommandsList.Count;
 					}
 				}
 				return num;
@@ -56,100 +100,142 @@ namespace ExitGames.Client.Photon
 			get
 			{
 				int num = 0;
-				lock (channels)
+				lock (channelArray)
 				{
-					foreach (EnetChannel value in channels.Values)
+					for (int i = 0; i < channelArray.Length; i++)
 					{
-						num += value.outgoingReliableCommandsList.Count;
-						num += value.outgoingUnreliableCommandsList.Count;
+						EnetChannel enetChannel = channelArray[i];
+						num += enetChannel.outgoingReliableCommandsList.Count;
+						num += enetChannel.outgoingUnreliableCommandsList.Count;
 					}
 				}
 				return num;
 			}
 		}
 
-		internal EnetPeer()
+		internal override int SentReliableCommandsCount
 		{
-			PeerBase.peerCount++;
-			InitOnce();
-			TrafficPackageHeaderSize = 12;
+			get
+			{
+				return sentReliableCommands.Count;
+			}
 		}
 
-		internal EnetPeer(IPhotonPeerListener listener)
-			: this()
+		internal EnetPeer()
 		{
-			base.Listener = listener;
+			TrafficPackageHeaderSize = 12;
 		}
 
 		internal override void InitPeerBase()
 		{
 			base.InitPeerBase();
-			peerID = -1;
+			if (photonPeer.PayloadEncryptionSecret != null && usedTransportProtocol == ConnectionProtocol.Udp)
+			{
+				InitEncryption(photonPeer.PayloadEncryptionSecret);
+			}
+			if (photonPeer.Encryptor != null)
+			{
+				isEncryptionAvailable = true;
+			}
+			peerID = (short)(photonPeer.EnableServerTracing ? (-2) : (-1));
 			challenge = SupportClass.ThreadSafeRandom.Next();
-			udpBuffer = new byte[mtu];
+			if (udpBuffer == null || udpBuffer.Length != base.mtu)
+			{
+				udpBuffer = new byte[base.mtu];
+			}
 			reliableCommandsSent = 0;
 			reliableCommandsRepeated = 0;
-			lock (channels)
+			lock (channelArray)
 			{
-				channels = new Dictionary<byte, EnetChannel>();
-			}
-			lock (channels)
-			{
-				channels[byte.MaxValue] = new EnetChannel(byte.MaxValue, commandBufferSize);
-				for (byte b = 0; b < ChannelCount; b = (byte)(b + 1))
+				EnetChannel[] array = channelArray;
+				if (array.Length != base.ChannelCount + 1)
 				{
-					channels[b] = new EnetChannel(b, commandBufferSize);
+					array = new EnetChannel[base.ChannelCount + 1];
 				}
+				for (byte b = 0; b < base.ChannelCount; b = (byte)(b + 1))
+				{
+					array[b] = new EnetChannel(b, commandBufferSize);
+				}
+				array[base.ChannelCount] = new EnetChannel(byte.MaxValue, commandBufferSize);
+				channelArray = array;
 			}
 			lock (sentReliableCommands)
 			{
 				sentReliableCommands = new List<NCommand>(commandBufferSize);
 			}
-			lock (outgoingAcknowledgementsList)
+			outgoingAcknowledgementsPool = new StreamBuffer();
+			CommandLogInit();
+		}
+
+		internal void ApplyRandomizedSequenceNumbers()
+		{
+			if (!photonPeer.RandomizeSequenceNumbers)
 			{
-				outgoingAcknowledgementsList = new Queue<NCommand>(commandBufferSize);
+				return;
+			}
+			lock (channelArray)
+			{
+				EnetChannel[] array = channelArray;
+				foreach (EnetChannel enetChannel in array)
+				{
+					int num = photonPeer.RandomizedSequenceNumbers[(int)enetChannel.ChannelNumber % photonPeer.RandomizedSequenceNumbers.Length];
+					string debugReturn = string.Format("Channel {0} seqNr in: {1} out: {2}. randomize value: {3}", enetChannel.ChannelNumber, enetChannel.incomingReliableSequenceNumber, enetChannel.outgoingReliableSequenceNumber, num);
+					EnqueueDebugReturn(DebugLevel.INFO, debugReturn);
+					enetChannel.incomingReliableSequenceNumber = num;
+					enetChannel.outgoingReliableSequenceNumber = num;
+					enetChannel.outgoingReliableUnsequencedNumber = num;
+				}
 			}
 		}
 
-		internal override bool Connect(string ipport, string appID)
+		internal override bool Connect(string ipport, string appID, object custom = null)
+		{
+			return Connect(ipport, null, appID, custom);
+		}
+
+		internal override bool Connect(string ipport, string proxyServerAddress, string appID, object custom)
 		{
 			if (peerConnectionState != 0)
 			{
 				base.Listener.DebugReturn(DebugLevel.WARNING, "Connect() can't be called if peer is not Disconnected. Not connecting. peerConnectionState: " + peerConnectionState);
 				return false;
 			}
-			if ((int)debugOut >= 5)
+			if ((int)base.debugOut >= 5)
 			{
 				base.Listener.DebugReturn(DebugLevel.ALL, "Connect()");
 			}
 			base.ServerAddress = ipport;
+			base.ProxyServerAddress = proxyServerAddress;
 			InitPeerBase();
-			if (appID == null)
+			if (base.SocketImplementation != null)
 			{
-				appID = "Lite";
+				PhotonSocket = (IPhotonSocket)Activator.CreateInstance(base.SocketImplementation, this);
 			}
-			for (int i = 0; i < 32; i++)
+			else
 			{
-                INIT_BYTES[i + 9] = (byte)((i < appID.Length) ? (byte)appID[i] : (byte)0);
-            }
-            rt = new SocketUdp(this);
-			if (rt == null)
+				PhotonSocket = new SocketUdp(this);
+			}
+			if (PhotonSocket == null)
 			{
 				base.Listener.DebugReturn(DebugLevel.ERROR, "Connect() failed, because SocketImplementation or socket was null. Set PhotonPeer.SocketImplementation before Connect().");
 				return false;
 			}
-			if (rt.Connect())
+			if (PhotonSocket.Connect())
 			{
 				if (base.TrafficStatsEnabled)
 				{
-					TrafficStatsOutgoing.ControlCommandBytes += 44;
-					TrafficStatsOutgoing.ControlCommandCount++;
+					base.TrafficStatsOutgoing.ControlCommandBytes += 44;
+					base.TrafficStatsOutgoing.ControlCommandCount++;
 				}
 				peerConnectionState = ConnectionStateValue.Connecting;
-				QueueOutgoingReliableCommand(new NCommand(this, 2, null, byte.MaxValue));
 				return true;
 			}
 			return false;
+		}
+
+		public override void OnConnect()
+		{
+			QueueOutgoingReliableCommand(new NCommand(this, 2, null, byte.MaxValue));
 		}
 
 		internal override void Disconnect()
@@ -158,13 +244,6 @@ namespace ExitGames.Client.Photon
 			{
 				return;
 			}
-			if (outgoingAcknowledgementsList != null)
-			{
-				lock (outgoingAcknowledgementsList)
-				{
-					outgoingAcknowledgementsList.Clear();
-				}
-			}
 			if (sentReliableCommands != null)
 			{
 				lock (sentReliableCommands)
@@ -172,30 +251,35 @@ namespace ExitGames.Client.Photon
 					sentReliableCommands.Clear();
 				}
 			}
-			lock (channels)
+			lock (channelArray)
 			{
-				foreach (EnetChannel value in channels.Values)
+				EnetChannel[] array = channelArray;
+				foreach (EnetChannel enetChannel in array)
 				{
-					value.clearAll();
+					enetChannel.clearAll();
 				}
 			}
+			bool isSimulationEnabled = base.NetworkSimulationSettings.IsSimulationEnabled;
+			base.NetworkSimulationSettings.IsSimulationEnabled = false;
 			NCommand nCommand = new NCommand(this, 4, null, byte.MaxValue);
 			QueueOutgoingReliableCommand(nCommand);
 			SendOutgoingCommands();
 			if (base.TrafficStatsEnabled)
 			{
-				TrafficStatsOutgoing.CountControlCommand(nCommand.Size);
+				base.TrafficStatsOutgoing.CountControlCommand(nCommand.Size);
 			}
-			rt.Disconnect();
+			base.NetworkSimulationSettings.IsSimulationEnabled = isSimulationEnabled;
+			PhotonSocket.Disconnect();
 			peerConnectionState = ConnectionStateValue.Disconnected;
-			base.Listener.OnStatusChanged(StatusCode.Disconnect);
+			EnqueueStatusCallback(StatusCode.Disconnect);
+			datagramEncryptedConnection = false;
 		}
 
 		internal override void StopConnection()
 		{
-			if (rt != null)
+			if (PhotonSocket != null)
 			{
-				rt.Disconnect();
+				PhotonSocket.Disconnect();
 			}
 			peerConnectionState = ConnectionStateValue.Disconnected;
 			if (base.Listener != null)
@@ -206,24 +290,35 @@ namespace ExitGames.Client.Photon
 
 		internal override void FetchServerTimestamp()
 		{
-			if (peerConnectionState != ConnectionStateValue.Connected)
+			if (peerConnectionState != ConnectionStateValue.Connected || !ApplicationIsInitialized)
 			{
-				if ((int)debugOut >= 3)
+				if ((int)base.debugOut >= 3)
 				{
 					EnqueueDebugReturn(DebugLevel.INFO, "FetchServerTimestamp() was skipped, as the client is not connected. Current ConnectionState: " + peerConnectionState);
 				}
 			}
 			else
 			{
-				CreateAndEnqueueCommand(12, new byte[0], byte.MaxValue);
+				CreateAndEnqueueCommand(12, null, byte.MaxValue);
 			}
 		}
 
 		internal override bool DispatchIncomingCommands()
 		{
+			int count = CommandQueue.Count;
+			if (count > 0)
+			{
+				for (int i = 0; i < count; i++)
+				{
+					lock (CommandQueue)
+					{
+						NCommand command = CommandQueue.Dequeue();
+						ExecuteCommand(command);
+					}
+				}
+			}
 			while (true)
 			{
-				bool flag = true;
 				MyAction myAction;
 				lock (ActionQueue)
 				{
@@ -232,105 +327,128 @@ namespace ExitGames.Client.Photon
 						break;
 					}
 					myAction = ActionQueue.Dequeue();
-					goto IL_0043;
+					goto IL_00a8;
 				}
-				IL_0043:
+				IL_00a8:
 				myAction();
 			}
 			NCommand value = null;
-			Queue<int> queue = new Queue<int>();
-			lock (channels)
+			lock (channelArray)
 			{
-				foreach (EnetChannel value2 in channels.Values)
+				for (int j = 0; j < channelArray.Length; j++)
 				{
-					if (value2.incomingUnreliableCommandsList.Count > 0)
+					EnetChannel enetChannel = channelArray[j];
+					if (enetChannel.incomingUnsequencedCommandsList.Count > 0)
+					{
+						value = enetChannel.incomingUnsequencedCommandsList.Dequeue();
+						break;
+					}
+					if (enetChannel.incomingUnreliableCommandsList.Count > 0)
 					{
 						int num = int.MaxValue;
-						foreach (int key in value2.incomingUnreliableCommandsList.Keys)
+						foreach (int key in enetChannel.incomingUnreliableCommandsList.Keys)
 						{
-							NCommand nCommand = value2.incomingUnreliableCommandsList[key];
-							if (key < value2.incomingUnreliableSequenceNumber || nCommand.reliableSequenceNumber < value2.incomingReliableSequenceNumber)
+							NCommand nCommand = enetChannel.incomingUnreliableCommandsList[key];
+							if (key < enetChannel.incomingUnreliableSequenceNumber || nCommand.reliableSequenceNumber < enetChannel.incomingReliableSequenceNumber)
 							{
-								queue.Enqueue(key);
+								commandsToRemove.Enqueue(key);
 							}
-							else if (limitOfUnreliableCommands > 0 && value2.incomingUnreliableCommandsList.Count > limitOfUnreliableCommands)
-							{
-								queue.Enqueue(key);
-							}
-							else if (key < num && nCommand.reliableSequenceNumber <= value2.incomingReliableSequenceNumber)
+							else if (key < num && nCommand.reliableSequenceNumber <= enetChannel.incomingReliableSequenceNumber)
 							{
 								num = key;
 							}
 						}
-						while (queue.Count > 0)
+						while (commandsToRemove.Count > 0)
 						{
-							value2.incomingUnreliableCommandsList.Remove(queue.Dequeue());
+							enetChannel.incomingUnreliableCommandsList.Remove(commandsToRemove.Dequeue());
 						}
 						if (num < int.MaxValue)
 						{
-							value = value2.incomingUnreliableCommandsList[num];
+							value = enetChannel.incomingUnreliableCommandsList[num];
 						}
 						if (value != null)
 						{
-							value2.incomingUnreliableCommandsList.Remove(value.unreliableSequenceNumber);
-							value2.incomingUnreliableSequenceNumber = value.unreliableSequenceNumber;
+							enetChannel.incomingUnreliableCommandsList.Remove(value.unreliableSequenceNumber);
+							enetChannel.incomingUnreliableSequenceNumber = value.unreliableSequenceNumber;
 							break;
 						}
 					}
-					if (value != null || value2.incomingReliableCommandsList.Count <= 0)
+					if (value != null || enetChannel.incomingReliableCommandsList.Count <= 0)
 					{
 						continue;
 					}
-					value2.incomingReliableCommandsList.TryGetValue(value2.incomingReliableSequenceNumber + 1, out value);
-					if (value == null)
+					enetChannel.incomingReliableCommandsList.TryGetValue(enetChannel.incomingReliableSequenceNumber + 1, out value);
+					if (value != null)
 					{
-						continue;
-					}
-					if (value.commandType != 8)
-					{
-						value2.incomingReliableSequenceNumber = value.reliableSequenceNumber;
-						value2.incomingReliableCommandsList.Remove(value.reliableSequenceNumber);
-						break;
-					}
-					if (value.fragmentsRemaining > 0)
-					{
-						value = null;
-						break;
-					}
-					byte[] array = new byte[value.totalLength];
-					for (int i = value.startSequenceNumber; i < value.startSequenceNumber + value.fragmentCount; i++)
-					{
-						if (value2.ContainsReliableSequenceNumber(i))
+						if (value.commandType != 8)
 						{
-							NCommand nCommand2 = value2.FetchReliableSequenceNumber(i);
-							Buffer.BlockCopy(nCommand2.Payload, 0, array, nCommand2.fragmentOffset, nCommand2.Payload.Length);
-							value2.incomingReliableCommandsList.Remove(nCommand2.reliableSequenceNumber);
-							continue;
+							enetChannel.incomingReliableSequenceNumber = value.reliableSequenceNumber;
+							enetChannel.incomingReliableCommandsList.Remove(value.reliableSequenceNumber);
 						}
-						throw new Exception("command.fragmentsRemaining was 0, but not all fragments are found to be combined!");
+						else if (value.fragmentsRemaining > 0)
+						{
+							value = null;
+						}
+						else
+						{
+							enetChannel.incomingReliableSequenceNumber = value.reliableSequenceNumber + value.fragmentCount - 1;
+							enetChannel.incomingReliableCommandsList.Remove(value.reliableSequenceNumber);
+						}
+						break;
 					}
-					if ((int)debugOut >= 5)
-					{
-						base.Listener.DebugReturn(DebugLevel.ALL, "assembled fragmented payload from " + value.fragmentCount + " parts. Dispatching now.");
-					}
-					value.Payload = array;
-					value.Size = 12 * value.fragmentCount + value.totalLength;
-					value2.incomingReliableSequenceNumber = value.reliableSequenceNumber + value.fragmentCount - 1;
-					break;
 				}
 			}
 			if (value != null && value.Payload != null)
 			{
 				ByteCountCurrentDispatch = value.Size;
 				CommandInCurrentDispatch = value;
-				if (DeserializeMessageAndCallback(value.Payload))
-				{
-					CommandInCurrentDispatch = null;
-					return true;
-				}
+				bool flag = DeserializeMessageAndCallback(value.Payload);
+				value.FreePayload();
 				CommandInCurrentDispatch = null;
+				return true;
 			}
 			return false;
+		}
+
+		private int GetFragmentLength()
+		{
+			if (fragmentLength == 0 || base.mtu != fragmentLengthMtuValue)
+			{
+				fragmentLengthMtuValue = base.mtu;
+				fragmentLength = base.mtu - 12 - 36;
+				int num = base.mtu;
+				num = num - 7 - 32 - 16;
+				num = num / 16 * 16;
+				num = num - 5 - 36;
+				fragmentLengthDatagramEncrypt = num;
+			}
+			return datagramEncryptedConnection ? fragmentLengthDatagramEncrypt : fragmentLength;
+		}
+
+		private int CalculateBufferLen()
+		{
+			int num = base.mtu;
+			if (datagramEncryptedConnection)
+			{
+				num = num - 7 - 32 - 16;
+				num = num / 16 * 16;
+				return num - 1;
+			}
+			return num;
+		}
+
+		private int CalculateInitialOffset()
+		{
+			if (datagramEncryptedConnection)
+			{
+				return 5;
+			}
+			int num = 12;
+			if (photonPeer.CrcEnabled)
+			{
+				num += 4;
+			}
+			return num;
 		}
 
 		internal override bool SendAcksOnly()
@@ -339,39 +457,33 @@ namespace ExitGames.Client.Photon
 			{
 				return false;
 			}
-			if (rt == null || !rt.Connected)
+			if (PhotonSocket == null || !PhotonSocket.Connected)
 			{
 				return false;
 			}
 			lock (udpBuffer)
 			{
 				int num = 0;
-				udpBufferIndex = 12;
-				if (crcEnabled)
-				{
-					udpBufferIndex += 4;
-				}
+				udpBufferIndex = CalculateInitialOffset();
+				udpBufferLength = CalculateBufferLen();
 				udpCommandCount = 0;
-				timeInt = SupportClass.GetTickCount() - timeBase;
-				lock (outgoingAcknowledgementsList)
+				lock (outgoingAcknowledgementsPool)
 				{
-					if (outgoingAcknowledgementsList.Count > 0)
-					{
-						num = SerializeToBuffer(outgoingAcknowledgementsList);
-					}
+					num = SerializeAckToBuffer();
+					timeLastSendAck = base.timeInt;
 				}
-				if (timeInt > timeoutInt && sentReliableCommands.Count > 0)
+				if (base.timeInt > timeoutInt && sentReliableCommands.Count > 0)
 				{
 					lock (sentReliableCommands)
 					{
 						foreach (NCommand sentReliableCommand in sentReliableCommands)
 						{
-							if (sentReliableCommand != null && sentReliableCommand.roundTripTimeout != 0 && timeInt - sentReliableCommand.commandSentTime > sentReliableCommand.roundTripTimeout)
+							if (sentReliableCommand != null && sentReliableCommand.roundTripTimeout != 0 && base.timeInt - sentReliableCommand.commandSentTime > sentReliableCommand.roundTripTimeout)
 							{
 								sentReliableCommand.commandSentCount = 1;
 								sentReliableCommand.roundTripTimeout = 0;
 								sentReliableCommand.timeoutTime = int.MaxValue;
-								sentReliableCommand.commandSentTime = timeInt;
+								sentReliableCommand.commandSentTime = base.timeInt;
 							}
 						}
 					}
@@ -382,8 +494,8 @@ namespace ExitGames.Client.Photon
 				}
 				if (base.TrafficStatsEnabled)
 				{
-					TrafficStatsOutgoing.TotalPacketCount++;
-					TrafficStatsOutgoing.TotalCommandsInPackets += udpCommandCount;
+					base.TrafficStatsOutgoing.TotalPacketCount++;
+					base.TrafficStatsOutgoing.TotalCommandsInPackets += udpCommandCount;
 				}
 				SendData(udpBuffer, udpBufferIndex);
 				return num > 0;
@@ -396,81 +508,86 @@ namespace ExitGames.Client.Photon
 			{
 				return false;
 			}
-			if (!rt.Connected)
+			if (!PhotonSocket.Connected)
 			{
 				return false;
 			}
 			lock (udpBuffer)
 			{
 				int num = 0;
-				udpBufferIndex = 12;
-				if (crcEnabled)
-				{
-					udpBufferIndex += 4;
-				}
+				udpBufferIndex = CalculateInitialOffset();
+				udpBufferLength = CalculateBufferLen();
 				udpCommandCount = 0;
-				timeInt = SupportClass.GetTickCount() - timeBase;
-				lock (outgoingAcknowledgementsList)
+				timeLastSendOutgoing = base.timeInt;
+				lock (outgoingAcknowledgementsPool)
 				{
-					if (outgoingAcknowledgementsList.Count > 0)
+					if (outgoingAcknowledgementsPool.Length > 0)
 					{
-						num = SerializeToBuffer(outgoingAcknowledgementsList);
+						num = SerializeAckToBuffer();
+						timeLastSendAck = base.timeInt;
 					}
 				}
-				if (!base.IsSendingOnlyAcks && timeInt > timeoutInt && sentReliableCommands.Count > 0)
+				if (!base.IsSendingOnlyAcks && base.timeInt > timeoutInt && sentReliableCommands.Count > 0)
 				{
 					lock (sentReliableCommands)
 					{
-						Queue<NCommand> queue = new Queue<NCommand>();
-						foreach (NCommand sentReliableCommand in sentReliableCommands)
+						commandsToResend.Clear();
+						for (int i = 0; i < sentReliableCommands.Count; i++)
 						{
-							if (sentReliableCommand == null || timeInt - sentReliableCommand.commandSentTime <= sentReliableCommand.roundTripTimeout)
+							NCommand nCommand = sentReliableCommands[i];
+							if (nCommand == null || base.timeInt - nCommand.commandSentTime <= nCommand.roundTripTimeout)
 							{
 								continue;
 							}
-							if (sentReliableCommand.commandSentCount > sentCountAllowance || timeInt > sentReliableCommand.timeoutTime)
+							if (nCommand.commandSentCount > photonPeer.SentCountAllowance || base.timeInt > nCommand.timeoutTime)
 							{
-								if ((int)debugOut >= 3)
+								if ((int)base.debugOut >= 2)
 								{
-									base.Listener.DebugReturn(DebugLevel.INFO, string.Concat("Timeout-disconnect! Command: ", sentReliableCommand, " now: ", timeInt, " challenge: ", Convert.ToString(challenge, 16)));
+									base.Listener.DebugReturn(DebugLevel.WARNING, string.Concat("Timeout-disconnect! Command: ", nCommand, " now: ", base.timeInt, " challenge: ", Convert.ToString(challenge, 16)));
+								}
+								if (CommandLog != null)
+								{
+									CommandLog.Enqueue(new CmdLogSentReliable(nCommand, base.timeInt, roundTripTime, roundTripTimeVariance, true));
+									CommandLogResize();
 								}
 								peerConnectionState = ConnectionStateValue.Zombie;
-								base.Listener.OnStatusChanged(StatusCode.TimeoutDisconnect);
+								EnqueueStatusCallback(StatusCode.TimeoutDisconnect);
 								Disconnect();
 								return false;
 							}
-							queue.Enqueue(sentReliableCommand);
+							commandsToResend.Enqueue(nCommand);
 						}
-						while (queue.Count > 0)
+						while (commandsToResend.Count > 0)
 						{
-							NCommand current = queue.Dequeue();
-							QueueOutgoingReliableCommand(current);
-							sentReliableCommands.Remove(current);
+							NCommand nCommand2 = commandsToResend.Dequeue();
+							QueueOutgoingReliableCommand(nCommand2);
+							sentReliableCommands.Remove(nCommand2);
 							reliableCommandsRepeated++;
-							if ((int)debugOut >= 3)
+							if ((int)base.debugOut >= 3)
 							{
-								base.Listener.DebugReturn(DebugLevel.INFO, string.Format("Resending: {0}. times out after: {1} sent: {3} now: {2} rtt/var: {4}/{5} last recv: {6}", current, current.roundTripTimeout, timeInt, current.commandSentTime, roundTripTime, roundTripTimeVariance, SupportClass.GetTickCount() - timestampOfLastReceive));
+								base.Listener.DebugReturn(DebugLevel.INFO, string.Format("Resending: {0}. times out after: {1} sent: {3} now: {2} rtt/var: {4}/{5} last recv: {6}", nCommand2, nCommand2.roundTripTimeout, base.timeInt, nCommand2.commandSentTime, roundTripTime, roundTripTimeVariance, SupportClass.GetTickCount() - timestampOfLastReceive));
 							}
 						}
 					}
 				}
-				if (!base.IsSendingOnlyAcks && peerConnectionState == ConnectionStateValue.Connected && timePingInterval > 0 && sentReliableCommands.Count == 0 && timeInt - timeLastAckReceive > timePingInterval && !AreReliableCommandsInTransit() && udpBufferIndex + 12 < udpBuffer.Length)
+				if (!base.IsSendingOnlyAcks && peerConnectionState == ConnectionStateValue.Connected && base.timePingInterval > 0 && sentReliableCommands.Count == 0 && base.timeInt - timeLastAckReceive > base.timePingInterval && !AreReliableCommandsInTransit() && udpBufferIndex + 12 < udpBufferLength)
 				{
-					NCommand current = new NCommand(this, 5, null, byte.MaxValue);
-					QueueOutgoingReliableCommand(current);
+					NCommand nCommand3 = new NCommand(this, 5, null, byte.MaxValue);
+					QueueOutgoingReliableCommand(nCommand3);
 					if (base.TrafficStatsEnabled)
 					{
-						TrafficStatsOutgoing.CountControlCommand(current.Size);
+						base.TrafficStatsOutgoing.CountControlCommand(nCommand3.Size);
 					}
 				}
 				if (!base.IsSendingOnlyAcks)
 				{
-					lock (channels)
+					lock (channelArray)
 					{
-						foreach (EnetChannel value in channels.Values)
+						for (int j = 0; j < channelArray.Length; j++)
 						{
-							num += SerializeToBuffer(value.outgoingReliableCommandsList);
-							num += SerializeToBuffer(value.outgoingUnreliableCommandsList);
+							EnetChannel enetChannel = channelArray[j];
+							num += SerializeToBuffer(enetChannel.outgoingReliableCommandsList);
+							num += SerializeToBuffer(enetChannel.outgoingUnreliableCommandsList);
 						}
 					}
 				}
@@ -480,8 +597,8 @@ namespace ExitGames.Client.Photon
 				}
 				if (base.TrafficStatsEnabled)
 				{
-					TrafficStatsOutgoing.TotalPacketCount++;
-					TrafficStatsOutgoing.TotalCommandsInPackets += udpCommandCount;
+					base.TrafficStatsOutgoing.TotalPacketCount++;
+					base.TrafficStatsOutgoing.TotalCommandsInPackets += udpCommandCount;
 				}
 				SendData(udpBuffer, udpBufferIndex);
 				return num > 0;
@@ -490,11 +607,12 @@ namespace ExitGames.Client.Photon
 
 		private bool AreReliableCommandsInTransit()
 		{
-			lock (channels)
+			lock (channelArray)
 			{
-				foreach (EnetChannel value in channels.Values)
+				for (int i = 0; i < channelArray.Length; i++)
 				{
-					if (value.outgoingReliableCommandsList.Count > 0)
+					EnetChannel enetChannel = channelArray[i];
+					if (enetChannel.outgoingReliableCommandsList.Count > 0)
 					{
 						return true;
 					}
@@ -503,79 +621,107 @@ namespace ExitGames.Client.Photon
 			return false;
 		}
 
-		internal override bool EnqueueOperation(Dictionary<byte, object> parameters, byte opCode, bool sendReliable, byte channelId, bool encrypt, EgMessageType messageType)
+		internal override bool EnqueueOperation(Dictionary<byte, object> parameters, byte opCode, SendOptions sendParams, EgMessageType messageType = EgMessageType.Operation)
 		{
 			if (peerConnectionState != ConnectionStateValue.Connected)
 			{
-				if ((int)debugOut >= 1)
+				if ((int)base.debugOut >= 1)
 				{
 					base.Listener.DebugReturn(DebugLevel.ERROR, "Cannot send op: " + opCode + " Not connected. PeerState: " + peerConnectionState);
 				}
 				base.Listener.OnStatusChanged(StatusCode.SendError);
 				return false;
 			}
-			if (channelId >= ChannelCount)
+			if (sendParams.Channel >= base.ChannelCount)
 			{
-				if ((int)debugOut >= 1)
+				if ((int)base.debugOut >= 1)
 				{
-					base.Listener.DebugReturn(DebugLevel.ERROR, "Cannot send op: Selected channel (" + channelId + ")>= channelCount (" + ChannelCount + ").");
+					base.Listener.DebugReturn(DebugLevel.ERROR, "Cannot send op: Selected channel (" + sendParams.Channel + ")>= channelCount (" + base.ChannelCount + ").");
 				}
 				base.Listener.OnStatusChanged(StatusCode.SendError);
 				return false;
 			}
-			byte[] payload = SerializeOperationToMessage(opCode, parameters, messageType, encrypt);
-			return CreateAndEnqueueCommand((byte)(sendReliable ? 6 : 7), payload, channelId);
+			byte commandType = 7;
+			if (sendParams.DeliveryMode == DeliveryMode.UnreliableUnsequenced)
+			{
+				commandType = 11;
+			}
+			else if (sendParams.DeliveryMode == DeliveryMode.ReliableUnsequenced)
+			{
+				commandType = 14;
+			}
+			else if (sendParams.DeliveryMode == DeliveryMode.Reliable)
+			{
+				commandType = 6;
+			}
+			StreamBuffer payload = SerializeOperationToMessage(opCode, parameters, messageType, sendParams.Encrypt);
+			return CreateAndEnqueueCommand(commandType, payload, sendParams.Channel);
 		}
 
-		internal bool CreateAndEnqueueCommand(byte commandType, byte[] payload, byte channelNumber)
+		internal override bool EnqueueMessage(object message, SendOptions sendOptions)
 		{
-			if (payload == null)
+			if (peerConnectionState != ConnectionStateValue.Connected)
 			{
+				if ((int)base.debugOut >= 1)
+				{
+					base.Listener.DebugReturn(DebugLevel.ERROR, "Cannot send message! Not connected. PeerState: " + peerConnectionState);
+				}
+				base.Listener.OnStatusChanged(StatusCode.SendError);
 				return false;
 			}
-			EnetChannel enetChannel = channels[channelNumber];
-			ByteCountLastOperation = 0;
-			int num = mtu - 12 - 36;
-			if (payload.Length > num)
+			byte channel = sendOptions.Channel;
+			if (channel >= base.ChannelCount)
 			{
-				int fragmentCount = (payload.Length + num - 1) / num;
-				int startSequenceNumber = enetChannel.outgoingReliableSequenceNumber + 1;
-				int num2 = 0;
-				for (int i = 0; i < payload.Length; i += num)
+				if ((int)base.debugOut >= 1)
 				{
-					if (payload.Length - i < num)
-					{
-						num = payload.Length - i;
-					}
-					byte[] array = new byte[num];
-					Buffer.BlockCopy(payload, i, array, 0, num);
-					NCommand nCommand = new NCommand(this, 8, array, enetChannel.ChannelNumber);
-					nCommand.fragmentNumber = num2;
-					nCommand.startSequenceNumber = startSequenceNumber;
-					nCommand.fragmentCount = fragmentCount;
-					nCommand.totalLength = payload.Length;
-					nCommand.fragmentOffset = i;
-					QueueOutgoingReliableCommand(nCommand);
-					ByteCountLastOperation += nCommand.Size;
-					if (base.TrafficStatsEnabled)
-					{
-						TrafficStatsOutgoing.CountFragmentOpCommand(nCommand.Size);
-						TrafficStatsGameLevel.CountOperation(nCommand.Size);
-					}
-					num2++;
+					base.Listener.DebugReturn(DebugLevel.ERROR, "Cannot send op: Selected channel (" + channel + ")>= channelCount (" + base.ChannelCount + ").");
 				}
+				base.Listener.OnStatusChanged(StatusCode.SendError);
+				return false;
 			}
-			else
+			byte commandType = 7;
+			if (sendOptions.DeliveryMode == DeliveryMode.UnreliableUnsequenced)
 			{
-				NCommand nCommand = new NCommand(this, commandType, payload, enetChannel.ChannelNumber);
-				if (nCommand.commandFlags == 1)
+				commandType = 11;
+			}
+			else if (sendOptions.DeliveryMode == DeliveryMode.ReliableUnsequenced)
+			{
+				commandType = 14;
+			}
+			else if (sendOptions.DeliveryMode == DeliveryMode.Reliable)
+			{
+				commandType = 6;
+			}
+			StreamBuffer payload = SerializeMessageToMessage(message, sendOptions.Encrypt, messageHeader, false);
+			return CreateAndEnqueueCommand(commandType, payload, channel);
+		}
+
+		private EnetChannel GetChannel(byte channelNumber)
+		{
+			return (channelNumber == byte.MaxValue) ? channelArray[channelArray.Length - 1] : channelArray[channelNumber];
+		}
+
+		internal bool CreateAndEnqueueCommand(byte commandType, StreamBuffer payload, byte channelNumber)
+		{
+			EnetChannel channel = GetChannel(channelNumber);
+			ByteCountLastOperation = 0;
+			int num = GetFragmentLength();
+			if (num == 0)
+			{
+				num = 1000;
+				EnqueueDebugReturn(DebugLevel.WARNING, "Value of currentFragmentSize should not be 0. Corrected to 1000.");
+			}
+			if (payload == null || payload.Length <= num)
+			{
+				NCommand nCommand = new NCommand(this, commandType, payload, channel.ChannelNumber);
+				if (nCommand.IsFlaggedReliable)
 				{
 					QueueOutgoingReliableCommand(nCommand);
 					ByteCountLastOperation = nCommand.Size;
 					if (base.TrafficStatsEnabled)
 					{
-						TrafficStatsOutgoing.CountReliableOpCommand(nCommand.Size);
-						TrafficStatsGameLevel.CountOperation(nCommand.Size);
+						base.TrafficStatsOutgoing.CountReliableOpCommand(nCommand.Size);
+						base.TrafficStatsGameLevel.CountOperation(nCommand.Size);
 					}
 				}
 				else
@@ -584,46 +730,97 @@ namespace ExitGames.Client.Photon
 					ByteCountLastOperation = nCommand.Size;
 					if (base.TrafficStatsEnabled)
 					{
-						TrafficStatsOutgoing.CountUnreliableOpCommand(nCommand.Size);
-						TrafficStatsGameLevel.CountOperation(nCommand.Size);
+						base.TrafficStatsOutgoing.CountUnreliableOpCommand(nCommand.Size);
+						base.TrafficStatsGameLevel.CountOperation(nCommand.Size);
 					}
 				}
+			}
+			else
+			{
+				bool flag = commandType == 14 || commandType == 11;
+				int fragmentCount = (payload.Length + num - 1) / num;
+				int startSequenceNumber = (flag ? channel.outgoingReliableUnsequencedNumber : channel.outgoingReliableSequenceNumber) + 1;
+				byte[] buffer = payload.GetBuffer();
+				int num2 = 0;
+				for (int i = 0; i < payload.Length; i += num)
+				{
+					if (payload.Length - i < num)
+					{
+						num = payload.Length - i;
+					}
+					StreamBuffer streamBuffer = PeerBase.MessageBufferPoolGet();
+					streamBuffer.Write(buffer, i, num);
+					NCommand nCommand2 = new NCommand(this, (byte)(flag ? 15 : 8), streamBuffer, channel.ChannelNumber);
+					nCommand2.fragmentNumber = num2;
+					nCommand2.startSequenceNumber = startSequenceNumber;
+					nCommand2.fragmentCount = fragmentCount;
+					nCommand2.totalLength = payload.Length;
+					nCommand2.fragmentOffset = i;
+					QueueOutgoingReliableCommand(nCommand2);
+					ByteCountLastOperation += nCommand2.Size;
+					if (base.TrafficStatsEnabled)
+					{
+						base.TrafficStatsOutgoing.CountFragmentOpCommand(nCommand2.Size);
+						base.TrafficStatsGameLevel.CountOperation(nCommand2.Size);
+					}
+					num2++;
+				}
+				PeerBase.MessageBufferPoolPut(payload);
 			}
 			return true;
 		}
 
-		internal override byte[] SerializeOperationToMessage(byte opc, Dictionary<byte, object> parameters, EgMessageType messageType, bool encrypt)
+		internal override StreamBuffer SerializeOperationToMessage(byte opCode, Dictionary<byte, object> parameters, EgMessageType messageType, bool encrypt)
 		{
-			byte[] array;
-			lock (SerializeMemStream)
+			bool flag = encrypt && !datagramEncryptedConnection;
+			StreamBuffer streamBuffer = PeerBase.MessageBufferPoolGet();
+			streamBuffer.SetLength(0L);
+			if (!flag)
 			{
-				SerializeMemStream.Position = 0L;
-				SerializeMemStream.SetLength(0L);
-				if (!encrypt)
-				{
-					SerializeMemStream.Write(messageHeader, 0, messageHeader.Length);
-				}
-				Protocol.SerializeOperationRequest(SerializeMemStream, opc, parameters, false);
-				if (encrypt)
-				{
-					byte[] data = SerializeMemStream.ToArray();
-					data = CryptoProvider.Encrypt(data);
-					SerializeMemStream.Position = 0L;
-					SerializeMemStream.SetLength(0L);
-					SerializeMemStream.Write(messageHeader, 0, messageHeader.Length);
-					SerializeMemStream.Write(data, 0, data.Length);
-				}
-				array = SerializeMemStream.ToArray();
+				streamBuffer.Write(messageHeader, 0, messageHeader.Length);
 			}
+			SerializationProtocol.SerializeOperationRequest(streamBuffer, opCode, parameters, false);
+			if (flag)
+			{
+				byte[] array = CryptoProvider.Encrypt(streamBuffer.GetBuffer(), 0, streamBuffer.Length);
+				streamBuffer.SetLength(0L);
+				streamBuffer.Write(messageHeader, 0, messageHeader.Length);
+				streamBuffer.Write(array, 0, array.Length);
+			}
+			byte[] buffer = streamBuffer.GetBuffer();
 			if (messageType != EgMessageType.Operation)
 			{
-				array[messageHeader.Length - 1] = (byte)messageType;
+				buffer[messageHeader.Length - 1] = (byte)messageType;
 			}
-			if (encrypt)
+			if (flag || (encrypt && photonPeer.EnableEncryptedFlag))
 			{
-				array[messageHeader.Length - 1] = (byte)(array[messageHeader.Length - 1] | 0x80u);
+				buffer[messageHeader.Length - 1] = (byte)(buffer[messageHeader.Length - 1] | 0x80u);
 			}
-			return array;
+			return streamBuffer;
+		}
+
+		internal int SerializeAckToBuffer()
+		{
+			outgoingAcknowledgementsPool.Seek(0L, SeekOrigin.Begin);
+			while (outgoingAcknowledgementsPool.Position + 20 <= outgoingAcknowledgementsPool.Length)
+			{
+				if (udpBufferIndex + 20 > udpBufferLength)
+				{
+					if ((int)base.debugOut >= 3)
+					{
+						base.Listener.DebugReturn(DebugLevel.INFO, "UDP package is full. Commands in Package: " + udpCommandCount + ". bytes left in queue: " + outgoingAcknowledgementsPool.Position);
+					}
+					break;
+				}
+				int offset;
+				byte[] bufferAndAdvance = outgoingAcknowledgementsPool.GetBufferAndAdvance(20, out offset);
+				Buffer.BlockCopy(bufferAndAdvance, offset, udpBuffer, udpBufferIndex, 20);
+				udpBufferIndex += 20;
+				udpCommandCount++;
+			}
+			outgoingAcknowledgementsPool.Compact();
+			outgoingAcknowledgementsPool.Position = outgoingAcknowledgementsPool.Length;
+			return outgoingAcknowledgementsPool.Length / 20;
 		}
 
 		internal int SerializeToBuffer(Queue<NCommand> commandList)
@@ -636,20 +833,33 @@ namespace ExitGames.Client.Photon
 					commandList.Dequeue();
 					continue;
 				}
-				if (udpBufferIndex + nCommand.Size > udpBuffer.Length)
+				if (udpBufferIndex + nCommand.Size > udpBufferLength)
 				{
-					if ((int)debugOut >= 3)
+					if ((int)base.debugOut >= 3)
 					{
 						base.Listener.DebugReturn(DebugLevel.INFO, "UDP package is full. Commands in Package: " + udpCommandCount + ". Commands left in queue: " + commandList.Count);
 					}
 					break;
 				}
-				Buffer.BlockCopy(nCommand.Serialize(), 0, udpBuffer, udpBufferIndex, nCommand.Size);
-				udpBufferIndex += nCommand.Size;
+				nCommand.SerializeHeader(udpBuffer, ref udpBufferIndex);
+				if (nCommand.SizeOfPayload > 0)
+				{
+					Buffer.BlockCopy(nCommand.Serialize(), 0, udpBuffer, udpBufferIndex, nCommand.SizeOfPayload);
+					udpBufferIndex += nCommand.SizeOfPayload;
+				}
 				udpCommandCount++;
-				if ((nCommand.commandFlags & 1) > 0)
+				if (nCommand.IsFlaggedReliable)
 				{
 					QueueSentCommand(nCommand);
+					if (CommandLog != null)
+					{
+						CommandLog.Enqueue(new CmdLogSentReliable(nCommand, base.timeInt, roundTripTime, roundTripTimeVariance));
+						CommandLogResize();
+					}
+				}
+				else
+				{
+					nCommand.FreePayload();
 				}
 				commandList.Dequeue();
 			}
@@ -660,14 +870,19 @@ namespace ExitGames.Client.Photon
 		{
 			try
 			{
+				if (datagramEncryptedConnection)
+				{
+					SendDataEncrypted(data, length);
+					return;
+				}
 				int targetOffset = 0;
 				Protocol.Serialize(peerID, data, ref targetOffset);
-				data[2] = (byte)(crcEnabled ? 204 : 0);
+				data[2] = (byte)(photonPeer.CrcEnabled ? 204 : 0);
 				data[3] = udpCommandCount;
 				targetOffset = 4;
-				Protocol.Serialize(timeInt, data, ref targetOffset);
+				Protocol.Serialize(base.timeInt, data, ref targetOffset);
 				Protocol.Serialize(challenge, data, ref targetOffset);
-				if (crcEnabled)
+				if (photonPeer.CrcEnabled)
 				{
 					Protocol.Serialize(0, data, ref targetOffset);
 					uint value = SupportClass.CalculateCrc(data, length);
@@ -675,23 +890,11 @@ namespace ExitGames.Client.Photon
 					Protocol.Serialize((int)value, data, ref targetOffset);
 				}
 				bytesOut += length;
-				if (base.NetworkSimulationSettings.IsSimulationEnabled)
-				{
-					byte[] dataCopy = new byte[length];
-					Buffer.BlockCopy(data, 0, dataCopy, 0, length);
-					SendNetworkSimulated(delegate
-					{
-						rt.Send(dataCopy, length);
-					});
-				}
-				else
-				{
-					rt.Send(data, length);
-				}
+				SendToSocket(data, length);
 			}
 			catch (Exception ex)
 			{
-				if ((int)debugOut >= 1)
+				if ((int)base.debugOut >= 1)
 				{
 					base.Listener.DebugReturn(DebugLevel.ERROR, ex.ToString());
 				}
@@ -699,16 +902,54 @@ namespace ExitGames.Client.Photon
 			}
 		}
 
+		private void SendToSocket(byte[] data, int length)
+		{
+			if (base.NetworkSimulationSettings.IsSimulationEnabled)
+			{
+				byte[] array = new byte[length];
+				Buffer.BlockCopy(data, 0, array, 0, length);
+				SendNetworkSimulated(array);
+				return;
+			}
+			int tickCount = SupportClass.GetTickCount();
+			PhotonSocket.Send(data, length);
+			int num = SupportClass.GetTickCount() - tickCount;
+			if (num > longestSentCall)
+			{
+				longestSentCall = num;
+			}
+		}
+
+		private void SendDataEncrypted(byte[] data, int length)
+		{
+			if (bufferForEncryption == null || bufferForEncryption.Length != base.mtu)
+			{
+				bufferForEncryption = new byte[base.mtu];
+			}
+			byte[] array = bufferForEncryption;
+			int targetOffset = 0;
+			Protocol.Serialize(peerID, array, ref targetOffset);
+			array[2] = 1;
+			targetOffset++;
+			Protocol.Serialize(challenge, array, ref targetOffset);
+			data[0] = udpCommandCount;
+			int targetOffset2 = 1;
+			Protocol.Serialize(base.timeInt, data, ref targetOffset2);
+			photonPeer.Encryptor.Encrypt(data, length, array, ref targetOffset);
+			Buffer.BlockCopy(photonPeer.Encryptor.CreateHMAC(array, 0, targetOffset), 0, array, targetOffset, 32);
+			SendToSocket(array, targetOffset + 32);
+		}
+
 		internal void QueueSentCommand(NCommand command)
 		{
-			command.commandSentTime = timeInt;
+			command.commandSentTime = base.timeInt;
 			command.commandSentCount++;
 			if (command.roundTripTimeout == 0)
 			{
-				command.roundTripTimeout = roundTripTime + 4 * roundTripTimeVariance;
-				command.timeoutTime = timeInt + DisconnectTimeout;
+				command.roundTripTimeout = Math.Min(roundTripTime + 4 * roundTripTimeVariance, photonPeer.InitialResendTimeMax);
+				command.timeoutTime = base.timeInt + base.DisconnectTimeout;
 			}
-			else
+			else if (command.commandSentCount > photonPeer.QuickResendAttempts + 1)
 			{
 				command.roundTripTimeout *= 2;
 			}
@@ -716,57 +957,70 @@ namespace ExitGames.Client.Photon
 			{
 				if (sentReliableCommands.Count == 0)
 				{
-					timeoutInt = command.commandSentTime + command.roundTripTimeout;
+					int num = command.commandSentTime + command.roundTripTimeout;
+					if (num < timeoutInt)
+					{
+						timeoutInt = num;
+					}
 				}
 				reliableCommandsSent++;
 				sentReliableCommands.Add(command);
-			}
-			if (sentReliableCommands.Count >= warningSize && sentReliableCommands.Count % warningSize == 0)
-			{
-				base.Listener.OnStatusChanged(StatusCode.QueueSentWarning);
 			}
 		}
 
 		internal void QueueOutgoingReliableCommand(NCommand command)
 		{
-			EnetChannel enetChannel = channels[command.commandChannelID];
-			lock (enetChannel)
+			EnetChannel channel = GetChannel(command.commandChannelID);
+			lock (channel)
 			{
-				Queue<NCommand> outgoingReliableCommandsList = enetChannel.outgoingReliableCommandsList;
-				if (outgoingReliableCommandsList.Count >= warningSize && outgoingReliableCommandsList.Count % warningSize == 0)
-				{
-					base.Listener.OnStatusChanged(StatusCode.QueueOutgoingReliableWarning);
-				}
 				if (command.reliableSequenceNumber == 0)
 				{
-					command.reliableSequenceNumber = ++enetChannel.outgoingReliableSequenceNumber;
+					if (command.IsFlaggedUnsequenced)
+					{
+						command.reliableSequenceNumber = ++channel.outgoingReliableUnsequencedNumber;
+					}
+					else
+					{
+						command.reliableSequenceNumber = ++channel.outgoingReliableSequenceNumber;
+					}
 				}
-				outgoingReliableCommandsList.Enqueue(command);
+				channel.outgoingReliableCommandsList.Enqueue(command);
 			}
 		}
 
 		internal void QueueOutgoingUnreliableCommand(NCommand command)
 		{
-			Queue<NCommand> outgoingUnreliableCommandsList = channels[command.commandChannelID].outgoingUnreliableCommandsList;
-			if (outgoingUnreliableCommandsList.Count >= warningSize && outgoingUnreliableCommandsList.Count % warningSize == 0)
+			EnetChannel channel = GetChannel(command.commandChannelID);
+			lock (channel)
 			{
-				base.Listener.OnStatusChanged(StatusCode.QueueOutgoingUnreliableWarning);
+				if (command.IsFlaggedUnsequenced)
+				{
+					command.reliableSequenceNumber = 0;
+					command.unsequencedGroupNumber = ++outgoingUnsequencedGroupNumber;
+				}
+				else
+				{
+					command.reliableSequenceNumber = channel.outgoingReliableSequenceNumber;
+					command.unreliableSequenceNumber = ++channel.outgoingUnreliableSequenceNumber;
+				}
+				if (!photonPeer.SendInCreationOrder)
+				{
+					channel.outgoingUnreliableCommandsList.Enqueue(command);
+				}
+				else
+				{
+					channel.outgoingReliableCommandsList.Enqueue(command);
+				}
 			}
-			EnetChannel enetChannel = channels[command.commandChannelID];
-			command.reliableSequenceNumber = enetChannel.outgoingReliableSequenceNumber;
-			command.unreliableSequenceNumber = ++enetChannel.outgoingUnreliableSequenceNumber;
-			outgoingUnreliableCommandsList.Enqueue(command);
 		}
 
-		internal void QueueOutgoingAcknowledgement(NCommand command)
+		internal void QueueOutgoingAcknowledgement(NCommand readCommand, int sendTime)
 		{
-			lock (outgoingAcknowledgementsList)
+			lock (outgoingAcknowledgementsPool)
 			{
-				if (outgoingAcknowledgementsList.Count >= warningSize && outgoingAcknowledgementsList.Count % warningSize == 0)
-				{
-					base.Listener.OnStatusChanged(StatusCode.QueueOutgoingAcksWarning);
-				}
-				outgoingAcknowledgementsList.Enqueue(command);
+				int offset;
+				byte[] bufferAndAdvance = outgoingAcknowledgementsPool.GetBufferAndAdvance(20, out offset);
+				NCommand.CreateAck(bufferAndAdvance, offset, readCommand, sendTime);
 			}
 		}
 
@@ -779,33 +1033,67 @@ namespace ExitGames.Client.Photon
 				short value;
 				Protocol.Deserialize(out value, inBuff, ref offset);
 				byte b = inBuff[offset++];
-				byte b2 = inBuff[offset++];
-				Protocol.Deserialize(out serverSentTime, inBuff, ref offset);
 				int value2;
-				Protocol.Deserialize(out value2, inBuff, ref offset);
-				if (b == 204)
+				byte b2;
+				if (b == 1)
 				{
-					int value3;
-					Protocol.Deserialize(out value3, inBuff, ref offset);
-					bytesIn += 4L;
-					offset -= 4;
-					Protocol.Serialize(0, inBuff, ref offset);
-					uint num = SupportClass.CalculateCrc(inBuff, dataLength);
-					if (value3 != (int)num)
+					if (photonPeer.Encryptor == null)
+					{
+						EnqueueDebugReturn(DebugLevel.ERROR, "Got encrypted packet, but encryption is not set up. Packet ignored");
+						return;
+					}
+					datagramEncryptedConnection = true;
+					if (!photonPeer.Encryptor.CheckHMAC(inBuff, dataLength))
 					{
 						packetLossByCrc++;
-						if (peerConnectionState != 0 && (int)debugOut >= 3)
+						if (peerConnectionState != 0 && (int)base.debugOut >= 3)
 						{
-							EnqueueDebugReturn(DebugLevel.INFO, string.Format("Ignored package due to wrong CRC. Incoming:  {0:X} Local: {1:X}", (uint)value3, num));
+							EnqueueDebugReturn(DebugLevel.INFO, "Ignored package due to wrong HMAC.");
 						}
 						return;
 					}
+					Protocol.Deserialize(out value2, inBuff, ref offset);
+					inBuff = photonPeer.Encryptor.Decrypt(inBuff, offset, dataLength - offset - 32, out dataLength);
+					dataLength = inBuff.Length;
+					offset = 0;
+					b2 = inBuff[offset++];
+					Protocol.Deserialize(out serverSentTime, inBuff, ref offset);
+					bytesIn += 60 + dataLength + (16 - dataLength % 16);
 				}
-				bytesIn += 12L;
+				else
+				{
+					if (datagramEncryptedConnection)
+					{
+						EnqueueDebugReturn(DebugLevel.WARNING, "Got not encrypted packet, but expected only encrypted. Packet ignored");
+						return;
+					}
+					b2 = inBuff[offset++];
+					Protocol.Deserialize(out serverSentTime, inBuff, ref offset);
+					Protocol.Deserialize(out value2, inBuff, ref offset);
+					if (b == 204)
+					{
+						int value3;
+						Protocol.Deserialize(out value3, inBuff, ref offset);
+						bytesIn += 4L;
+						offset -= 4;
+						Protocol.Serialize(0, inBuff, ref offset);
+						uint num = SupportClass.CalculateCrc(inBuff, dataLength);
+						if (value3 != (int)num)
+						{
+							packetLossByCrc++;
+							if (peerConnectionState != 0 && (int)base.debugOut >= 3)
+							{
+								EnqueueDebugReturn(DebugLevel.INFO, string.Format("Ignored package due to wrong CRC. Incoming:  {0:X} Local: {1:X}", (uint)value3, num));
+							}
+							return;
+						}
+					}
+					bytesIn += 12L;
+				}
 				if (base.TrafficStatsEnabled)
 				{
-					TrafficStatsIncoming.TotalPacketCount++;
-					TrafficStatsIncoming.TotalCommandsInPackets += b2;
+					base.TrafficStatsIncoming.TotalPacketCount++;
+					base.TrafficStatsIncoming.TotalCommandsInPackets += b2;
 				}
 				if (b2 > commandBufferSize || b2 <= 0)
 				{
@@ -813,43 +1101,46 @@ namespace ExitGames.Client.Photon
 				}
 				if (value2 != challenge)
 				{
-					if (peerConnectionState != 0 && (int)debugOut >= 5)
+					packetLossByChallenge++;
+					if (peerConnectionState != 0 && (int)base.debugOut >= 5)
 					{
 						EnqueueDebugReturn(DebugLevel.ALL, "Info: Ignoring received package due to wrong challenge. Challenge in-package!=local:" + value2 + "!=" + challenge + " Commands in it: " + b2);
 					}
 					return;
 				}
-				timeInt = SupportClass.GetTickCount() - timeBase;
 				for (int i = 0; i < b2; i++)
 				{
-					NCommand readCommand = new NCommand(this, inBuff, ref offset);
-					if (readCommand.commandType != 1)
+					NCommand nCommand = new NCommand(this, inBuff, ref offset);
+					if (nCommand.commandType != 1 && nCommand.commandType != 16)
 					{
-						EnqueueActionForDispatch(delegate
+						lock (CommandQueue)
 						{
-							ExecuteCommand(readCommand);
-						});
+							CommandQueue.Enqueue(nCommand);
+						}
 					}
 					else
 					{
-						TrafficStatsIncoming.TimestampOfLastAck = SupportClass.GetTickCount();
-						ExecuteCommand(readCommand);
+						ExecuteCommand(nCommand);
 					}
-					if ((readCommand.commandFlags & 1) > 0)
+					if (nCommand.IsFlaggedReliable)
 					{
-						NCommand nCommand = NCommand.CreateAck(this, readCommand, serverSentTime);
-						QueueOutgoingAcknowledgement(nCommand);
+						if (InReliableLog != null)
+						{
+							InReliableLog.Enqueue(new CmdLogReceivedReliable(nCommand, base.timeInt, roundTripTime, roundTripTimeVariance, base.timeInt - timeLastSendOutgoing, base.timeInt - timeLastSendAck));
+							CommandLogResize();
+						}
+						QueueOutgoingAcknowledgement(nCommand, serverSentTime);
 						if (base.TrafficStatsEnabled)
 						{
-							TrafficStatsIncoming.TimestampOfLastReliableCommand = SupportClass.GetTickCount();
-							TrafficStatsOutgoing.CountControlCommand(nCommand.Size);
+							base.TrafficStatsIncoming.TimestampOfLastReliableCommand = SupportClass.GetTickCount();
+							base.TrafficStatsOutgoing.CountControlCommand(20);
 						}
 					}
 				}
 			}
 			catch (Exception ex)
 			{
-				if ((int)debugOut >= 1)
+				if ((int)base.debugOut >= 1)
 				{
 					EnqueueDebugReturn(DebugLevel.ERROR, string.Format("Exception while reading commands from incoming data: {0}", ex));
 				}
@@ -859,55 +1150,75 @@ namespace ExitGames.Client.Photon
 
 		internal bool ExecuteCommand(NCommand command)
 		{
-			bool flag = true;
+			bool result = true;
 			switch (command.commandType)
 			{
 			case 2:
 			case 5:
 				if (base.TrafficStatsEnabled)
 				{
-					TrafficStatsIncoming.CountControlCommand(command.Size);
+					base.TrafficStatsIncoming.CountControlCommand(command.Size);
 				}
 				break;
 			case 4:
 			{
 				if (base.TrafficStatsEnabled)
 				{
-					TrafficStatsIncoming.CountControlCommand(command.Size);
+					base.TrafficStatsIncoming.CountControlCommand(command.Size);
 				}
-				StatusCode statusCode = StatusCode.DisconnectByServer;
+				StatusCode statusValue = StatusCode.DisconnectByServerReasonUnknown;
 				if (command.reservedByte == 1)
 				{
-					statusCode = StatusCode.DisconnectByServerLogic;
+					statusValue = StatusCode.DisconnectByServerLogic;
+				}
+				else if (command.reservedByte == 2)
+				{
+					statusValue = StatusCode.DisconnectByServerTimeout;
 				}
 				else if (command.reservedByte == 3)
 				{
-					statusCode = StatusCode.DisconnectByServerUserLimit;
+					statusValue = StatusCode.DisconnectByServerUserLimit;
 				}
-				if ((int)debugOut >= 3)
+				if ((int)base.debugOut >= 3)
 				{
-					base.Listener.DebugReturn(DebugLevel.INFO, "Server " + base.ServerAddress + " sent disconnect. PeerId: " + (ushort)peerID + " RTT/Variance:" + roundTripTime + "/" + roundTripTimeVariance + " reason byte: " + command.reservedByte);
+					base.Listener.DebugReturn(DebugLevel.INFO, "Server " + base.ServerAddress + " sent disconnect. PeerId: " + (ushort)peerID + " RTT/Variance:" + roundTripTime + "/" + roundTripTimeVariance + " reason byte: " + command.reservedByte + " peerConnectionState: " + peerConnectionState);
 				}
-				peerConnectionState = ConnectionStateValue.Disconnecting;
-				base.Listener.OnStatusChanged(statusCode);
-				rt.Disconnect();
-				peerConnectionState = ConnectionStateValue.Disconnected;
-				base.Listener.OnStatusChanged(StatusCode.Disconnect);
+				if (peerConnectionState != 0 && peerConnectionState != ConnectionStateValue.Disconnecting)
+				{
+					EnqueueStatusCallback(statusValue);
+					Disconnect();
+				}
 				break;
 			}
 			case 1:
+			case 16:
 			{
 				if (base.TrafficStatsEnabled)
 				{
-					TrafficStatsIncoming.CountControlCommand(command.Size);
+					base.TrafficStatsIncoming.TimestampOfLastAck = SupportClass.GetTickCount();
+					base.TrafficStatsIncoming.CountControlCommand(command.Size);
 				}
-				timeLastAckReceive = timeInt;
-				lastRoundTripTime = timeInt - command.ackReceivedSentTime;
-				NCommand nCommand = RemoveSentReliableCommand(command.ackReceivedReliableSequenceNumber, command.commandChannelID);
+				timeLastAckReceive = base.timeInt;
+				lastRoundTripTime = base.timeInt - command.ackReceivedSentTime;
+				if (lastRoundTripTime < 0 || lastRoundTripTime > 10000)
+				{
+					if ((int)base.debugOut >= 3)
+					{
+						EnqueueDebugReturn(DebugLevel.INFO, "Measured lastRoundtripTime is suspicious: " + lastRoundTripTime + " for command: " + command);
+					}
+					lastRoundTripTime = roundTripTime * 4;
+				}
+				NCommand nCommand = RemoveSentReliableCommand(command.ackReceivedReliableSequenceNumber, command.commandChannelID, command.commandType == 16);
+				if (CommandLog != null)
+				{
+					CommandLog.Enqueue(new CmdLogReceivedAck(command, base.timeInt, roundTripTime, roundTripTimeVariance));
+					CommandLogResize();
+				}
 				if (nCommand == null)
 				{
 					break;
 				}
+				nCommand.FreePayload();
 				if (nCommand.commandType == 12)
 				{
 					if (lastRoundTripTime <= roundTripTime)
@@ -924,189 +1235,270 @@ namespace ExitGames.Client.Photon
 				UpdateRoundTripTimeAndVariance(lastRoundTripTime);
 				if (nCommand.commandType == 4 && peerConnectionState == ConnectionStateValue.Disconnecting)
 				{
-					if ((int)debugOut >= 3)
+					if ((int)base.debugOut >= 3)
 					{
 						EnqueueDebugReturn(DebugLevel.INFO, "Received disconnect ACK by server");
 					}
 					EnqueueActionForDispatch(delegate
 					{
-						rt.Disconnect();
+						PhotonSocket.Disconnect();
 					});
 				}
-				else if (nCommand.commandType == 2)
+				else if (nCommand.commandType == 2 && lastRoundTripTime >= 0)
 				{
-					roundTripTime = lastRoundTripTime;
+					if (lastRoundTripTime <= 15)
+					{
+						roundTripTime = 15;
+						roundTripTimeVariance = 5;
+					}
+					else
+					{
+						roundTripTime = lastRoundTripTime;
+					}
 				}
 				break;
 			}
 			case 6:
 				if (base.TrafficStatsEnabled)
 				{
-					TrafficStatsIncoming.CountReliableOpCommand(command.Size);
+					base.TrafficStatsIncoming.CountReliableOpCommand(command.Size);
 				}
 				if (peerConnectionState == ConnectionStateValue.Connected)
 				{
-					flag = QueueIncomingCommand(command);
+					result = QueueIncomingCommand(command);
+				}
+				break;
+			case 14:
+				if (base.TrafficStatsEnabled)
+				{
+					base.TrafficStatsIncoming.CountReliableOpCommand(command.Size);
+				}
+				if (peerConnectionState == ConnectionStateValue.Connected)
+				{
+					result = QueueIncomingCommand(command);
 				}
 				break;
 			case 7:
 				if (base.TrafficStatsEnabled)
 				{
-					TrafficStatsIncoming.CountUnreliableOpCommand(command.Size);
+					base.TrafficStatsIncoming.CountUnreliableOpCommand(command.Size);
 				}
 				if (peerConnectionState == ConnectionStateValue.Connected)
 				{
-					flag = QueueIncomingCommand(command);
+					result = QueueIncomingCommand(command);
+				}
+				break;
+			case 11:
+				if (base.TrafficStatsEnabled)
+				{
+					base.TrafficStatsIncoming.CountUnreliableOpCommand(command.Size);
+				}
+				if (peerConnectionState == ConnectionStateValue.Connected)
+				{
+					result = QueueIncomingCommand(command);
 				}
 				break;
 			case 8:
+			case 15:
 			{
-				if (base.TrafficStatsEnabled)
-				{
-					TrafficStatsIncoming.CountFragmentOpCommand(command.Size);
-				}
 				if (peerConnectionState != ConnectionStateValue.Connected)
 				{
 					break;
 				}
+				if (base.TrafficStatsEnabled)
+				{
+					base.TrafficStatsIncoming.CountFragmentOpCommand(command.Size);
+				}
 				if (command.fragmentNumber > command.fragmentCount || command.fragmentOffset >= command.totalLength || command.fragmentOffset + command.Payload.Length > command.totalLength)
 				{
-					if ((int)debugOut >= 1)
+					if ((int)base.debugOut >= 1)
 					{
 						base.Listener.DebugReturn(DebugLevel.ERROR, "Received fragment has bad size: " + command);
 					}
 					break;
 				}
-				flag = QueueIncomingCommand(command);
-				if (!flag)
+				bool flag = command.commandType == 8;
+				EnetChannel channel = GetChannel(command.commandChannelID);
+				NCommand fragment = null;
+				bool flag2 = channel.TryGetFragment(command.startSequenceNumber, flag, out fragment);
+				if ((flag2 && fragment.fragmentsRemaining <= 0) || !QueueIncomingCommand(command))
 				{
 					break;
 				}
-				EnetChannel enetChannel = channels[command.commandChannelID];
-				if (command.reliableSequenceNumber == command.startSequenceNumber)
+				if (command.reliableSequenceNumber != command.startSequenceNumber)
 				{
-					command.fragmentsRemaining--;
-					int num = command.startSequenceNumber + 1;
-					while (command.fragmentsRemaining > 0 && num < command.startSequenceNumber + command.fragmentCount)
+					if (flag2)
 					{
-						if (enetChannel.ContainsReliableSequenceNumber(num++))
+						fragment.fragmentsRemaining--;
+					}
+				}
+				else
+				{
+					fragment = command;
+					fragment.fragmentsRemaining--;
+					NCommand fragment2 = null;
+					int num = command.startSequenceNumber + 1;
+					while (fragment.fragmentsRemaining > 0 && num < fragment.startSequenceNumber + fragment.fragmentCount)
+					{
+						if (channel.TryGetFragment(num++, flag, out fragment2))
 						{
-							command.fragmentsRemaining--;
+							fragment.fragmentsRemaining--;
 						}
 					}
 				}
-				else if (enetChannel.ContainsReliableSequenceNumber(command.startSequenceNumber))
+				if (fragment == null || fragment.fragmentsRemaining > 0)
 				{
-					NCommand nCommand2 = enetChannel.FetchReliableSequenceNumber(command.startSequenceNumber);
-					nCommand2.fragmentsRemaining--;
+					break;
+				}
+				StreamBuffer streamBuffer = PeerBase.MessageBufferPoolGet();
+				streamBuffer.Position = 0;
+				streamBuffer.SetCapacityMinimum(fragment.totalLength);
+				byte[] buffer = streamBuffer.GetBuffer();
+				for (int i = fragment.startSequenceNumber; i < fragment.startSequenceNumber + fragment.fragmentCount; i++)
+				{
+					NCommand fragment3;
+					if (channel.TryGetFragment(i, flag, out fragment3))
+					{
+						Buffer.BlockCopy(fragment3.Payload.GetBuffer(), 0, buffer, fragment3.fragmentOffset, fragment3.Payload.Length);
+						fragment3.FreePayload();
+						channel.RemoveFragment(fragment3.reliableSequenceNumber, flag);
+						continue;
+					}
+					throw new Exception("startCommand.fragmentsRemaining was 0 but not all fragments were found to be combined!");
+				}
+				streamBuffer.SetLength(fragment.totalLength);
+				fragment.Payload = streamBuffer;
+				fragment.Size = 12 * fragment.fragmentCount + fragment.totalLength;
+				if (!flag)
+				{
+					channel.incomingUnsequencedCommandsList.Enqueue(fragment);
+				}
+				else
+				{
+					channel.incomingReliableCommandsList.Add(fragment.startSequenceNumber, fragment);
 				}
 				break;
 			}
 			case 3:
 				if (base.TrafficStatsEnabled)
 				{
-					TrafficStatsIncoming.CountControlCommand(command.Size);
+					base.TrafficStatsIncoming.CountControlCommand(command.Size);
 				}
 				if (peerConnectionState == ConnectionStateValue.Connecting)
 				{
-					command = new NCommand(this, 6, INIT_BYTES, 0);
-					QueueOutgoingReliableCommand(command);
-					if (base.TrafficStatsEnabled)
+					byte[] buf = PrepareConnectData(base.ServerAddress, AppId, CustomInitData);
+					CreateAndEnqueueCommand(6, new StreamBuffer(buf), 0);
+					if (photonPeer.RandomizeSequenceNumbers)
 					{
-						TrafficStatsOutgoing.CountControlCommand(command.Size);
+						ApplyRandomizedSequenceNumbers();
 					}
 					peerConnectionState = ConnectionStateValue.Connected;
 				}
 				break;
 			}
-			return flag;
+			return result;
 		}
 
 		internal bool QueueIncomingCommand(NCommand command)
 		{
-			EnetChannel value = null;
-			channels.TryGetValue(command.commandChannelID, out value);
-			if (value == null)
+			EnetChannel channel = GetChannel(command.commandChannelID);
+			if (channel == null)
 			{
-				if ((int)debugOut >= 1)
+				if ((int)base.debugOut >= 1)
 				{
 					base.Listener.DebugReturn(DebugLevel.ERROR, "Received command for non-existing channel: " + command.commandChannelID);
 				}
 				return false;
 			}
-			if ((int)debugOut >= 5)
+			if ((int)base.debugOut >= 5)
 			{
-				base.Listener.DebugReturn(DebugLevel.ALL, string.Concat("queueIncomingCommand() ", command, " channel seq# r/u: ", value.incomingReliableSequenceNumber, "/", value.incomingUnreliableSequenceNumber));
+				base.Listener.DebugReturn(DebugLevel.ALL, string.Concat("queueIncomingCommand() ", command, " channel seq# r/u: ", channel.incomingReliableSequenceNumber, "/", channel.incomingUnreliableSequenceNumber));
 			}
-			if (command.commandFlags == 1)
+			if (command.IsFlaggedReliable)
 			{
-				if (command.reliableSequenceNumber <= value.incomingReliableSequenceNumber)
+				if (command.IsFlaggedUnsequenced)
 				{
-					if ((int)debugOut >= 3)
+					return channel.QueueIncomingReliableUnsequenced(command);
+				}
+				if (command.reliableSequenceNumber <= channel.incomingReliableSequenceNumber)
+				{
+					if ((int)base.debugOut >= 3)
 					{
-						base.Listener.DebugReturn(DebugLevel.INFO, "incoming command " + command.ToString() + " is old (not saving it). Dispatched incomingReliableSequenceNumber: " + value.incomingReliableSequenceNumber);
+						base.Listener.DebugReturn(DebugLevel.INFO, string.Concat("incoming command ", command, " is old (not saving it). Dispatched incomingReliableSequenceNumber: ", channel.incomingReliableSequenceNumber));
 					}
 					return false;
 				}
-				if (value.ContainsReliableSequenceNumber(command.reliableSequenceNumber))
+				if (channel.ContainsReliableSequenceNumber(command.reliableSequenceNumber))
 				{
-					if ((int)debugOut >= 3)
+					if ((int)base.debugOut >= 3)
 					{
-						base.Listener.DebugReturn(DebugLevel.INFO, string.Concat("Info: command was received before! Old/New: ", value.FetchReliableSequenceNumber(command.reliableSequenceNumber), "/", command, " inReliableSeq#: ", value.incomingReliableSequenceNumber));
+						base.Listener.DebugReturn(DebugLevel.INFO, string.Concat("Info: command was received before! Old/New: ", channel.FetchReliableSequenceNumber(command.reliableSequenceNumber), "/", command, " inReliableSeq#: ", channel.incomingReliableSequenceNumber));
 					}
 					return false;
 				}
-				if (value.incomingReliableCommandsList.Count >= warningSize && value.incomingReliableCommandsList.Count % warningSize == 0)
-				{
-					base.Listener.OnStatusChanged(StatusCode.QueueIncomingReliableWarning);
-				}
-				value.incomingReliableCommandsList.Add(command.reliableSequenceNumber, command);
+				channel.incomingReliableCommandsList.Add(command.reliableSequenceNumber, command);
 				return true;
 			}
 			if (command.commandFlags == 0)
 			{
-				if (command.reliableSequenceNumber < value.incomingReliableSequenceNumber)
+				if (command.reliableSequenceNumber < channel.incomingReliableSequenceNumber)
 				{
-					if ((int)debugOut >= 3)
+					if ((int)base.debugOut >= 3)
 					{
 						base.Listener.DebugReturn(DebugLevel.INFO, "incoming reliable-seq# < Dispatched-rel-seq#. not saved.");
 					}
 					return true;
 				}
-				if (command.unreliableSequenceNumber <= value.incomingUnreliableSequenceNumber)
+				if (command.unreliableSequenceNumber <= channel.incomingUnreliableSequenceNumber)
 				{
-					if ((int)debugOut >= 3)
+					if ((int)base.debugOut >= 3)
 					{
 						base.Listener.DebugReturn(DebugLevel.INFO, "incoming unreliable-seq# < Dispatched-unrel-seq#. not saved.");
 					}
 					return true;
 				}
-				if (value.ContainsUnreliableSequenceNumber(command.unreliableSequenceNumber))
+				if (channel.ContainsUnreliableSequenceNumber(command.unreliableSequenceNumber))
 				{
-					if ((int)debugOut >= 3)
+					if ((int)base.debugOut >= 3)
 					{
-						base.Listener.DebugReturn(DebugLevel.INFO, string.Concat("command was received before! Old/New: ", value.incomingUnreliableCommandsList[command.unreliableSequenceNumber], "/", command));
+						base.Listener.DebugReturn(DebugLevel.INFO, string.Concat("command was received before! Old/New: ", channel.incomingUnreliableCommandsList[command.unreliableSequenceNumber], "/", command));
 					}
 					return false;
 				}
-				if (value.incomingUnreliableCommandsList.Count >= warningSize && value.incomingUnreliableCommandsList.Count % warningSize == 0)
+				channel.incomingUnreliableCommandsList.Add(command.unreliableSequenceNumber, command);
+				return true;
+			}
+			if (command.commandFlags == 2)
+			{
+				int unsequencedGroupNumber = command.unsequencedGroupNumber;
+				int num = command.unsequencedGroupNumber % 128;
+				if (unsequencedGroupNumber >= incomingUnsequencedGroupNumber + 128)
 				{
-					base.Listener.OnStatusChanged(StatusCode.QueueIncomingUnreliableWarning);
+					incomingUnsequencedGroupNumber = unsequencedGroupNumber - num;
+					for (int i = 0; i < unsequencedWindow.Length; i++)
+					{
+						unsequencedWindow[i] = 0;
+					}
 				}
-				value.incomingUnreliableCommandsList.Add(command.unreliableSequenceNumber, command);
+				else if (unsequencedGroupNumber < incomingUnsequencedGroupNumber || (unsequencedWindow[num / 32] & (1 << num % 32)) != 0)
+				{
+					return false;
+				}
+				unsequencedWindow[num / 32] |= 1 << num % 32;
+				channel.incomingUnsequencedCommandsList.Enqueue(command);
 				return true;
 			}
 			return false;
 		}
 
-		internal NCommand RemoveSentReliableCommand(int ackReceivedReliableSequenceNumber, int ackReceivedChannel)
+		internal NCommand RemoveSentReliableCommand(int ackReceivedReliableSequenceNumber, int ackReceivedChannel, bool isUnsequenced)
 		{
 			NCommand nCommand = null;
 			lock (sentReliableCommands)
 			{
 				foreach (NCommand sentReliableCommand in sentReliableCommands)
 				{
-					if (sentReliableCommand != null && sentReliableCommand.reliableSequenceNumber == ackReceivedReliableSequenceNumber && sentReliableCommand.commandChannelID == ackReceivedChannel)
+					if (sentReliableCommand != null && sentReliableCommand.reliableSequenceNumber == ackReceivedReliableSequenceNumber && sentReliableCommand.IsFlaggedUnsequenced == isUnsequenced && sentReliableCommand.commandChannelID == ackReceivedChannel)
 					{
 						nCommand = sentReliableCommand;
 						break;
@@ -1117,10 +1509,10 @@ namespace ExitGames.Client.Photon
 					sentReliableCommands.Remove(nCommand);
 					if (sentReliableCommands.Count > 0)
 					{
-						timeoutInt = sentReliableCommands[0].commandSentTime + sentReliableCommands[0].roundTripTimeout;
+						timeoutInt = base.timeInt + 25;
 					}
 				}
-				else if ((int)debugOut >= 5 && peerConnectionState != ConnectionStateValue.Connected && peerConnectionState != ConnectionStateValue.Disconnecting)
+				else if ((int)base.debugOut >= 5 && peerConnectionState != ConnectionStateValue.Connected && peerConnectionState != ConnectionStateValue.Disconnecting)
 				{
 					EnqueueDebugReturn(DebugLevel.ALL, string.Format("No sent command for ACK (Ch: {0} Sq#: {1}). PeerState: {2}.", ackReceivedReliableSequenceNumber, ackReceivedChannel, peerConnectionState));
 				}
@@ -1130,7 +1522,7 @@ namespace ExitGames.Client.Photon
 
 		internal string CommandListToString(NCommand[] list)
 		{
-			if ((int)debugOut < 5)
+			if ((int)base.debugOut < 5)
 			{
 				return string.Empty;
 			}

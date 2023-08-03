@@ -9,19 +9,19 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1489816362171000}
+  m_RootGameObject: {fileID: 1449042675813483}
   m_IsPrefabParent: 1
   m_IsExploded: 0
---- !u!1 &1489816362171000
+--- !u!1 &1449042675813483
 GameObject:
   serializedVersion: 4
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_Component:
-  - 4: {fileID: 4632482459665979}
-  - 33: {fileID: 33175971010867028}
-  - 23: {fileID: 23969283377073929}
+  - 4: {fileID: 4275932986601341}
+  - 33: {fileID: 33949692012317438}
+  - 23: {fileID: 23140219509347210}
   m_Layer: 0
   m_Name: hair_girl2
   m_TagString: Untagged
@@ -29,38 +29,38 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4632482459665979
+--- !u!4 &4275932986601341
 Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1489816362171000}
+  m_GameObject: {fileID: 1449042675813483}
   m_LocalRotation: {x: -0.7071069, y: 0, z: -0, w: 0.70710677}
   m_LocalPosition: {x: 0, y: 0, z: -0.0019471667}
   m_LocalScale: {x: 25, y: 25, z: 25}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!33 &33175971010867028
+--- !u!33 &33949692012317438
 MeshFilter:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1489816362171000}
-  m_Mesh: {fileID: 4300000, guid: 3140b27039688fb4a90f26a217025650, type: 2}
---- !u!23 &23969283377073929
+  m_GameObject: {fileID: 1449042675813483}
+  m_Mesh: {fileID: 4300000, guid: 82e864b4678d5454ca4a888c3ad103b8, type: 2}
+--- !u!23 &23140219509347210
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1489816362171000}
+  m_GameObject: {fileID: 1449042675813483}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_LightmapIndex: 255
   m_LightmapTilingOffset: {x: 1, y: 1, z: 0, w: 0}
   m_Materials:
-  - {fileID: 2100000, guid: b34f2af7042b6384696e4d055bf7a02e, type: 2}
+  - {fileID: 2100000, guid: a66b2d267699da042bba64f473a620fd, type: 2}
   m_SubsetIndices: []
   m_StaticBatchRoot: {fileID: 0}
   m_UseLightProbes: 0

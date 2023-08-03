@@ -2,13 +2,13 @@ using UnityEngine;
 
 public class PanelMain : MonoBehaviour
 {
-	public GameObject label_single;
+	public GameObject label_credits;
 
 	public GameObject label_multi;
 
 	public GameObject label_option;
 
-	public GameObject label_credits;
+	public GameObject label_single;
 
 	private int lang = -1;
 

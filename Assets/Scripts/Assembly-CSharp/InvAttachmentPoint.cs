@@ -3,11 +3,11 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Examples/Item Attachment Point")]
 public class InvAttachmentPoint : MonoBehaviour
 {
-	public InvBaseItem.Slot slot;
+	private GameObject mChild;
 
 	private GameObject mPrefab;
 
-	private GameObject mChild;
+	public InvBaseItem.Slot slot;
 
 	public GameObject Attach(GameObject prefab)
 	{

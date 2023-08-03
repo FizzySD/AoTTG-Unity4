@@ -7,7 +7,7 @@ public class EquipItems : MonoBehaviour
 
 	private void Start()
 	{
-		if (itemIDs != null && itemIDs.Length > 0)
+		if (itemIDs != null && itemIDs.Length != 0)
 		{
 			InvEquipment invEquipment = GetComponent<InvEquipment>();
 			if (invEquipment == null)
@@ -22,10 +22,12 @@ public class EquipItems : MonoBehaviour
 				InvBaseItem invBaseItem = InvDatabase.FindByID(num2);
 				if (invBaseItem != null)
 				{
-					InvGameItem invGameItem = new InvGameItem(num2, invBaseItem);
-					invGameItem.quality = (InvGameItem.Quality)Random.Range(0, max);
-					invGameItem.itemLevel = NGUITools.RandomRange(invBaseItem.minItemLevel, invBaseItem.maxItemLevel);
-					invEquipment.Equip(invGameItem);
+					InvGameItem item = new InvGameItem(num2, invBaseItem)
+					{
+						quality = (InvGameItem.Quality)Random.Range(0, max),
+						itemLevel = NGUITools.RandomRange(invBaseItem.minItemLevel, invBaseItem.maxItemLevel)
+					};
+					invEquipment.Equip(item);
 				}
 				else
 				{

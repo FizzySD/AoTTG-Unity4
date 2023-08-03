@@ -13,7 +13,11 @@ public class ByteReader
 	{
 		get
 		{
-			return mBuffer != null && mOffset < mBuffer.Length;
+			if (mBuffer != null)
+			{
+				return mOffset < mBuffer.Length;
+			}
+			return false;
 		}
 	}
 
@@ -27,41 +31,6 @@ public class ByteReader
 		mBuffer = asset.bytes;
 	}
 
-	private static string ReadLine(byte[] buffer, int start, int count)
-	{
-		return Encoding.UTF8.GetString(buffer, start, count);
-	}
-
-	public string ReadLine()
-	{
-		int num = mBuffer.Length;
-		while (mOffset < num && mBuffer[mOffset] < 32)
-		{
-			mOffset++;
-		}
-		int num2 = mOffset;
-		if (num2 < num)
-		{
-			int num3;
-			do
-			{
-				if (num2 < num)
-				{
-					num3 = mBuffer[num2++];
-					continue;
-				}
-				num2++;
-				break;
-			}
-			while (num3 != 10 && num3 != 13);
-			string result = ReadLine(mBuffer, mOffset, num2 - mOffset - 1);
-			mOffset = num2;
-			return result;
-		}
-		mOffset = num;
-		return null;
-	}
-
 	public Dictionary<string, string> ReadDictionary()
 	{
 		Dictionary<string, string> dictionary = new Dictionary<string, string>();
@@ -71,7 +40,7 @@ public class ByteReader
 			string text = ReadLine();
 			if (text == null)
 			{
-				break;
+				return dictionary;
 			}
 			if (!text.StartsWith("//"))
 			{
@@ -85,5 +54,40 @@ public class ByteReader
 			}
 		}
 		return dictionary;
+	}
+
+	public string ReadLine()
+	{
+		int num = mBuffer.Length;
+		while (mOffset < num && mBuffer[mOffset] < 32)
+		{
+			mOffset++;
+		}
+		int num2 = mOffset;
+		if (num2 >= num)
+		{
+			mOffset = num;
+			return null;
+		}
+		byte b;
+		do
+		{
+			if (num2 < num)
+			{
+				b = mBuffer[num2++];
+				continue;
+			}
+			num2++;
+			break;
+		}
+		while (b != 10 && b != 13);
+		string result = ReadLine(mBuffer, mOffset, num2 - mOffset - 1);
+		mOffset = num2;
+		return result;
+	}
+
+	private static string ReadLine(byte[] buffer, int start, int count)
+	{
+		return Encoding.UTF8.GetString(buffer, start, count);
 	}
 }

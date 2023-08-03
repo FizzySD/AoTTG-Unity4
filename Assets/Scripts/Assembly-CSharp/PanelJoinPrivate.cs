@@ -2,13 +2,13 @@ using UnityEngine;
 
 public class PanelJoinPrivate : MonoBehaviour
 {
-	public GameObject label_ip;
+	public GameObject label_back;
 
-	public GameObject label_port;
+	public GameObject label_ip;
 
 	public GameObject label_join;
 
-	public GameObject label_back;
+	public GameObject label_port;
 
 	private int lang = -1;
 

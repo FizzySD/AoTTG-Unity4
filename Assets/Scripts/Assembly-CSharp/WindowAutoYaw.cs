@@ -3,13 +3,22 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Examples/Window Auto-Yaw")]
 public class WindowAutoYaw : MonoBehaviour
 {
-	public int updateOrder;
+	private Transform mTrans;
 
 	public Camera uiCamera;
 
+	public int updateOrder;
+
 	public float yawAmount = 20f;
 
-	private Transform mTrans;
+	private void CoroutineUpdate(float delta)
+	{
+		if (uiCamera != null)
+		{
+			Vector3 vector = uiCamera.WorldToViewportPoint(mTrans.position);
+			mTrans.localRotation = Quaternion.Euler(0f, (vector.x * 2f - 1f) * yawAmount, 0f);
+		}
+	}
 
 	private void OnDisable()
 	{
@@ -24,14 +33,5 @@ public class WindowAutoYaw : MonoBehaviour
 		}
 		mTrans = base.transform;
 		UpdateManager.AddCoroutine(this, updateOrder, CoroutineUpdate);
-	}
-
-	private void CoroutineUpdate(float delta)
-	{
-		if (uiCamera != null)
-		{
-			Vector3 vector = uiCamera.WorldToViewportPoint(mTrans.position);
-			mTrans.localRotation = Quaternion.Euler(0f, (vector.x * 2f - 1f) * yawAmount, 0f);
-		}
 	}
 }

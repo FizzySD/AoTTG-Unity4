@@ -2,11 +2,39 @@ using UnityEngine;
 
 public class Sprite
 {
+	public Color Color;
+
+	protected bool ColorChanged;
+
+	protected float ElapsedTime;
+
+	protected float Fps;
+
+	protected Matrix4x4 LastMat;
+
+	private Matrix4x4 LocalMat;
+
 	protected Vector2 LowerLeftUV;
+
+	public Camera MainCamera;
+
+	public STransform MyTransform;
+
+	private ORIPOINT OriPoint;
+
+	protected Vector3 RotateAxis;
+
+	private Quaternion Rotation;
+
+	private Vector3 ScaleVector;
+
+	private STYPE Type;
+
+	protected bool UVChanged;
 
 	protected Vector2 UVDimensions;
 
-	public STransform MyTransform;
+	private int UVStretch;
 
 	public Vector3 v1 = Vector3.zero;
 
@@ -18,35 +46,7 @@ public class Sprite
 
 	protected VertexPool.VertexSegment Vertexsegment;
 
-	public Color Color;
-
-	private Vector3 ScaleVector;
-
-	private Quaternion Rotation;
-
-	private Matrix4x4 LocalMat;
-
 	private Matrix4x4 WorldMat;
-
-	protected float ElapsedTime;
-
-	protected float Fps;
-
-	public Camera MainCamera;
-
-	protected bool UVChanged;
-
-	protected bool ColorChanged;
-
-	protected Matrix4x4 LastMat;
-
-	protected Vector3 RotateAxis;
-
-	private STYPE Type;
-
-	private ORIPOINT OriPoint;
-
-	private int UVStretch;
 
 	public Sprite(VertexPool.VertexSegment segment, float width, float height, STYPE type, ORIPOINT oripoint, Camera cam, int uvStretch, float maxFps)
 	{
@@ -77,6 +77,21 @@ public class Sprite
 		SetRotation(0f);
 	}
 
+	public void Reset()
+	{
+		MyTransform.Reset();
+		SetColor(Color.white);
+		SetUVCoord(Vector2.zero, Vector2.zero);
+		ScaleVector = Vector3.one;
+		Rotation = Quaternion.identity;
+		VertexPool pool = Vertexsegment.Pool;
+		int vertStart = Vertexsegment.VertStart;
+		pool.Vertices[vertStart] = Vector3.zero;
+		pool.Vertices[vertStart + 1] = Vector3.zero;
+		pool.Vertices[vertStart + 2] = Vector3.zero;
+		pool.Vertices[vertStart + 3] = Vector3.zero;
+	}
+
 	public void ResetSegment()
 	{
 		VertexPool pool = Vertexsegment.Pool;
@@ -103,16 +118,20 @@ public class Sprite
 		pool.UVChanged = (pool.IndiceChanged = (pool.ColorChanged = (pool.VertChanged = true)));
 	}
 
-	public void SetUVCoord(Vector2 lowerleft, Vector2 dimensions)
+	public void SetColor(Color c)
 	{
-		LowerLeftUV = lowerleft;
-		UVDimensions = dimensions;
-		UVChanged = true;
+		Color = c;
+		ColorChanged = true;
 	}
 
 	public void SetPosition(Vector3 pos)
 	{
 		MyTransform.position = pos;
+	}
+
+	public void SetRotation(float angle)
+	{
+		Rotation = Quaternion.AngleAxis(angle, RotateAxis);
 	}
 
 	public void SetRotation(Quaternion q)
@@ -127,7 +146,7 @@ public class Sprite
 
 	public void SetRotationTo(Vector3 dir)
 	{
-		if (!(dir == Vector3.zero))
+		if (dir != Vector3.zero)
 		{
 			Quaternion rotation = Quaternion.identity;
 			Vector3 vector = dir;
@@ -139,74 +158,56 @@ public class Sprite
 			if (OriPoint == ORIPOINT.CENTER)
 			{
 				Quaternion quaternion = Quaternion.FromToRotation(new Vector3(0f, 0f, 1f), vector);
-				Quaternion quaternion2 = Quaternion.FromToRotation(vector, dir);
-				rotation = quaternion2 * quaternion;
+				rotation = Quaternion.FromToRotation(vector, dir) * quaternion;
 			}
 			else if (OriPoint == ORIPOINT.LEFT_UP)
 			{
-				Quaternion quaternion3 = Quaternion.FromToRotation(LocalMat.MultiplyPoint3x4(v3), vector);
-				Quaternion quaternion4 = Quaternion.FromToRotation(vector, dir);
-				rotation = quaternion4 * quaternion3;
+				Quaternion quaternion2 = Quaternion.FromToRotation(LocalMat.MultiplyPoint3x4(v3), vector);
+				rotation = Quaternion.FromToRotation(vector, dir) * quaternion2;
 			}
 			else if (OriPoint == ORIPOINT.LEFT_BOTTOM)
 			{
-				Quaternion quaternion5 = Quaternion.FromToRotation(LocalMat.MultiplyPoint3x4(v4), vector);
-				Quaternion quaternion6 = Quaternion.FromToRotation(vector, dir);
-				rotation = quaternion6 * quaternion5;
+				Quaternion quaternion3 = Quaternion.FromToRotation(LocalMat.MultiplyPoint3x4(v4), vector);
+				rotation = Quaternion.FromToRotation(vector, dir) * quaternion3;
 			}
 			else if (OriPoint == ORIPOINT.RIGHT_BOTTOM)
 			{
-				Quaternion quaternion7 = Quaternion.FromToRotation(LocalMat.MultiplyPoint3x4(v1), vector);
-				Quaternion quaternion8 = Quaternion.FromToRotation(vector, dir);
-				rotation = quaternion8 * quaternion7;
+				Quaternion quaternion4 = Quaternion.FromToRotation(LocalMat.MultiplyPoint3x4(v1), vector);
+				rotation = Quaternion.FromToRotation(vector, dir) * quaternion4;
 			}
 			else if (OriPoint == ORIPOINT.RIGHT_UP)
 			{
-				Quaternion quaternion9 = Quaternion.FromToRotation(LocalMat.MultiplyPoint3x4(v2), vector);
-				Quaternion quaternion10 = Quaternion.FromToRotation(vector, dir);
-				rotation = quaternion10 * quaternion9;
+				Quaternion quaternion5 = Quaternion.FromToRotation(LocalMat.MultiplyPoint3x4(v2), vector);
+				rotation = Quaternion.FromToRotation(vector, dir) * quaternion5;
 			}
 			else if (OriPoint == ORIPOINT.BOTTOM_CENTER)
 			{
-				Quaternion quaternion11 = Quaternion.FromToRotation(new Vector3(0f, 0f, 1f), vector);
-				Quaternion quaternion12 = Quaternion.FromToRotation(vector, dir);
-				rotation = quaternion12 * quaternion11;
+				Quaternion quaternion6 = Quaternion.FromToRotation(new Vector3(0f, 0f, 1f), vector);
+				rotation = Quaternion.FromToRotation(vector, dir) * quaternion6;
 			}
 			else if (OriPoint == ORIPOINT.TOP_CENTER)
 			{
-				Quaternion quaternion13 = Quaternion.FromToRotation(new Vector3(0f, 0f, -1f), vector);
-				Quaternion quaternion14 = Quaternion.FromToRotation(vector, dir);
-				rotation = quaternion14 * quaternion13;
+				Quaternion quaternion7 = Quaternion.FromToRotation(new Vector3(0f, 0f, -1f), vector);
+				rotation = Quaternion.FromToRotation(vector, dir) * quaternion7;
 			}
 			else if (OriPoint == ORIPOINT.RIGHT_CENTER)
 			{
-				Quaternion quaternion15 = Quaternion.FromToRotation(new Vector3(-1f, 0f, 0f), vector);
-				Quaternion quaternion16 = Quaternion.FromToRotation(vector, dir);
-				rotation = quaternion16 * quaternion15;
+				Quaternion quaternion8 = Quaternion.FromToRotation(new Vector3(-1f, 0f, 0f), vector);
+				rotation = Quaternion.FromToRotation(vector, dir) * quaternion8;
 			}
 			else if (OriPoint == ORIPOINT.LEFT_CENTER)
 			{
-				Quaternion quaternion17 = Quaternion.FromToRotation(new Vector3(1f, 0f, 0f), vector);
-				Quaternion quaternion18 = Quaternion.FromToRotation(vector, dir);
-				rotation = quaternion18 * quaternion17;
+				Quaternion quaternion9 = Quaternion.FromToRotation(new Vector3(1f, 0f, 0f), vector);
+				rotation = Quaternion.FromToRotation(vector, dir) * quaternion9;
 			}
 			MyTransform.rotation = rotation;
 		}
 	}
 
-	public void Reset()
+	public void SetScale(float width, float height)
 	{
-		MyTransform.Reset();
-		SetColor(Color.white);
-		SetUVCoord(Vector2.zero, Vector2.zero);
-		ScaleVector = Vector3.one;
-		Rotation = Quaternion.identity;
-		VertexPool pool = Vertexsegment.Pool;
-		int vertStart = Vertexsegment.VertStart;
-		pool.Vertices[vertStart] = Vector3.zero;
-		pool.Vertices[vertStart + 1] = Vector3.zero;
-		pool.Vertices[vertStart + 2] = Vector3.zero;
-		pool.Vertices[vertStart + 3] = Vector3.zero;
+		ScaleVector.x = width;
+		ScaleVector.z = height;
 	}
 
 	public void SetSizeXZ(float width, float height)
@@ -254,36 +255,11 @@ public class Sprite
 		v4 += vector;
 	}
 
-	public void UpdateUV()
+	public void SetUVCoord(Vector2 lowerleft, Vector2 dimensions)
 	{
-		VertexPool pool = Vertexsegment.Pool;
-		int vertStart = Vertexsegment.VertStart;
-		if (UVDimensions.y > 0f)
-		{
-			pool.UVs[vertStart] = LowerLeftUV + Vector2.up * UVDimensions.y;
-			pool.UVs[vertStart + 1] = LowerLeftUV;
-			pool.UVs[vertStart + 2] = LowerLeftUV + Vector2.right * UVDimensions.x;
-			pool.UVs[vertStart + 3] = LowerLeftUV + UVDimensions;
-		}
-		else
-		{
-			pool.UVs[vertStart] = LowerLeftUV;
-			pool.UVs[vertStart + 1] = LowerLeftUV + Vector2.up * UVDimensions.y;
-			pool.UVs[vertStart + 2] = LowerLeftUV + UVDimensions;
-			pool.UVs[vertStart + 3] = LowerLeftUV + Vector2.right * UVDimensions.x;
-		}
-		Vertexsegment.Pool.UVChanged = true;
-	}
-
-	public void UpdateColor()
-	{
-		VertexPool pool = Vertexsegment.Pool;
-		int vertStart = Vertexsegment.VertStart;
-		pool.Colors[vertStart] = Color;
-		pool.Colors[vertStart + 1] = Color;
-		pool.Colors[vertStart + 2] = Color;
-		pool.Colors[vertStart + 3] = Color;
-		Vertexsegment.Pool.ColorChanged = true;
+		LowerLeftUV = lowerleft;
+		UVDimensions = dimensions;
+		UVChanged = true;
 	}
 
 	public void Transform()
@@ -349,17 +325,6 @@ public class Sprite
 		pool.Vertices[vertStart + 3] = vector4;
 	}
 
-	public void SetRotation(float angle)
-	{
-		Rotation = Quaternion.AngleAxis(angle, RotateAxis);
-	}
-
-	public void SetScale(float width, float height)
-	{
-		ScaleVector.x = width;
-		ScaleVector.z = height;
-	}
-
 	public void Update(bool force)
 	{
 		ElapsedTime += Time.deltaTime;
@@ -382,9 +347,35 @@ public class Sprite
 		}
 	}
 
-	public void SetColor(Color c)
+	public void UpdateColor()
 	{
-		Color = c;
-		ColorChanged = true;
+		VertexPool pool = Vertexsegment.Pool;
+		int vertStart = Vertexsegment.VertStart;
+		pool.Colors[vertStart] = Color;
+		pool.Colors[vertStart + 1] = Color;
+		pool.Colors[vertStart + 2] = Color;
+		pool.Colors[vertStart + 3] = Color;
+		Vertexsegment.Pool.ColorChanged = true;
+	}
+
+	public void UpdateUV()
+	{
+		VertexPool pool = Vertexsegment.Pool;
+		int vertStart = Vertexsegment.VertStart;
+		if (UVDimensions.y > 0f)
+		{
+			pool.UVs[vertStart] = LowerLeftUV + Vector2.up * UVDimensions.y;
+			pool.UVs[vertStart + 1] = LowerLeftUV;
+			pool.UVs[vertStart + 2] = LowerLeftUV + Vector2.right * UVDimensions.x;
+			pool.UVs[vertStart + 3] = LowerLeftUV + UVDimensions;
+		}
+		else
+		{
+			pool.UVs[vertStart] = LowerLeftUV;
+			pool.UVs[vertStart + 1] = LowerLeftUV + Vector2.up * UVDimensions.y;
+			pool.UVs[vertStart + 2] = LowerLeftUV + UVDimensions;
+			pool.UVs[vertStart + 3] = LowerLeftUV + Vector2.right * UVDimensions.x;
+		}
+		Vertexsegment.Pool.UVChanged = true;
 	}
 }

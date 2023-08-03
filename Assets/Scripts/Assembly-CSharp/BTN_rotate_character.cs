@@ -2,11 +2,11 @@ using UnityEngine;
 
 public class BTN_rotate_character : MonoBehaviour
 {
-	public GameObject hero;
-
 	public new GameObject camera;
 
 	private float distance = 3f;
+
+	public GameObject hero;
 
 	private bool isRotate;
 

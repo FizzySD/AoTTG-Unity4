@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace ExitGames.Client.Photon
 {
@@ -10,19 +9,23 @@ namespace ExitGames.Client.Photon
 
 		internal const int MSG_HEADER_BYTES = 2;
 
-		internal const int ALL_HEADER_BYTES = 9;
+		public const int ALL_HEADER_BYTES = 9;
 
-		private List<byte[]> incomingList = new List<byte[]>();
+		private Queue<byte[]> incomingList = new Queue<byte[]>(32);
 
-		internal MemoryStream outgoingStream;
+		internal List<StreamBuffer> outgoingStream;
 
 		private int lastPingResult;
 
 		private byte[] pingRequest = new byte[5] { 240, 0, 0, 0, 0 };
 
-		internal static readonly byte[] tcpHead = new byte[9] { 251, 0, 0, 0, 0, 0, 0, 243, 2 };
+		internal static readonly byte[] tcpFramedMessageHead = new byte[9] { 251, 0, 0, 0, 0, 0, 0, 243, 2 };
 
-		internal static readonly byte[] messageHeader = tcpHead;
+		internal static readonly byte[] tcpMsgHead = new byte[2] { 243, 2 };
+
+		internal byte[] messageHeader;
+
+		protected internal bool DoFraming = true;
 
 		internal override int QueuedIncomingCommandsCount
 		{
@@ -42,67 +45,76 @@ namespace ExitGames.Client.Photon
 
 		internal TPeer()
 		{
-			PeerBase.peerCount++;
-			InitOnce();
 			TrafficPackageHeaderSize = 0;
-		}
-
-		internal TPeer(IPhotonPeerListener listener)
-			: this()
-		{
-			base.Listener = listener;
 		}
 
 		internal override void InitPeerBase()
 		{
 			base.InitPeerBase();
-			incomingList = new List<byte[]>();
+			incomingList = new Queue<byte[]>(32);
+			timestampOfLastReceive = SupportClass.GetTickCount();
 		}
 
-		internal override bool Connect(string serverAddress, string appID)
+		internal override bool Connect(string serverAddress, string appID, object customData = null)
+		{
+			return Connect(serverAddress, null, appID, customData);
+		}
+
+		internal override bool Connect(string serverAddress, string proxyServerAddress, string appID, object customData)
 		{
 			if (peerConnectionState != 0)
 			{
 				base.Listener.DebugReturn(DebugLevel.WARNING, "Connect() can't be called if peer is not Disconnected. Not connecting.");
 				return false;
 			}
-			if ((int)debugOut >= 5)
+			if ((int)base.debugOut >= 5)
 			{
 				base.Listener.DebugReturn(DebugLevel.ALL, "Connect()");
 			}
 			base.ServerAddress = serverAddress;
+			base.ProxyServerAddress = proxyServerAddress;
 			InitPeerBase();
-			outgoingStream = new MemoryStream(PeerBase.outgoingStreamBufferSize);
-			if (appID == null)
+			outgoingStream = new List<StreamBuffer>();
+			if (usedTransportProtocol == ConnectionProtocol.WebSocket || usedTransportProtocol == ConnectionProtocol.WebSocketSecure)
 			{
-				appID = "Lite";
+				serverAddress = PepareWebSocketUrl(serverAddress, appID, customData);
 			}
-			for (int i = 0; i < 32; i++)
+			if (base.SocketImplementation != null)
 			{
-				INIT_BYTES[i + 9] = (byte)((i < appID.Length) ? ((byte)appID[i]) : (byte)0);
+				PhotonSocket = (IPhotonSocket)Activator.CreateInstance(base.SocketImplementation, this);
 			}
-			rt = new SocketTcp(this);
-			if (rt == null)
+			else
 			{
-				base.Listener.DebugReturn(DebugLevel.ERROR, "Connect() failed, because SocketImplementation or socket was null. Set PhotonPeer.SocketImplementation before Connect().");
+				PhotonSocket = new SocketTcp(this);
+			}
+			if (PhotonSocket == null)
+			{
+				base.Listener.DebugReturn(DebugLevel.ERROR, "Connect() failed, because SocketImplementation or socket was null. Set PhotonPeer.SocketImplementation before Connect(). SocketImplementation: " + base.SocketImplementation);
 				return false;
 			}
-			if (rt.Connect())
+			messageHeader = (DoFraming ? tcpFramedMessageHead : tcpMsgHead);
+			if (PhotonSocket.Connect())
 			{
 				peerConnectionState = ConnectionStateValue.Connecting;
-				EnqueueInit();
-				SendOutgoingCommands();
 				return true;
 			}
 			peerConnectionState = ConnectionStateValue.Disconnected;
 			return false;
 		}
 
+		public override void OnConnect()
+		{
+			lastPingResult = SupportClass.GetTickCount();
+			byte[] data = PrepareConnectData(base.ServerAddress, AppId, CustomInitData);
+			EnqueueInit(data);
+			SendOutgoingCommands();
+		}
+
 		internal override void Disconnect()
 		{
 			if (peerConnectionState != 0 && peerConnectionState != ConnectionStateValue.Disconnecting)
 			{
-				if ((int)debugOut >= 5)
+				if ((int)base.debugOut >= 5)
 				{
 					base.Listener.DebugReturn(DebugLevel.ALL, "TPeer.Disconnect()");
 				}
@@ -113,23 +125,23 @@ namespace ExitGames.Client.Photon
 		internal override void StopConnection()
 		{
 			peerConnectionState = ConnectionStateValue.Disconnecting;
-			if (rt != null)
+			if (PhotonSocket != null)
 			{
-				rt.Disconnect();
+				PhotonSocket.Disconnect();
 			}
 			lock (incomingList)
 			{
 				incomingList.Clear();
 			}
 			peerConnectionState = ConnectionStateValue.Disconnected;
-			base.Listener.OnStatusChanged(StatusCode.Disconnect);
+			EnqueueStatusCallback(StatusCode.Disconnect);
 		}
 
 		internal override void FetchServerTimestamp()
 		{
 			if (peerConnectionState != ConnectionStateValue.Connected)
 			{
-				if ((int)debugOut >= 3)
+				if ((int)base.debugOut >= 3)
 				{
 					base.Listener.DebugReturn(DebugLevel.INFO, "FetchServerTimestamp() was skipped, as the client is not connected. Current ConnectionState: " + peerConnectionState);
 				}
@@ -142,30 +154,35 @@ namespace ExitGames.Client.Photon
 			}
 		}
 
-		private void EnqueueInit()
+		private void EnqueueInit(byte[] data)
 		{
-			MemoryStream memoryStream = new MemoryStream(0);
-			BinaryWriter binaryWriter = new BinaryWriter(memoryStream);
-			byte[] array = new byte[7] { 251, 0, 0, 0, 0, 0, 1 };
-			int targetOffset = 1;
-			Protocol.Serialize(INIT_BYTES.Length + array.Length, array, ref targetOffset);
-			binaryWriter.Write(array);
-			binaryWriter.Write(INIT_BYTES);
-			byte[] array2 = memoryStream.ToArray();
-			if (base.TrafficStatsEnabled)
+			if (DoFraming)
 			{
-				TrafficStatsOutgoing.TotalPacketCount++;
-				TrafficStatsOutgoing.TotalCommandsInPackets++;
-				TrafficStatsOutgoing.CountControlCommand(array2.Length);
+				StreamBuffer streamBuffer = new StreamBuffer(data.Length + 32);
+				byte[] array = new byte[7] { 251, 0, 0, 0, 0, 0, 1 };
+				int targetOffset = 1;
+				Protocol.Serialize(data.Length + array.Length, array, ref targetOffset);
+				streamBuffer.Write(array, 0, array.Length);
+				streamBuffer.Write(data, 0, data.Length);
+				if (base.TrafficStatsEnabled)
+				{
+					base.TrafficStatsOutgoing.TotalPacketCount++;
+					base.TrafficStatsOutgoing.TotalCommandsInPackets++;
+					base.TrafficStatsOutgoing.CountControlCommand(streamBuffer.Length);
+				}
+				EnqueueMessageAsPayload(DeliveryMode.Reliable, streamBuffer, 0);
 			}
-			EnqueueMessageAsPayload(true, array2, 0);
 		}
 
 		internal override bool DispatchIncomingCommands()
 		{
+			if (peerConnectionState == ConnectionStateValue.Connected && SupportClass.GetTickCount() - timestampOfLastReceive > base.DisconnectTimeout)
+			{
+				EnqueueStatusCallback(StatusCode.TimeoutDisconnect);
+				EnqueueActionForDispatch(Disconnect);
+			}
 			while (true)
 			{
-				bool flag = true;
 				MyAction myAction;
 				lock (ActionQueue)
 				{
@@ -174,9 +191,9 @@ namespace ExitGames.Client.Photon
 						break;
 					}
 					myAction = ActionQueue.Dequeue();
-					goto IL_0041;
+					goto IL_008a;
 				}
-				IL_0041:
+				IL_008a:
 				myAction();
 			}
 			byte[] array;
@@ -186,11 +203,10 @@ namespace ExitGames.Client.Photon
 				{
 					return false;
 				}
-				array = incomingList[0];
-				incomingList.RemoveAt(0);
+				array = incomingList.Dequeue();
 			}
 			ByteCountCurrentDispatch = array.Length + 3;
-			return DeserializeMessageAndCallback(array);
+			return DeserializeMessageAndCallback(new StreamBuffer(array));
 		}
 
 		internal override bool SendOutgoingCommands()
@@ -199,170 +215,229 @@ namespace ExitGames.Client.Photon
 			{
 				return false;
 			}
-			if (!rt.Connected)
+			if (!PhotonSocket.Connected)
 			{
 				return false;
 			}
-			if (peerConnectionState == ConnectionStateValue.Connected && SupportClass.GetTickCount() - lastPingResult > timePingInterval)
+			timeLastSendOutgoing = base.timeInt;
+			if (peerConnectionState == ConnectionStateValue.Connected && Math.Abs(SupportClass.GetTickCount() - lastPingResult) > base.timePingInterval)
 			{
 				SendPing();
 			}
 			lock (outgoingStream)
 			{
-				if (outgoingStream.Position > 0)
+				for (int i = 0; i < outgoingStream.Count; i++)
 				{
-					SendData(outgoingStream.ToArray());
-					outgoingStream.Position = 0L;
-					outgoingStream.SetLength(0L);
-					outgoingCommandsInStream = 0;
+					StreamBuffer streamBuffer = outgoingStream[i];
+					SendData(streamBuffer.GetBuffer(), streamBuffer.Length);
+					PeerBase.MessageBufferPoolPut(streamBuffer);
 				}
+				outgoingStream.Clear();
+				outgoingCommandsInStream = 0;
 			}
 			return false;
 		}
 
 		internal override bool SendAcksOnly()
 		{
-			if (rt == null || !rt.Connected)
+			if (PhotonSocket == null || !PhotonSocket.Connected)
 			{
 				return false;
 			}
-			if (peerConnectionState == ConnectionStateValue.Connected && SupportClass.GetTickCount() - lastPingResult > timePingInterval)
+			if (peerConnectionState == ConnectionStateValue.Connected && SupportClass.GetTickCount() - lastPingResult > base.timePingInterval)
 			{
 				SendPing();
 			}
 			return false;
 		}
 
-		internal override bool EnqueueOperation(Dictionary<byte, object> parameters, byte opCode, bool sendReliable, byte channelId, bool encrypt, EgMessageType messageType)
+		internal override bool EnqueueOperation(Dictionary<byte, object> parameters, byte opCode, SendOptions sendParams, EgMessageType messageType)
 		{
 			if (peerConnectionState != ConnectionStateValue.Connected)
 			{
-				if ((int)debugOut >= 1)
+				if ((int)base.debugOut >= 1)
 				{
 					base.Listener.DebugReturn(DebugLevel.ERROR, "Cannot send op: " + opCode + "! Not connected. PeerState: " + peerConnectionState);
 				}
 				base.Listener.OnStatusChanged(StatusCode.SendError);
 				return false;
 			}
-			if (channelId >= ChannelCount)
+			if (sendParams.Channel >= base.ChannelCount)
 			{
-				if ((int)debugOut >= 1)
+				if ((int)base.debugOut >= 1)
 				{
-					base.Listener.DebugReturn(DebugLevel.ERROR, "Cannot send op: Selected channel (" + channelId + ")>= channelCount (" + ChannelCount + ").");
+					base.Listener.DebugReturn(DebugLevel.ERROR, "Cannot send op: Selected channel (" + sendParams.Channel + ")>= channelCount (" + base.ChannelCount + ").");
 				}
 				base.Listener.OnStatusChanged(StatusCode.SendError);
 				return false;
 			}
-			byte[] opMessage = SerializeOperationToMessage(opCode, parameters, messageType, encrypt);
-			return EnqueueMessageAsPayload(sendReliable, opMessage, channelId);
+			StreamBuffer opMessage = SerializeOperationToMessage(opCode, parameters, messageType, sendParams.Encrypt);
+			return EnqueueMessageAsPayload(sendParams.DeliveryMode, opMessage, sendParams.Channel);
 		}
 
-		internal override byte[] SerializeOperationToMessage(byte opc, Dictionary<byte, object> parameters, EgMessageType messageType, bool encrypt)
+		internal override bool EnqueueMessage(object msg, SendOptions sendOptions)
 		{
-			byte[] array;
-			lock (SerializeMemStream)
+			if (peerConnectionState != ConnectionStateValue.Connected)
 			{
-				SerializeMemStream.Position = 0L;
-				SerializeMemStream.SetLength(0L);
-				if (!encrypt)
+				if ((int)base.debugOut >= 1)
 				{
-					SerializeMemStream.Write(messageHeader, 0, messageHeader.Length);
+					base.Listener.DebugReturn(DebugLevel.ERROR, "Cannot send message! Not connected. PeerState: " + peerConnectionState);
 				}
-				Protocol.SerializeOperationRequest(SerializeMemStream, opc, parameters, false);
-				if (encrypt)
-				{
-					byte[] data = SerializeMemStream.ToArray();
-					data = CryptoProvider.Encrypt(data);
-					SerializeMemStream.Position = 0L;
-					SerializeMemStream.SetLength(0L);
-					SerializeMemStream.Write(messageHeader, 0, messageHeader.Length);
-					SerializeMemStream.Write(data, 0, data.Length);
-				}
-				array = SerializeMemStream.ToArray();
+				base.Listener.OnStatusChanged(StatusCode.SendError);
+				return false;
 			}
+			byte channel = sendOptions.Channel;
+			if (channel >= base.ChannelCount)
+			{
+				if ((int)base.debugOut >= 1)
+				{
+					base.Listener.DebugReturn(DebugLevel.ERROR, "Cannot send op: Selected channel (" + channel + ")>= channelCount (" + base.ChannelCount + ").");
+				}
+				base.Listener.OnStatusChanged(StatusCode.SendError);
+				return false;
+			}
+			StreamBuffer opMessage = SerializeMessageToMessage(msg, sendOptions.Encrypt, messageHeader);
+			return EnqueueMessageAsPayload(sendOptions.DeliveryMode, opMessage, channel);
+		}
+
+		internal override StreamBuffer SerializeOperationToMessage(byte opCode, Dictionary<byte, object> parameters, EgMessageType messageType, bool encrypt)
+		{
+			bool flag = encrypt && usedTransportProtocol != ConnectionProtocol.WebSocketSecure;
+			StreamBuffer streamBuffer = PeerBase.MessageBufferPoolGet();
+			streamBuffer.SetLength(0L);
+			if (!flag)
+			{
+				streamBuffer.Write(messageHeader, 0, messageHeader.Length);
+			}
+			SerializationProtocol.SerializeOperationRequest(streamBuffer, opCode, parameters, false);
+			if (flag)
+			{
+				byte[] array = CryptoProvider.Encrypt(streamBuffer.GetBuffer(), 0, streamBuffer.Length);
+				streamBuffer.SetLength(0L);
+				streamBuffer.Write(messageHeader, 0, messageHeader.Length);
+				streamBuffer.Write(array, 0, array.Length);
+			}
+			byte[] buffer = streamBuffer.GetBuffer();
 			if (messageType != EgMessageType.Operation)
 			{
-				array[messageHeader.Length - 1] = (byte)messageType;
+				buffer[messageHeader.Length - 1] = (byte)messageType;
 			}
-			if (encrypt)
+			if (flag || (encrypt && photonPeer.EnableEncryptedFlag))
 			{
-				array[messageHeader.Length - 1] = (byte)(array[messageHeader.Length - 1] | 0x80u);
+				buffer[messageHeader.Length - 1] = (byte)(buffer[messageHeader.Length - 1] | 0x80u);
 			}
-			int targetOffset = 1;
-			Protocol.Serialize(array.Length, array, ref targetOffset);
-			return array;
+			if (DoFraming)
+			{
+				int targetOffset = 1;
+				Protocol.Serialize(streamBuffer.Length, buffer, ref targetOffset);
+			}
+			return streamBuffer;
 		}
 
-		internal bool EnqueueMessageAsPayload(bool sendReliable, byte[] opMessage, byte channelId)
+		internal bool EnqueueMessageAsPayload(DeliveryMode deliveryMode, StreamBuffer opMessage, byte channelId)
 		{
 			if (opMessage == null)
 			{
 				return false;
 			}
-			opMessage[5] = channelId;
-			opMessage[6] = (byte)(sendReliable ? 1 : 0);
-			lock (outgoingStream)
+			if (DoFraming)
 			{
-				outgoingStream.Write(opMessage, 0, opMessage.Length);
-				outgoingCommandsInStream++;
-				if (outgoingCommandsInStream % warningSize == 0)
+				byte[] buffer = opMessage.GetBuffer();
+				buffer[5] = channelId;
+				switch (deliveryMode)
 				{
-					base.Listener.OnStatusChanged(StatusCode.QueueOutgoingReliableWarning);
+				case DeliveryMode.Unreliable:
+					buffer[6] = 0;
+					break;
+				case DeliveryMode.Reliable:
+					buffer[6] = 1;
+					break;
+				case DeliveryMode.UnreliableUnsequenced:
+					buffer[6] = 2;
+					break;
+				case DeliveryMode.ReliableUnsequenced:
+					buffer[6] = 3;
+					break;
+				default:
+					throw new ArgumentOutOfRangeException("DeliveryMode", deliveryMode, null);
 				}
 			}
-			ByteCountLastOperation = opMessage.Length;
+			lock (outgoingStream)
+			{
+				outgoingStream.Add(opMessage);
+				outgoingCommandsInStream++;
+			}
+			int num = (ByteCountLastOperation = opMessage.Length);
 			if (base.TrafficStatsEnabled)
 			{
-				if (sendReliable)
+				switch (deliveryMode)
 				{
-					TrafficStatsOutgoing.CountReliableOpCommand(opMessage.Length);
+				case DeliveryMode.Unreliable:
+					base.TrafficStatsOutgoing.CountUnreliableOpCommand(num);
+					break;
+				case DeliveryMode.Reliable:
+					base.TrafficStatsOutgoing.CountReliableOpCommand(num);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException("deliveryMode", deliveryMode, null);
 				}
-				else
-				{
-					TrafficStatsOutgoing.CountUnreliableOpCommand(opMessage.Length);
-				}
-				TrafficStatsGameLevel.CountOperation(opMessage.Length);
+				base.TrafficStatsGameLevel.CountOperation(num);
 			}
 			return true;
 		}
 
 		internal void SendPing()
 		{
-			int targetOffset = 1;
-			Protocol.Serialize(SupportClass.GetTickCount(), pingRequest, ref targetOffset);
-			lastPingResult = SupportClass.GetTickCount();
-			if (base.TrafficStatsEnabled)
+			int num = (lastPingResult = SupportClass.GetTickCount());
+			if (!DoFraming)
 			{
-				TrafficStatsOutgoing.CountControlCommand(pingRequest.Length);
+				SendOptions sendOptions = default(SendOptions);
+				sendOptions.DeliveryMode = DeliveryMode.Reliable;
+				SendOptions sendOptions2 = sendOptions;
+				StreamBuffer streamBuffer = SerializeOperationToMessage(PhotonCodes.Ping, new Dictionary<byte, object> { { 1, num } }, EgMessageType.InternalOperationRequest, sendOptions2.Encrypt);
+				SendData(streamBuffer.GetBuffer(), streamBuffer.Length);
+				if (base.TrafficStatsEnabled)
+				{
+					base.TrafficStatsOutgoing.CountControlCommand(streamBuffer.Length);
+				}
+				PeerBase.MessageBufferPoolPut(streamBuffer);
 			}
-			SendData(pingRequest);
+			else
+			{
+				int targetOffset = 1;
+				Protocol.Serialize(num, pingRequest, ref targetOffset);
+				if (base.TrafficStatsEnabled)
+				{
+					base.TrafficStatsOutgoing.CountControlCommand(pingRequest.Length);
+				}
+				SendData(pingRequest, pingRequest.Length);
+			}
 		}
 
-		internal void SendData(byte[] data)
+		internal void SendData(byte[] data, int length)
 		{
 			try
 			{
-				bytesOut += data.Length;
+				bytesOut += length;
 				if (base.TrafficStatsEnabled)
 				{
-					TrafficStatsOutgoing.TotalPacketCount++;
-					TrafficStatsOutgoing.TotalCommandsInPackets += outgoingCommandsInStream;
+					base.TrafficStatsOutgoing.TotalPacketCount++;
+					base.TrafficStatsOutgoing.TotalCommandsInPackets += outgoingCommandsInStream;
 				}
 				if (base.NetworkSimulationSettings.IsSimulationEnabled)
 				{
-					SendNetworkSimulated(delegate
-					{
-						rt.Send(data, data.Length);
-					});
+					byte[] array = new byte[length];
+					Buffer.BlockCopy(data, 0, array, 0, length);
+					SendNetworkSimulated(array);
 				}
 				else
 				{
-					rt.Send(data, data.Length);
+					PhotonSocket.Send(data, length);
 				}
 			}
 			catch (Exception ex)
 			{
-				if ((int)debugOut >= 1)
+				if ((int)base.debugOut >= 1)
 				{
 					base.Listener.DebugReturn(DebugLevel.ERROR, ex.ToString());
 				}
@@ -374,39 +449,43 @@ namespace ExitGames.Client.Photon
 		{
 			if (inbuff == null)
 			{
-				if ((int)debugOut >= 1)
+				if ((int)base.debugOut >= 1)
 				{
 					EnqueueDebugReturn(DebugLevel.ERROR, "checkAndQueueIncomingCommands() inBuff: null");
 				}
 				return;
 			}
 			timestampOfLastReceive = SupportClass.GetTickCount();
-			bytesIn += inbuff.Length + 7;
+			bytesIn += dataLength + 7;
 			if (base.TrafficStatsEnabled)
 			{
-				TrafficStatsIncoming.TotalPacketCount++;
-				TrafficStatsIncoming.TotalCommandsInPackets++;
+				base.TrafficStatsIncoming.TotalPacketCount++;
+				base.TrafficStatsIncoming.TotalCommandsInPackets++;
 			}
-			if (inbuff[0] == 243 || inbuff[0] == 244)
+			if (inbuff[0] == 243)
 			{
-				lock (incomingList)
+				byte b = (byte)(inbuff[1] & 0x7Fu);
+				byte b2 = inbuff[2];
+				if (b != 7 || b2 != PhotonCodes.Ping)
 				{
-					incomingList.Add(inbuff);
-					if (incomingList.Count % warningSize == 0)
+					byte[] array = new byte[dataLength];
+					Buffer.BlockCopy(inbuff, 0, array, 0, dataLength);
+					lock (incomingList)
 					{
-						EnqueueStatusCallback(StatusCode.QueueIncomingReliableWarning);
+						incomingList.Enqueue(array);
+						return;
 					}
-					return;
 				}
+				DeserializeMessageAndCallback(new StreamBuffer(inbuff));
 			}
-			if (inbuff[0] == 240)
+			else if (inbuff[0] == 240)
 			{
-				TrafficStatsIncoming.CountControlCommand(inbuff.Length);
+				base.TrafficStatsIncoming.CountControlCommand(inbuff.Length);
 				ReadPingResult(inbuff);
 			}
-			else if ((int)debugOut >= 1)
+			else if ((int)base.debugOut >= 1)
 			{
-				EnqueueDebugReturn(DebugLevel.ERROR, "receiveIncomingCommands() MagicNumber should be 0xF0, 0xF3 or 0xF4. Is: " + inbuff[0]);
+				EnqueueDebugReturn(DebugLevel.ERROR, "receiveIncomingCommands() MagicNumber should be 0xF0 or 0xF3. Is: " + inbuff[0]);
 			}
 		}
 
@@ -426,6 +505,23 @@ namespace ExitGames.Client.Photon
 			if (!serverTimeOffsetIsAvailable)
 			{
 				serverTimeOffset = value + (lastRoundTripTime >> 1) - SupportClass.GetTickCount();
+				serverTimeOffsetIsAvailable = true;
+			}
+		}
+
+		protected internal void ReadPingResult(OperationResponse operationResponse)
+		{
+			int num = (int)operationResponse.Parameters[2];
+			int num2 = (int)operationResponse.Parameters[1];
+			lastRoundTripTime = SupportClass.GetTickCount() - num2;
+			if (!serverTimeOffsetIsAvailable)
+			{
+				roundTripTime = lastRoundTripTime;
+			}
+			UpdateRoundTripTimeAndVariance(lastRoundTripTime);
+			if (!serverTimeOffsetIsAvailable)
+			{
+				serverTimeOffset = num + (lastRoundTripTime >> 1) - SupportClass.GetTickCount();
 				serverTimeOffsetIsAvailable = true;
 			}
 		}

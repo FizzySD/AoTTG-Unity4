@@ -1,7 +1,7 @@
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("NGUI/Internal/Draw Call")]
+[ExecuteInEditMode]
 public class UIDrawCall : MonoBehaviour
 {
 	public enum Clipping
@@ -12,17 +12,7 @@ public class UIDrawCall : MonoBehaviour
 		SoftClip = 3
 	}
 
-	private Transform mTrans;
-
-	private Material mSharedMat;
-
-	private Mesh mMesh0;
-
-	private Mesh mMesh1;
-
-	private MeshFilter mFilter;
-
-	private MeshRenderer mRen;
+	private Material mClippedMat;
 
 	private Clipping mClipping;
 
@@ -30,33 +20,27 @@ public class UIDrawCall : MonoBehaviour
 
 	private Vector2 mClipSoft;
 
-	private Material mClippedMat;
-
 	private Material mDepthMat;
-
-	private int[] mIndices;
 
 	private bool mDepthPass;
 
-	private bool mReset = true;
-
 	private bool mEven = true;
 
-	public bool depthPass
-	{
-		get
-		{
-			return mDepthPass;
-		}
-		set
-		{
-			if (mDepthPass != value)
-			{
-				mDepthPass = value;
-				mReset = true;
-			}
-		}
-	}
+	private MeshFilter mFilter;
+
+	private int[] mIndices;
+
+	private Mesh mMesh0;
+
+	private Mesh mMesh1;
+
+	private MeshRenderer mRen;
+
+	private bool mReset = true;
+
+	private Material mSharedMat;
+
+	private Transform mTrans;
 
 	public Transform cachedTransform
 	{
@@ -67,35 +51,6 @@ public class UIDrawCall : MonoBehaviour
 				mTrans = base.transform;
 			}
 			return mTrans;
-		}
-	}
-
-	public Material material
-	{
-		get
-		{
-			return mSharedMat;
-		}
-		set
-		{
-			mSharedMat = value;
-		}
-	}
-
-	public int triangles
-	{
-		get
-		{
-			Mesh mesh = ((!mEven) ? mMesh1 : mMesh0);
-			return (mesh != null) ? (mesh.vertexCount >> 1) : 0;
-		}
-	}
-
-	public bool isClipped
-	{
-		get
-		{
-			return mClippedMat != null;
 		}
 	}
 
@@ -139,6 +94,55 @@ public class UIDrawCall : MonoBehaviour
 		}
 	}
 
+	public bool depthPass
+	{
+		get
+		{
+			return mDepthPass;
+		}
+		set
+		{
+			if (mDepthPass != value)
+			{
+				mDepthPass = value;
+				mReset = true;
+			}
+		}
+	}
+
+	public bool isClipped
+	{
+		get
+		{
+			return mClippedMat != null;
+		}
+	}
+
+	public Material material
+	{
+		get
+		{
+			return mSharedMat;
+		}
+		set
+		{
+			mSharedMat = value;
+		}
+	}
+
+	public int triangles
+	{
+		get
+		{
+			Mesh mesh = ((!mEven) ? mMesh1 : mMesh0);
+			if (!(mesh == null))
+			{
+				return mesh.vertexCount >> 1;
+			}
+			return 0;
+		}
+	}
+
 	private Mesh GetMesh(ref bool rebuildIndices, int vertexCount)
 	{
 		mEven = !mEven;
@@ -175,76 +179,35 @@ public class UIDrawCall : MonoBehaviour
 		return mMesh1;
 	}
 
-	private void UpdateMaterials()
+	private void OnDestroy()
 	{
-		if (mClipping != 0)
+		NGUITools.DestroyImmediate(mMesh0);
+		NGUITools.DestroyImmediate(mMesh1);
+		NGUITools.DestroyImmediate(mClippedMat);
+		NGUITools.DestroyImmediate(mDepthMat);
+	}
+
+	private void OnWillRenderObject()
+	{
+		if (mReset)
 		{
-			Shader shader = null;
-			if (mClipping != 0)
-			{
-				string text = mSharedMat.shader.name;
-				text = text.Replace(" (AlphaClip)", string.Empty);
-				text = text.Replace(" (SoftClip)", string.Empty);
-				if (mClipping == Clipping.HardClip || mClipping == Clipping.AlphaClip)
-				{
-					shader = Shader.Find(text + " (AlphaClip)");
-				}
-				else if (mClipping == Clipping.SoftClip)
-				{
-					shader = Shader.Find(text + " (SoftClip)");
-				}
-				if (shader == null)
-				{
-					mClipping = Clipping.None;
-				}
-			}
-			if (shader != null)
-			{
-				if (mClippedMat == null)
-				{
-					mClippedMat = new Material(mSharedMat);
-					mClippedMat.hideFlags = HideFlags.DontSave;
-				}
-				mClippedMat.shader = shader;
-				mClippedMat.CopyPropertiesFromMaterial(mSharedMat);
-			}
-			else if (mClippedMat != null)
-			{
-				NGUITools.Destroy(mClippedMat);
-				mClippedMat = null;
-			}
+			mReset = false;
+			UpdateMaterials();
 		}
-		else if (mClippedMat != null)
+		if (mClippedMat != null)
 		{
-			NGUITools.Destroy(mClippedMat);
-			mClippedMat = null;
-		}
-		if (mDepthPass)
-		{
-			if (mDepthMat == null)
+			mClippedMat.mainTextureOffset = new Vector2((0f - mClipRange.x) / mClipRange.z, (0f - mClipRange.y) / mClipRange.w);
+			mClippedMat.mainTextureScale = new Vector2(1f / mClipRange.z, 1f / mClipRange.w);
+			Vector2 vector = new Vector2(1000f, 1000f);
+			if (mClipSoft.x > 0f)
 			{
-				Shader shader2 = Shader.Find("Unlit/Depth Cutout");
-				mDepthMat = new Material(shader2);
-				mDepthMat.hideFlags = HideFlags.DontSave;
+				vector.x = mClipRange.z / mClipSoft.x;
 			}
-			mDepthMat.mainTexture = mSharedMat.mainTexture;
-		}
-		else if (mDepthMat != null)
-		{
-			NGUITools.Destroy(mDepthMat);
-			mDepthMat = null;
-		}
-		Material material = ((!(mClippedMat != null)) ? mSharedMat : mClippedMat);
-		if (mDepthMat != null)
-		{
-			if (mRen.sharedMaterials == null || mRen.sharedMaterials.Length != 2 || !(mRen.sharedMaterials[1] == material))
+			if (mClipSoft.y > 0f)
 			{
-				mRen.sharedMaterials = new Material[2] { mDepthMat, material };
+				vector.y = mClipRange.w / mClipSoft.y;
 			}
-		}
-		else if (mRen.sharedMaterial != material)
-		{
-			mRen.sharedMaterials = new Material[1] { material };
+			mClippedMat.SetVector("_ClipSharpness", vector);
 		}
 	}
 
@@ -330,35 +293,74 @@ public class UIDrawCall : MonoBehaviour
 		}
 	}
 
-	private void OnWillRenderObject()
+	private void UpdateMaterials()
 	{
-		if (mReset)
+		if (mClipping != 0)
 		{
-			mReset = false;
-			UpdateMaterials();
+			Shader shader = null;
+			if (mClipping != 0)
+			{
+				string text = mSharedMat.shader.name.Replace(" (AlphaClip)", string.Empty).Replace(" (SoftClip)", string.Empty);
+				if (mClipping == Clipping.HardClip || mClipping == Clipping.AlphaClip)
+				{
+					shader = Shader.Find(text + " (AlphaClip)");
+				}
+				else if (mClipping == Clipping.SoftClip)
+				{
+					shader = Shader.Find(text + " (SoftClip)");
+				}
+				if (shader == null)
+				{
+					mClipping = Clipping.None;
+				}
+			}
+			if (shader != null)
+			{
+				if (mClippedMat == null)
+				{
+					mClippedMat = new Material(mSharedMat);
+					mClippedMat.hideFlags = HideFlags.DontSave;
+				}
+				mClippedMat.shader = shader;
+				mClippedMat.CopyPropertiesFromMaterial(mSharedMat);
+			}
+			else if (mClippedMat != null)
+			{
+				NGUITools.Destroy(mClippedMat);
+				mClippedMat = null;
+			}
 		}
-		if (mClippedMat != null)
+		else if (mClippedMat != null)
 		{
-			mClippedMat.mainTextureOffset = new Vector2((0f - mClipRange.x) / mClipRange.z, (0f - mClipRange.y) / mClipRange.w);
-			mClippedMat.mainTextureScale = new Vector2(1f / mClipRange.z, 1f / mClipRange.w);
-			Vector2 vector = new Vector2(1000f, 1000f);
-			if (mClipSoft.x > 0f)
-			{
-				vector.x = mClipRange.z / mClipSoft.x;
-			}
-			if (mClipSoft.y > 0f)
-			{
-				vector.y = mClipRange.w / mClipSoft.y;
-			}
-			mClippedMat.SetVector("_ClipSharpness", vector);
+			NGUITools.Destroy(mClippedMat);
+			mClippedMat = null;
 		}
-	}
-
-	private void OnDestroy()
-	{
-		NGUITools.DestroyImmediate(mMesh0);
-		NGUITools.DestroyImmediate(mMesh1);
-		NGUITools.DestroyImmediate(mClippedMat);
-		NGUITools.DestroyImmediate(mDepthMat);
+		if (mDepthPass)
+		{
+			if (mDepthMat == null)
+			{
+				Shader shader2 = Shader.Find("Unlit/Depth Cutout");
+				mDepthMat = new Material(shader2);
+				mDepthMat.hideFlags = HideFlags.DontSave;
+			}
+			mDepthMat.mainTexture = mSharedMat.mainTexture;
+		}
+		else if (mDepthMat != null)
+		{
+			NGUITools.Destroy(mDepthMat);
+			mDepthMat = null;
+		}
+		Material material = ((mClippedMat == null) ? mSharedMat : mClippedMat);
+		if (mDepthMat != null)
+		{
+			if (mRen.sharedMaterials == null || mRen.sharedMaterials.Length != 2 || mRen.sharedMaterials[1] != material)
+			{
+				mRen.sharedMaterials = new Material[2] { mDepthMat, material };
+			}
+		}
+		else if (mRen.sharedMaterial != material)
+		{
+			mRen.sharedMaterials = new Material[1] { material };
+		}
 	}
 }

@@ -1,32 +1,48 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(RectTransform))]
 public class StyledComboBox : StyledItem
 {
-	public delegate void SelectionChangedHandler(StyledItem item);
+	[CompilerGenerated]
+	private sealed class AddItemcAnonStoreyF
+	{
+		internal StyledComboBox fthis;
 
-	public SelectionChangedHandler OnSelectionChanged;
+		internal int curIndex;
+
+		internal StyledItem styledItem;
+
+		internal void m0()
+		{
+			fthis.OnItemClicked(styledItem, curIndex);
+		}
+	}
+
+	public delegate void SelectionChangedHandler(StyledItem item);
 
 	public StyledComboBoxPrefab containerPrefab;
 
-	public StyledItem itemPrefab;
+	private bool isToggled;
 
 	public StyledItem itemMenuPrefab;
 
-	[HideInInspector]
-	[SerializeField]
-	private StyledComboBoxPrefab root;
+	public StyledItem itemPrefab;
 
 	[HideInInspector]
 	[SerializeField]
 	private List<StyledItem> items = new List<StyledItem>();
 
+	public SelectionChangedHandler OnSelectionChanged;
+
+	[HideInInspector]
+	[SerializeField]
+	private StyledComboBoxPrefab root;
+
 	[SerializeField]
 	private int selectedIndex;
-
-	private bool isToggled;
 
 	public int SelectedIndex
 	{
@@ -54,11 +70,6 @@ public class StyledComboBox : StyledItem
 			}
 			return null;
 		}
-	}
-
-	private void Awake()
-	{
-		InitControl();
 	}
 
 	private void AddItem(object data)
@@ -95,24 +106,6 @@ public class StyledComboBox : StyledItem
 		}
 	}
 
-	public void OnItemClicked(StyledItem item, int index)
-	{
-		SelectedIndex = index;
-		TogglePanelState();
-		if (OnSelectionChanged != null)
-		{
-			OnSelectionChanged(item);
-		}
-	}
-
-	public void ClearItems()
-	{
-		for (int num = items.Count - 1; num >= 0; num--)
-		{
-			Object.DestroyObject(items[num].gameObject);
-		}
-	}
-
 	public void AddItems(params object[] list)
 	{
 		ClearItems();
@@ -123,25 +116,16 @@ public class StyledComboBox : StyledItem
 		SelectedIndex = 0;
 	}
 
-	public void InitControl()
+	private void Awake()
 	{
-		if (root != null)
+		InitControl();
+	}
+
+	public void ClearItems()
+	{
+		for (int num = items.Count - 1; num >= 0; num--)
 		{
-			Object.DestroyImmediate(root.gameObject);
-		}
-		if (containerPrefab != null)
-		{
-			RectTransform component = GetComponent<RectTransform>();
-			root = Object.Instantiate(containerPrefab, component.position, component.rotation) as StyledComboBoxPrefab;
-			root.transform.SetParent(base.transform, false);
-			RectTransform component2 = root.GetComponent<RectTransform>();
-			component2.pivot = new Vector2(0.5f, 0.5f);
-			component2.anchorMin = Vector2.zero;
-			component2.anchorMax = Vector2.one;
-			component2.offsetMax = Vector2.zero;
-			component2.offsetMin = Vector2.zero;
-			root.gameObject.hideFlags = HideFlags.HideInHierarchy;
-			root.itemPanel.gameObject.SetActive(isToggled);
+			Object.DestroyObject(items[num].gameObject);
 		}
 	}
 
@@ -171,6 +155,38 @@ public class StyledComboBox : StyledItem
 			{
 				button.onClick.AddListener(TogglePanelState);
 			}
+		}
+	}
+
+	public void InitControl()
+	{
+		if (root != null)
+		{
+			Object.DestroyImmediate(root.gameObject);
+		}
+		if (containerPrefab != null)
+		{
+			RectTransform component = GetComponent<RectTransform>();
+			root = Object.Instantiate(containerPrefab, component.position, component.rotation) as StyledComboBoxPrefab;
+			root.transform.SetParent(base.transform, false);
+			RectTransform component2 = root.GetComponent<RectTransform>();
+			component2.pivot = new Vector2(0.5f, 0.5f);
+			component2.anchorMin = Vector2.zero;
+			component2.anchorMax = Vector2.one;
+			component2.offsetMax = Vector2.zero;
+			component2.offsetMin = Vector2.zero;
+			root.gameObject.hideFlags = HideFlags.HideInHierarchy;
+			root.itemPanel.gameObject.SetActive(isToggled);
+		}
+	}
+
+	public void OnItemClicked(StyledItem item, int index)
+	{
+		SelectedIndex = index;
+		TogglePanelState();
+		if (OnSelectionChanged != null)
+		{
+			OnSelectionChanged(item);
 		}
 	}
 

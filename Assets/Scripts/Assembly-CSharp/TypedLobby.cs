@@ -1,16 +1,20 @@
 public class TypedLobby
 {
+	public static readonly TypedLobby Default = new TypedLobby();
+
 	public string Name;
 
 	public LobbyType Type;
-
-	public static readonly TypedLobby Default = new TypedLobby();
 
 	public bool IsDefault
 	{
 		get
 		{
-			return Type == LobbyType.Default && string.IsNullOrEmpty(Name);
+			if (Type == LobbyType.Default)
+			{
+				return string.IsNullOrEmpty(Name);
+			}
+			return false;
 		}
 	}
 

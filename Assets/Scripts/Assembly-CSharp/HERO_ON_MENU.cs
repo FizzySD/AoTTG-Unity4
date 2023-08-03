@@ -2,22 +2,31 @@ using UnityEngine;
 
 public class HERO_ON_MENU : MonoBehaviour
 {
+	private Vector3 cameraOffset;
+
+	private Transform cameraPref;
+
 	public int costumeId;
 
 	private Transform head;
-
-	private Transform cameraPref;
 
 	public float headRotationX;
 
 	public float headRotationY;
 
-	private Vector3 cameraOffset;
+	private void LateUpdate()
+	{
+		head.rotation = Quaternion.Euler(head.rotation.eulerAngles.x + headRotationX, head.rotation.eulerAngles.y + headRotationY, head.rotation.eulerAngles.z);
+		if (costumeId == 9)
+		{
+			GameObject.Find("MainCamera_Mono").transform.position = cameraPref.position + cameraOffset;
+		}
+	}
 
 	private void Start()
 	{
 		HERO_SETUP component = base.gameObject.GetComponent<HERO_SETUP>();
-		HeroCostume.init();
+		HeroCostume.init2();
 		component.init();
 		component.myCostume = HeroCostume.costume[costumeId];
 		component.setCharacterComponent();
@@ -37,18 +46,8 @@ public class HERO_ON_MENU : MonoBehaviour
 			base.animation.Play("stand_levi");
 			base.animation["stand_levi"].normalizedTime = Random.Range(0f, 1f);
 		}
-		AnimationState animationState = base.animation["stand_levi"];
 		float speed = 0.5f;
 		base.animation["stand"].speed = speed;
-		animationState.speed = speed;
-	}
-
-	private void LateUpdate()
-	{
-		head.rotation = Quaternion.Euler(head.rotation.eulerAngles.x + headRotationX, head.rotation.eulerAngles.y + headRotationY, head.rotation.eulerAngles.z);
-		if (costumeId == 9)
-		{
-			GameObject.Find("MainCamera_Mono").transform.position = cameraPref.position + cameraOffset;
-		}
+		base.animation["stand_levi"].speed = speed;
 	}
 }

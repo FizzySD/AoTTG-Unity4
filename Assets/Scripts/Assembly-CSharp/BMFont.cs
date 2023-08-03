@@ -5,37 +5,41 @@ using UnityEngine;
 [Serializable]
 public class BMFont
 {
-	[SerializeField]
 	[HideInInspector]
-	private int mSize;
-
 	[SerializeField]
-	[HideInInspector]
 	private int mBase;
 
-	[SerializeField]
-	[HideInInspector]
-	private int mWidth;
+	private Dictionary<int, BMGlyph> mDict = new Dictionary<int, BMGlyph>();
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private int mHeight;
+
+	[HideInInspector]
+	[SerializeField]
+	private List<BMGlyph> mSaved = new List<BMGlyph>();
+
+	[HideInInspector]
+	[SerializeField]
+	private int mSize;
 
 	[HideInInspector]
 	[SerializeField]
 	private string mSpriteName;
 
-	[SerializeField]
 	[HideInInspector]
-	private List<BMGlyph> mSaved = new List<BMGlyph>();
+	[SerializeField]
+	private int mWidth;
 
-	private Dictionary<int, BMGlyph> mDict = new Dictionary<int, BMGlyph>();
-
-	public bool isValid
+	public int baseOffset
 	{
 		get
 		{
-			return mSaved.Count > 0;
+			return mBase;
+		}
+		set
+		{
+			mBase = value;
 		}
 	}
 
@@ -51,27 +55,35 @@ public class BMFont
 		}
 	}
 
-	public int baseOffset
+	public int glyphCount
 	{
 		get
 		{
-			return mBase;
-		}
-		set
-		{
-			mBase = value;
+			if (isValid)
+			{
+				return mSaved.Count;
+			}
+			return 0;
 		}
 	}
 
-	public int texWidth
+	public bool isValid
 	{
 		get
 		{
-			return mWidth;
+			return mSaved.Count > 0;
+		}
+	}
+
+	public string spriteName
+	{
+		get
+		{
+			return mSpriteName;
 		}
 		set
 		{
-			mWidth = value;
+			mSpriteName = value;
 		}
 	}
 
@@ -87,24 +99,27 @@ public class BMFont
 		}
 	}
 
-	public int glyphCount
+	public int texWidth
 	{
 		get
 		{
-			return isValid ? mSaved.Count : 0;
-		}
-	}
-
-	public string spriteName
-	{
-		get
-		{
-			return mSpriteName;
+			return mWidth;
 		}
 		set
 		{
-			mSpriteName = value;
+			mWidth = value;
 		}
+	}
+
+	public void Clear()
+	{
+		mDict.Clear();
+		mSaved.Clear();
+	}
+
+	public BMGlyph GetGlyph(int index)
+	{
+		return GetGlyph(index, false);
 	}
 
 	public BMGlyph GetGlyph(int index, bool createIfMissing)
@@ -121,23 +136,14 @@ public class BMFont
 		}
 		if (!mDict.TryGetValue(index, out value) && createIfMissing)
 		{
-			value = new BMGlyph();
-			value.index = index;
+			value = new BMGlyph
+			{
+				index = index
+			};
 			mSaved.Add(value);
 			mDict.Add(index, value);
 		}
 		return value;
-	}
-
-	public BMGlyph GetGlyph(int index)
-	{
-		return GetGlyph(index, false);
-	}
-
-	public void Clear()
-	{
-		mDict.Clear();
-		mSaved.Clear();
 	}
 
 	public void Trim(int xMin, int yMin, int xMax, int yMax)

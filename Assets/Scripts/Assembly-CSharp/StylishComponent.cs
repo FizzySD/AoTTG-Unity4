@@ -1,8 +1,23 @@
+using UI;
 using UnityEngine;
 
 public class StylishComponent : MonoBehaviour
 {
 	public GameObject bar;
+
+	private int chainKillRank;
+
+	private float[] chainRankMultiplier;
+
+	private float chainTime;
+
+	private float duration;
+
+	private Vector3 exitPosition;
+
+	private bool flip;
+
+	private bool hasLostRank;
 
 	public GameObject labelChain;
 
@@ -10,84 +25,96 @@ public class StylishComponent : MonoBehaviour
 
 	public GameObject labelS;
 
-	public GameObject labelsub;
-
 	public GameObject labelS1;
 
 	public GameObject labelS2;
 
+	public GameObject labelsub;
+
 	public GameObject labelTotal;
-
-	private int styleTotalDamage;
-
-	private int chainKillRank;
-
-	private float chainTime;
-
-	private int styleRank;
-
-	private float stylePoints;
-
-	private int styleHits;
-
-	private bool hasLostRank;
-
-	private string[,] styleRankText = new string[8, 2]
-	{
-		{ "D", "eja Vu" },
-		{ "C", "asual" },
-		{ "B", "oppin!" },
-		{ "A", "mazing!" },
-		{ "S", "ensational!" },
-		{ "S", "pectacular!!" },
-		{ "S", "tylish!!!" },
-		{ "X", "TREEME!!!" }
-	};
 
 	private Vector3 originalPosition;
 
-	private Vector3 exitPosition;
-
-	private float[] chainRankMultiplier = new float[9] { 1f, 1.1f, 1.2f, 1.3f, 1.5f, 1.7f, 2f, 2.3f, 2.5f };
-
-	private int[] styleRankPoints = new int[7] { 350, 950, 2450, 4550, 7000, 15000, 100000 };
-
-	private int[] styleRankDepletions = new int[8] { 1, 2, 5, 10, 15, 20, 25, 25 };
-
 	private float R;
 
-	private float duration;
+	private int styleHits;
 
-	private bool flip;
+	private float stylePoints;
 
-	public void Style(int damage)
+	private int styleRank;
+
+	private int[] styleRankDepletions;
+
+	private int[] styleRankPoints;
+
+	private string[,] styleRankText;
+
+	private int styleTotalDamage;
+
+	public StylishComponent()
 	{
-		if (damage != -1)
+		string[,] array = new string[8, 2]
 		{
-			stylePoints += (int)((float)(damage + 200) * chainRankMultiplier[chainKillRank]);
-			styleTotalDamage += damage;
-			chainKillRank = ((chainKillRank >= chainRankMultiplier.Length - 1) ? chainKillRank : (chainKillRank + 1));
-			chainTime = 5f;
-			styleHits++;
-			SetRank();
-		}
-		else if (stylePoints == 0f)
+			{ "D", "eja Vu" },
+			{ "C", "asual" },
+			{ "B", "oppin!" },
+			{ "A", "mazing!" },
+			{ "S", "ensational!" },
+			{ "S", "pectacular!!" },
+			{ "S", "tylish!!!" },
+			{ "X", "TREEME!!!" }
+		};
+		styleRankText = array;
+		chainRankMultiplier = new float[9] { 1f, 1.1f, 1.2f, 1.3f, 1.5f, 1.7f, 2f, 2.3f, 2.5f };
+		styleRankPoints = new int[7] { 350, 950, 2450, 4550, 7000, 15000, 100000 };
+		styleRankDepletions = new int[8] { 1, 2, 5, 10, 15, 20, 25, 25 };
+	}
+
+	private int GetRankPercentage()
+	{
+		if (styleRank > 0 && styleRank < styleRankPoints.Length)
 		{
-			stylePoints += 1f;
-			SetRank();
+			return (int)((stylePoints - (float)styleRankPoints[styleRank - 1]) * 100f / (float)(styleRankPoints[styleRank] - styleRankPoints[styleRank - 1]));
 		}
-		startShake(5, 0.3f);
+		if (styleRank == 0)
+		{
+			return (int)(stylePoints * 100f) / styleRankPoints[styleRank];
+		}
+		return 100;
+	}
+
+	private int GetStyleDepletionRate()
+	{
+		return styleRankDepletions[styleRank];
+	}
+
+	public void reset()
+	{
+		styleTotalDamage = 0;
+		chainKillRank = 0;
+		chainTime = 0f;
+		styleRank = 0;
+		stylePoints = 0f;
+		styleHits = 0;
+	}
+
+	public void OnResolutionChange()
+	{
 		setPosition();
-		labelTotal.GetComponent<UILabel>().text = ((int)stylePoints).ToString();
-		labelHits.GetComponent<UILabel>().text = styleHits + ((styleHits <= 1) ? "Hit" : "Hits");
-		if (chainKillRank == 0)
+		if (stylePoints > 0f)
 		{
-			labelChain.GetComponent<UILabel>().text = string.Empty;
+			base.transform.localPosition = originalPosition;
 		}
 		else
 		{
-			labelChain.GetComponent<UILabel>().text = "x" + chainRankMultiplier[chainKillRank] + "!";
+			base.transform.localPosition = exitPosition;
 		}
+	}
+
+	private void setPosition()
+	{
+		originalPosition = new Vector3((int)((float)Screen.width * 0.5f - 2f), 0f, 0f);
+		exitPosition = new Vector3(Screen.width, originalPosition.y, originalPosition.z);
 	}
 
 	private void SetRank()
@@ -180,32 +207,25 @@ public class StylishComponent : MonoBehaviour
 		labelsub.GetComponent<UILabel>().text = styleRankText[styleRank, 1];
 	}
 
-	public void reset()
+	private void shakeUpdate()
 	{
-		styleTotalDamage = 0;
-		chainKillRank = 0;
-		chainTime = 0f;
-		styleRank = 0;
-		stylePoints = 0f;
-		styleHits = 0;
-	}
-
-	private int GetStyleDepletionRate()
-	{
-		return styleRankDepletions[styleRank];
-	}
-
-	private int GetRankPercentage()
-	{
-		if (styleRank > 0 && styleRank < styleRankPoints.Length)
+		if (duration > 0f)
 		{
-			return (int)((stylePoints - (float)styleRankPoints[styleRank - 1]) * 100f / (float)(styleRankPoints[styleRank] - styleRankPoints[styleRank - 1]));
+			duration -= Time.deltaTime;
+			if (flip)
+			{
+				base.gameObject.transform.localPosition = originalPosition + Vector3.up * R;
+			}
+			else
+			{
+				base.gameObject.transform.localPosition = originalPosition - Vector3.up * R;
+			}
+			flip = !flip;
+			if (duration <= 0f)
+			{
+				base.gameObject.transform.localPosition = originalPosition;
+			}
 		}
-		if (styleRank == 0)
-		{
-			return (int)(stylePoints * 100f) / styleRankPoints[styleRank];
-		}
-		return 100;
 	}
 
 	private void Start()
@@ -214,15 +234,48 @@ public class StylishComponent : MonoBehaviour
 		base.transform.localPosition = exitPosition;
 	}
 
-	private void setPosition()
+	public void startShake(int R, float duration)
 	{
-		originalPosition = new Vector3((int)((float)Screen.width * 0.5f - 2f), (int)((float)Screen.height * 0.5f - 150f), 0f);
-		exitPosition = new Vector3(Screen.width, originalPosition.y, originalPosition.z);
+		if (this.duration < duration)
+		{
+			this.R = R;
+			this.duration = duration;
+		}
+	}
+
+	public void Style(int damage)
+	{
+		if (damage != -1)
+		{
+			stylePoints += (int)((float)(damage + 200) * chainRankMultiplier[chainKillRank]);
+			styleTotalDamage += damage;
+			chainKillRank = ((chainKillRank >= chainRankMultiplier.Length - 1) ? chainKillRank : (chainKillRank + 1));
+			chainTime = 5f;
+			styleHits++;
+			SetRank();
+		}
+		else if (stylePoints == 0f)
+		{
+			stylePoints += 1f;
+			SetRank();
+		}
+		startShake(5, 0.3f);
+		setPosition();
+		labelTotal.GetComponent<UILabel>().text = ((int)stylePoints).ToString();
+		labelHits.GetComponent<UILabel>().text = styleHits + ((styleHits <= 1) ? "Hit" : "Hits");
+		if (chainKillRank == 0)
+		{
+			labelChain.GetComponent<UILabel>().text = string.Empty;
+		}
+		else
+		{
+			labelChain.GetComponent<UILabel>().text = "x" + chainRankMultiplier[chainKillRank] + "!";
+		}
 	}
 
 	private void Update()
 	{
-		if (!IN_GAME_MAIN_CAMERA.isPausing)
+		if (!GameMenu.Paused)
 		{
 			if (stylePoints > 0f)
 			{
@@ -245,36 +298,6 @@ public class StylishComponent : MonoBehaviour
 				chainKillRank = 0;
 			}
 			shakeUpdate();
-		}
-	}
-
-	private void shakeUpdate()
-	{
-		if (duration > 0f)
-		{
-			duration -= Time.deltaTime;
-			if (flip)
-			{
-				base.gameObject.transform.localPosition = originalPosition + Vector3.up * R;
-			}
-			else
-			{
-				base.gameObject.transform.localPosition = originalPosition - Vector3.up * R;
-			}
-			flip = !flip;
-			if (duration <= 0f)
-			{
-				base.gameObject.transform.localPosition = originalPosition;
-			}
-		}
-	}
-
-	public void startShake(int R, float duration)
-	{
-		if (this.duration < duration)
-		{
-			this.R = R;
-			this.duration = duration;
 		}
 	}
 }

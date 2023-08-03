@@ -3,65 +3,25 @@ using UnityEngine;
 
 public abstract class UIItemSlot : MonoBehaviour
 {
-	public UISprite icon;
-
 	public UIWidget background;
 
-	public UILabel label;
+	public AudioClip errorSound;
 
 	public AudioClip grabSound;
 
-	public AudioClip placeSound;
+	public UISprite icon;
 
-	public AudioClip errorSound;
+	public UILabel label;
+
+	private static InvGameItem mDraggedItem;
 
 	private InvGameItem mItem;
 
 	private string mText = string.Empty;
 
-	private static InvGameItem mDraggedItem;
+	public AudioClip placeSound;
 
 	protected abstract InvGameItem observedItem { get; }
-
-	protected abstract InvGameItem Replace(InvGameItem item);
-
-	private void OnTooltip(bool show)
-	{
-		InvGameItem invGameItem = ((!show) ? null : mItem);
-		if (invGameItem != null)
-		{
-			InvBaseItem baseItem = invGameItem.baseItem;
-			if (baseItem != null)
-			{
-				string text = "[" + NGUITools.EncodeColor(invGameItem.color) + "]" + invGameItem.name + "[-]\n";
-				string text2 = text;
-				text = text2 + "[AFAFAF]Level " + invGameItem.itemLevel + " " + baseItem.slot;
-				List<InvStat> list = invGameItem.CalculateStats();
-				int i = 0;
-				for (int count = list.Count; i < count; i++)
-				{
-					InvStat invStat = list[i];
-					if (invStat.amount != 0)
-					{
-						text = ((invStat.amount >= 0) ? (text + "\n[00FF00]+" + invStat.amount) : (text + "\n[FF0000]" + invStat.amount));
-						if (invStat.modifier == InvStat.Modifier.Percent)
-						{
-							text += "%";
-						}
-						text = text + " " + invStat.id;
-						text += "[-]";
-					}
-				}
-				if (!string.IsNullOrEmpty(baseItem.description))
-				{
-					text = text + "\n[FF9900]" + baseItem.description;
-				}
-				UITooltip.ShowText(text);
-				return;
-			}
-		}
-		UITooltip.ShowText(null);
-	}
 
 	private void OnClick()
 	{
@@ -110,17 +70,52 @@ public abstract class UIItemSlot : MonoBehaviour
 		UpdateCursor();
 	}
 
-	private void UpdateCursor()
+	private void OnTooltip(bool show)
 	{
-		if (mDraggedItem != null && mDraggedItem.baseItem != null)
+		InvGameItem invGameItem = ((!show) ? null : mItem);
+		if (invGameItem != null)
 		{
-			UICursor.Set(mDraggedItem.baseItem.iconAtlas, mDraggedItem.baseItem.iconName);
+			InvBaseItem baseItem = invGameItem.baseItem;
+			if (baseItem != null)
+			{
+				string[] array = new string[5]
+				{
+					"[",
+					NGUITools.EncodeColor(invGameItem.color),
+					"]",
+					invGameItem.name,
+					"[-]\n"
+				};
+				string text = string.Concat(array);
+				object[] array2 = new object[5] { text, "[AFAFAF]Level ", invGameItem.itemLevel, " ", baseItem.slot };
+				string text2 = string.Concat(array2);
+				List<InvStat> list = invGameItem.CalculateStats();
+				int i = 0;
+				for (int count = list.Count; i < count; i++)
+				{
+					InvStat invStat = list[i];
+					if (invStat.amount != 0)
+					{
+						text2 = ((invStat.amount >= 0) ? (text2 + "\n[00FF00]+" + invStat.amount) : (text2 + "\n[FF0000]" + invStat.amount));
+						if (invStat.modifier == InvStat.Modifier.Percent)
+						{
+							text2 += "%";
+						}
+						text2 = text2 + " " + invStat.id.ToString() + "[-]";
+					}
+				}
+				if (!string.IsNullOrEmpty(baseItem.description))
+				{
+					text2 = text2 + "\n[FF9900]" + baseItem.description;
+				}
+				UITooltip.ShowText(text2);
+				return;
+			}
 		}
-		else
-		{
-			UICursor.Clear();
-		}
+		UITooltip.ShowText(null);
 	}
+
+	protected abstract InvGameItem Replace(InvGameItem item);
 
 	private void Update()
 	{
@@ -157,6 +152,18 @@ public abstract class UIItemSlot : MonoBehaviour
 		if (background != null)
 		{
 			background.color = ((invGameItem == null) ? Color.white : invGameItem.color);
+		}
+	}
+
+	private void UpdateCursor()
+	{
+		if (mDraggedItem != null && mDraggedItem.baseItem != null)
+		{
+			UICursor.Set(mDraggedItem.baseItem.iconAtlas, mDraggedItem.baseItem.iconName);
+		}
+		else
+		{
+			UICursor.Clear();
 		}
 	}
 }

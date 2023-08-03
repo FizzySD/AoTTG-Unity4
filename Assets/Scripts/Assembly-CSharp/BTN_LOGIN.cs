@@ -2,13 +2,13 @@ using UnityEngine;
 
 public class BTN_LOGIN : MonoBehaviour
 {
-	public GameObject username;
-
-	public GameObject password;
+	public GameObject logincomponent;
 
 	public GameObject output;
 
-	public GameObject logincomponent;
+	public GameObject password;
+
+	public GameObject username;
 
 	private void OnClick()
 	{

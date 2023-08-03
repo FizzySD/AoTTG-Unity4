@@ -3,13 +3,13 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Center On Child")]
 public class UICenterOnChild : MonoBehaviour
 {
-	public float springStrength = 8f;
-
-	public SpringPanel.OnFinished onFinished;
+	private GameObject mCenteredObject;
 
 	private UIDraggablePanel mDrag;
 
-	private GameObject mCenteredObject;
+	public SpringPanel.OnFinished onFinished;
+
+	public float springStrength = 8f;
 
 	public GameObject centeredObject
 	{
@@ -19,17 +19,17 @@ public class UICenterOnChild : MonoBehaviour
 		}
 	}
 
-	private void OnEnable()
-	{
-		Recenter();
-	}
-
 	private void OnDragFinished()
 	{
 		if (base.enabled)
 		{
 			Recenter();
 		}
+	}
+
+	private void OnEnable()
+	{
+		Recenter();
 	}
 
 	public void Recenter()
@@ -53,7 +53,7 @@ public class UICenterOnChild : MonoBehaviour
 				mDrag.verticalScrollBar.onDragFinished = OnDragFinished;
 			}
 		}
-		if (mDrag.panel == null)
+		if (!(mDrag.panel != null))
 		{
 			return;
 		}

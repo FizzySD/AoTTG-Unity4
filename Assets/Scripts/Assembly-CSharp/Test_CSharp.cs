@@ -7,9 +7,22 @@ internal class Test_CSharp : MonoBehaviour
 
 	private Vector2 m_Position = Vector2.zero;
 
+	private void OnGUI()
+	{
+		m_Position = GUILayout.BeginScrollView(m_Position);
+		GUILayout.Label(m_InGameLog);
+		GUILayout.EndScrollView();
+	}
+
 	private void P(string aText)
 	{
 		m_InGameLog = m_InGameLog + aText + "\n";
+	}
+
+	private void Start()
+	{
+		Test();
+		Debug.Log("Test results:\n" + m_InGameLog);
 	}
 
 	private void Test()
@@ -65,18 +78,5 @@ internal class Test_CSharp : MonoBehaviour
 		P("I[\"data\"][0].ToString() : " + jSONClass["data"][0].ToString());
 		P("I[\"data\"][0].Value      : " + jSONClass["data"][0].Value);
 		P(jSONClass.ToString());
-	}
-
-	private void Start()
-	{
-		Test();
-		Debug.Log("Test results:\n" + m_InGameLog);
-	}
-
-	private void OnGUI()
-	{
-		m_Position = GUILayout.BeginScrollView(m_Position);
-		GUILayout.Label(m_InGameLog);
-		GUILayout.EndScrollView();
 	}
 }

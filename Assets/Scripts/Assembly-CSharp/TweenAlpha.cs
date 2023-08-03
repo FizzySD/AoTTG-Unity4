@@ -5,13 +5,13 @@ public class TweenAlpha : UITweener
 {
 	public float from = 1f;
 
-	public float to = 1f;
+	private UIPanel mPanel;
 
 	private Transform mTrans;
 
 	private UIWidget mWidget;
 
-	private UIPanel mPanel;
+	public float to = 1f;
 
 	public float alpha
 	{
@@ -49,11 +49,6 @@ public class TweenAlpha : UITweener
 		}
 	}
 
-	protected override void OnUpdate(float factor, bool isFinished)
-	{
-		alpha = Mathf.Lerp(from, to, factor);
-	}
-
 	public static TweenAlpha Begin(GameObject go, float duration, float alpha)
 	{
 		TweenAlpha tweenAlpha = UITweener.Begin<TweenAlpha>(go, duration);
@@ -65,5 +60,10 @@ public class TweenAlpha : UITweener
 			tweenAlpha.enabled = false;
 		}
 		return tweenAlpha;
+	}
+
+	protected override void OnUpdate(float factor, bool isFinished)
+	{
+		alpha = Mathf.Lerp(from, to, factor);
 	}
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public abstract class UIWidget : MonoBehaviour
@@ -16,35 +17,18 @@ public abstract class UIWidget : MonoBehaviour
 		BottomRight = 8
 	}
 
-	[HideInInspector]
-	[SerializeField]
-	protected Material mMat;
+	[CompilerGenerated]
+	private static Comparison<UIWidget> famScache14;
 
-	[HideInInspector]
-	[SerializeField]
-	protected Texture mTex;
+	protected bool mChanged = true;
 
-	[HideInInspector]
 	[SerializeField]
+	[HideInInspector]
 	private Color mColor = Color.white;
 
 	[SerializeField]
 	[HideInInspector]
-	private Pivot mPivot = Pivot.Center;
-
-	[HideInInspector]
-	[SerializeField]
 	private int mDepth;
-
-	protected GameObject mGo;
-
-	protected Transform mTrans;
-
-	protected UIPanel mPanel;
-
-	protected bool mChanged = true;
-
-	protected bool mPlayMode = true;
 
 	private Vector3 mDiffPos;
 
@@ -52,43 +36,39 @@ public abstract class UIWidget : MonoBehaviour
 
 	private Vector3 mDiffScale;
 
-	private Matrix4x4 mLocalToPanel;
-
-	private bool mVisibleByPanel = true;
-
-	private float mLastAlpha;
+	private bool mForceVisible;
 
 	private UIGeometry mGeom = new UIGeometry();
 
-	private bool mForceVisible;
+	protected GameObject mGo;
+
+	private float mLastAlpha;
+
+	private Matrix4x4 mLocalToPanel;
+
+	[HideInInspector]
+	[SerializeField]
+	protected Material mMat;
 
 	private Vector3 mOldV0;
 
 	private Vector3 mOldV1;
 
-	public bool isVisible
-	{
-		get
-		{
-			return mVisibleByPanel && finalAlpha > 0.001f;
-		}
-	}
+	protected UIPanel mPanel;
 
-	public Color color
-	{
-		get
-		{
-			return mColor;
-		}
-		set
-		{
-			if (!mColor.Equals(value))
-			{
-				mColor = value;
-				mChanged = true;
-			}
-		}
-	}
+	[HideInInspector]
+	[SerializeField]
+	private Pivot mPivot = Pivot.Center;
+
+	protected bool mPlayMode = true;
+
+	[SerializeField]
+	[HideInInspector]
+	protected Texture mTex;
+
+	protected Transform mTrans;
+
+	private bool mVisibleByPanel = true;
 
 	public float alpha
 	{
@@ -104,106 +84,11 @@ public abstract class UIWidget : MonoBehaviour
 		}
 	}
 
-	public float finalAlpha
+	public virtual Vector4 border
 	{
 		get
 		{
-			if (mPanel == null)
-			{
-				CreatePanel();
-			}
-			return (!(mPanel != null)) ? mColor.a : (mColor.a * mPanel.alpha);
-		}
-	}
-
-	public Pivot pivot
-	{
-		get
-		{
-			return mPivot;
-		}
-		set
-		{
-			if (mPivot != value)
-			{
-				Vector3 vector = NGUIMath.CalculateWidgetCorners(this)[0];
-				mPivot = value;
-				mChanged = true;
-				Vector3 vector2 = NGUIMath.CalculateWidgetCorners(this)[0];
-				Transform transform = cachedTransform;
-				Vector3 position = transform.position;
-				float z = transform.localPosition.z;
-				position.x += vector.x - vector2.x;
-				position.y += vector.y - vector2.y;
-				cachedTransform.position = position;
-				position = cachedTransform.localPosition;
-				position.x = Mathf.Round(position.x);
-				position.y = Mathf.Round(position.y);
-				position.z = z;
-				cachedTransform.localPosition = position;
-			}
-		}
-	}
-
-	public int depth
-	{
-		get
-		{
-			return mDepth;
-		}
-		set
-		{
-			if (mDepth != value)
-			{
-				mDepth = value;
-				if (mPanel != null)
-				{
-					mPanel.MarkMaterialAsChanged(material, true);
-				}
-			}
-		}
-	}
-
-	public Vector2 pivotOffset
-	{
-		get
-		{
-			Vector2 zero = Vector2.zero;
-			Vector4 vector = relativePadding;
-			Pivot pivot = this.pivot;
-			switch (pivot)
-			{
-			case Pivot.Top:
-			case Pivot.Center:
-			case Pivot.Bottom:
-				zero.x = (vector.x - vector.z - 1f) * 0.5f;
-				break;
-			case Pivot.TopRight:
-			case Pivot.Right:
-			case Pivot.BottomRight:
-				zero.x = -1f - vector.z;
-				break;
-			default:
-				zero.x = vector.x;
-				break;
-			}
-			switch (pivot)
-			{
-			case Pivot.Left:
-			case Pivot.Center:
-			case Pivot.Right:
-				zero.y = (vector.w - vector.y + 1f) * 0.5f;
-				break;
-			case Pivot.BottomLeft:
-			case Pivot.Bottom:
-			case Pivot.BottomRight:
-				zero.y = 1f + vector.w;
-				break;
-			default:
-				zero.y = 0f - vector.y;
-				break;
-			}
-			return zero;
+			return Vector4.zero;
 		}
 	}
 
@@ -231,28 +116,74 @@ public abstract class UIWidget : MonoBehaviour
 		}
 	}
 
-	public virtual Material material
+	public Color color
 	{
 		get
 		{
-			return mMat;
+			return mColor;
 		}
 		set
 		{
-			if (mMat != value)
+			if (!mColor.Equals(value))
 			{
-				if (mMat != null && mPanel != null)
+				mColor = value;
+				mChanged = true;
+			}
+		}
+	}
+
+	public int depth
+	{
+		get
+		{
+			return mDepth;
+		}
+		set
+		{
+			if (mDepth != value)
+			{
+				mDepth = value;
+				if (mPanel != null)
 				{
-					mPanel.RemoveWidget(this);
-				}
-				mPanel = null;
-				mMat = value;
-				mTex = null;
-				if (mMat != null)
-				{
-					CreatePanel();
+					mPanel.MarkMaterialAsChanged(material, true);
 				}
 			}
+		}
+	}
+
+	public float finalAlpha
+	{
+		get
+		{
+			if (mPanel == null)
+			{
+				CreatePanel();
+			}
+			if (!(mPanel == null))
+			{
+				return mColor.a * mPanel.alpha;
+			}
+			return mColor.a;
+		}
+	}
+
+	public bool isVisible
+	{
+		get
+		{
+			if (mVisibleByPanel)
+			{
+				return finalAlpha > 0.001f;
+			}
+			return false;
+		}
+	}
+
+	public virtual bool keepMaterial
+	{
+		get
+		{
+			return false;
 		}
 	}
 
@@ -308,6 +239,31 @@ public abstract class UIWidget : MonoBehaviour
 		}
 	}
 
+	public virtual Material material
+	{
+		get
+		{
+			return mMat;
+		}
+		set
+		{
+			if (mMat != value)
+			{
+				if (mMat != null && mPanel != null)
+				{
+					mPanel.RemoveWidget(this);
+				}
+				mPanel = null;
+				mMat = value;
+				mTex = null;
+				if (mMat != null)
+				{
+					CreatePanel();
+				}
+			}
+		}
+	}
+
 	public UIPanel panel
 	{
 		get
@@ -324,35 +280,74 @@ public abstract class UIWidget : MonoBehaviour
 		}
 	}
 
-	public virtual Vector2 relativeSize
+	public Pivot pivot
 	{
 		get
 		{
-			return Vector2.one;
+			return mPivot;
+		}
+		set
+		{
+			if (mPivot != value)
+			{
+				Vector3 vector = NGUIMath.CalculateWidgetCorners(this)[0];
+				mPivot = value;
+				mChanged = true;
+				Vector3 vector2 = NGUIMath.CalculateWidgetCorners(this)[0];
+				Transform transform = cachedTransform;
+				Vector3 position = transform.position;
+				float z = transform.localPosition.z;
+				position.x += vector.x - vector2.x;
+				position.y += vector.y - vector2.y;
+				cachedTransform.position = position;
+				position = cachedTransform.localPosition;
+				position.x = Mathf.Round(position.x);
+				position.y = Mathf.Round(position.y);
+				position.z = z;
+				cachedTransform.localPosition = position;
+			}
 		}
 	}
 
-	public virtual Vector4 relativePadding
+	public Vector2 pivotOffset
 	{
 		get
 		{
-			return Vector4.zero;
-		}
-	}
-
-	public virtual Vector4 border
-	{
-		get
-		{
-			return Vector4.zero;
-		}
-	}
-
-	public virtual bool keepMaterial
-	{
-		get
-		{
-			return false;
+			Vector2 zero = Vector2.zero;
+			Vector4 vector = relativePadding;
+			Pivot pivot = this.pivot;
+			switch (pivot)
+			{
+			case Pivot.Top:
+			case Pivot.Center:
+			case Pivot.Bottom:
+				zero.x = (vector.x - vector.z - 1f) * 0.5f;
+				break;
+			case Pivot.TopRight:
+			case Pivot.Right:
+			case Pivot.BottomRight:
+				zero.x = -1f - vector.z;
+				break;
+			default:
+				zero.x = vector.x;
+				break;
+			}
+			switch (pivot)
+			{
+			case Pivot.Left:
+			case Pivot.Center:
+			case Pivot.Right:
+				zero.y = (vector.w - vector.y + 1f) * 0.5f;
+				return zero;
+			case Pivot.BottomLeft:
+			case Pivot.Bottom:
+			case Pivot.BottomRight:
+				zero.y = 1f + vector.w;
+				return zero;
+			default:
+				zero.y = 0f - vector.y;
+				return zero;
+			}
 		}
 	}
 
@@ -364,25 +359,41 @@ public abstract class UIWidget : MonoBehaviour
 		}
 	}
 
-	public static BetterList<UIWidget> Raycast(GameObject root, Vector2 mousePos)
+	public virtual Vector4 relativePadding
 	{
-		BetterList<UIWidget> betterList = new BetterList<UIWidget>();
-		UICamera uICamera = UICamera.FindCameraForLayer(root.layer);
-		if (uICamera != null)
+		get
 		{
-			Camera cachedCamera = uICamera.cachedCamera;
-			UIWidget[] componentsInChildren = root.GetComponentsInChildren<UIWidget>();
-			foreach (UIWidget uIWidget in componentsInChildren)
-			{
-				Vector3[] worldPoints = NGUIMath.CalculateWidgetCorners(uIWidget);
-				if (NGUIMath.DistanceToRectangle(worldPoints, mousePos, cachedCamera) == 0f)
-				{
-					betterList.Add(uIWidget);
-				}
-			}
-			betterList.Sort((UIWidget w1, UIWidget w2) => w2.mDepth.CompareTo(w1.mDepth));
+			return Vector4.zero;
 		}
-		return betterList;
+	}
+
+	public virtual Vector2 relativeSize
+	{
+		get
+		{
+			return Vector2.one;
+		}
+	}
+
+	protected virtual void Awake()
+	{
+		mGo = base.gameObject;
+		mPlayMode = Application.isPlaying;
+	}
+
+	public void CheckLayer()
+	{
+		if (mPanel != null && mPanel.gameObject.layer != base.gameObject.layer)
+		{
+			Debug.LogWarning("You can't place widgets on a layer different than the UIPanel that manages them.\nIf you want to move widgets to a different layer, parent them to a new panel instead.", this);
+			base.gameObject.layer = mPanel.gameObject.layer;
+		}
+	}
+
+	[Obsolete("Use ParentHasChanged() instead")]
+	public void CheckParent()
+	{
+		ParentHasChanged();
 	}
 
 	public static int CompareFunc(UIWidget left, UIWidget right)
@@ -396,21 +407,6 @@ public abstract class UIWidget : MonoBehaviour
 			return -1;
 		}
 		return 0;
-	}
-
-	public void MarkAsChangedLite()
-	{
-		mChanged = true;
-	}
-
-	public virtual void MarkAsChanged()
-	{
-		mChanged = true;
-		if (mPanel != null && base.enabled && NGUITools.GetActive(base.gameObject) && !Application.isPlaying && material != null)
-		{
-			mPanel.AddWidget(this);
-			CheckLayer();
-		}
 	}
 
 	public void CreatePanel()
@@ -427,19 +423,90 @@ public abstract class UIWidget : MonoBehaviour
 		}
 	}
 
-	public void CheckLayer()
+	public virtual void MakePixelPerfect()
 	{
-		if (mPanel != null && mPanel.gameObject.layer != base.gameObject.layer)
+		Vector3 localScale = cachedTransform.localScale;
+		int num = Mathf.RoundToInt(localScale.x);
+		int num2 = Mathf.RoundToInt(localScale.y);
+		localScale.x = num;
+		localScale.y = num2;
+		localScale.z = 1f;
+		Vector3 localPosition = cachedTransform.localPosition;
+		localPosition.z = Mathf.RoundToInt(localPosition.z);
+		if (num % 2 == 1 && (pivot == Pivot.Top || pivot == Pivot.Center || pivot == Pivot.Bottom))
 		{
-			Debug.LogWarning("You can't place widgets on a layer different than the UIPanel that manages them.\nIf you want to move widgets to a different layer, parent them to a new panel instead.", this);
-			base.gameObject.layer = mPanel.gameObject.layer;
+			localPosition.x = Mathf.Floor(localPosition.x) + 0.5f;
+		}
+		else
+		{
+			localPosition.x = Mathf.Round(localPosition.x);
+		}
+		if (num2 % 2 == 1 && (pivot == Pivot.Left || pivot == Pivot.Center || pivot == Pivot.Right))
+		{
+			localPosition.y = Mathf.Ceil(localPosition.y) - 0.5f;
+		}
+		else
+		{
+			localPosition.y = Mathf.Round(localPosition.y);
+		}
+		cachedTransform.localPosition = localPosition;
+		cachedTransform.localScale = localScale;
+	}
+
+	public virtual void MarkAsChanged()
+	{
+		mChanged = true;
+		if (mPanel != null && base.enabled && NGUITools.GetActive(base.gameObject) && !Application.isPlaying && material != null)
+		{
+			mPanel.AddWidget(this);
+			CheckLayer();
 		}
 	}
 
-	[Obsolete("Use ParentHasChanged() instead")]
-	public void CheckParent()
+	public void MarkAsChangedLite()
 	{
-		ParentHasChanged();
+		mChanged = true;
+	}
+
+	private void OnDestroy()
+	{
+		if (mPanel != null)
+		{
+			mPanel.RemoveWidget(this);
+			mPanel = null;
+		}
+	}
+
+	private void OnDisable()
+	{
+		if (!keepMaterial)
+		{
+			material = null;
+		}
+		else if (mPanel != null)
+		{
+			mPanel.RemoveWidget(this);
+		}
+		mPanel = null;
+	}
+
+	protected virtual void OnEnable()
+	{
+		mChanged = true;
+		if (!keepMaterial)
+		{
+			mMat = null;
+			mTex = null;
+		}
+		mPanel = null;
+	}
+
+	public virtual void OnFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
+	{
+	}
+
+	protected virtual void OnStart()
+	{
 	}
 
 	public void ParentHasChanged()
@@ -461,21 +528,24 @@ public abstract class UIWidget : MonoBehaviour
 		}
 	}
 
-	protected virtual void Awake()
+	public static BetterList<UIWidget> Raycast(GameObject root, Vector2 mousePos)
 	{
-		mGo = base.gameObject;
-		mPlayMode = Application.isPlaying;
-	}
-
-	protected virtual void OnEnable()
-	{
-		mChanged = true;
-		if (!keepMaterial)
+		BetterList<UIWidget> betterList = new BetterList<UIWidget>();
+		UICamera uICamera = UICamera.FindCameraForLayer(root.layer);
+		if (uICamera != null)
 		{
-			mMat = null;
-			mTex = null;
+			Camera cachedCamera = uICamera.cachedCamera;
+			UIWidget[] componentsInChildren = root.GetComponentsInChildren<UIWidget>();
+			foreach (UIWidget uIWidget in componentsInChildren)
+			{
+				if (NGUIMath.DistanceToRectangle(NGUIMath.CalculateWidgetCorners(uIWidget), mousePos, cachedCamera) == 0f)
+				{
+					betterList.Add(uIWidget);
+				}
+			}
+			betterList.Sort((UIWidget w1, UIWidget w2) => w2.mDepth.CompareTo(w1.mDepth));
 		}
-		mPanel = null;
+		return betterList;
 	}
 
 	private void Start()
@@ -489,28 +559,6 @@ public abstract class UIWidget : MonoBehaviour
 		if (mPanel == null)
 		{
 			CreatePanel();
-		}
-	}
-
-	private void OnDisable()
-	{
-		if (!keepMaterial)
-		{
-			material = null;
-		}
-		else if (mPanel != null)
-		{
-			mPanel.RemoveWidget(this);
-		}
-		mPanel = null;
-	}
-
-	private void OnDestroy()
-	{
-		if (mPanel != null)
-		{
-			mPanel.RemoveWidget(this);
-			mPanel = null;
 		}
 	}
 
@@ -604,43 +652,5 @@ public abstract class UIWidget : MonoBehaviour
 	public void WriteToBuffers(BetterList<Vector3> v, BetterList<Vector2> u, BetterList<Color32> c, BetterList<Vector3> n, BetterList<Vector4> t)
 	{
 		mGeom.WriteToBuffers(v, u, c, n, t);
-	}
-
-	public virtual void MakePixelPerfect()
-	{
-		Vector3 localScale = cachedTransform.localScale;
-		int num = Mathf.RoundToInt(localScale.x);
-		int num2 = Mathf.RoundToInt(localScale.y);
-		localScale.x = num;
-		localScale.y = num2;
-		localScale.z = 1f;
-		Vector3 localPosition = cachedTransform.localPosition;
-		localPosition.z = Mathf.RoundToInt(localPosition.z);
-		if (num % 2 == 1 && (pivot == Pivot.Top || pivot == Pivot.Center || pivot == Pivot.Bottom))
-		{
-			localPosition.x = Mathf.Floor(localPosition.x) + 0.5f;
-		}
-		else
-		{
-			localPosition.x = Mathf.Round(localPosition.x);
-		}
-		if (num2 % 2 == 1 && (pivot == Pivot.Left || pivot == Pivot.Center || pivot == Pivot.Right))
-		{
-			localPosition.y = Mathf.Ceil(localPosition.y) - 0.5f;
-		}
-		else
-		{
-			localPosition.y = Mathf.Round(localPosition.y);
-		}
-		cachedTransform.localPosition = localPosition;
-		cachedTransform.localScale = localScale;
-	}
-
-	protected virtual void OnStart()
-	{
-	}
-
-	public virtual void OnFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
-	{
 	}
 }

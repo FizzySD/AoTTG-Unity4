@@ -6,17 +6,17 @@ public class PanelMultiStart : MonoBehaviour
 
 	public GameObject label_LAN;
 
-	public GameObject label_server_US;
-
-	public GameObject label_server_EU;
-
-	public GameObject label_server_ASIA;
-
-	public GameObject label_server_JAPAN;
-
 	public GameObject label_QUICK_MATCH;
 
 	public GameObject label_server;
+
+	public GameObject label_server_ASIA;
+
+	public GameObject label_server_EU;
+
+	public GameObject label_server_JAPAN;
+
+	public GameObject label_server_US;
 
 	private int lang = -1;
 
@@ -35,7 +35,7 @@ public class PanelMultiStart : MonoBehaviour
 			label_server_EU.GetComponent<UILabel>().text = Language.btn_server_EU[Language.type];
 			label_server_ASIA.GetComponent<UILabel>().text = Language.btn_server_ASIA[Language.type];
 			label_server_JAPAN.GetComponent<UILabel>().text = Language.btn_server_JAPAN[Language.type];
-			label_QUICK_MATCH.GetComponent<UILabel>().text = Language.btn_QUICK_MATCH[Language.type];
+			label_QUICK_MATCH.GetComponent<UILabel>().text = "Offline Mode";
 			label_server.GetComponent<UILabel>().text = Language.choose_region_server[Language.type];
 		}
 	}

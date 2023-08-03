@@ -3,9 +3,9 @@ using UnityEngine;
 
 public class CharacterMaterials
 {
-	public static Dictionary<string, Material> materials;
-
 	private static bool inited;
+
+	public static Dictionary<string, Material> materials;
 
 	public static void init()
 	{
@@ -79,7 +79,6 @@ public class CharacterMaterials
 
 	private static void newMaterial(string pref)
 	{
-		Debug.Log(pref);
 		Texture mainTexture = (Texture)Object.Instantiate(Resources.Load("NewTexture/" + pref));
 		Material material = (Material)Object.Instantiate(Resources.Load("NewTexture/MaterialCharacter"));
 		material.mainTexture = mainTexture;

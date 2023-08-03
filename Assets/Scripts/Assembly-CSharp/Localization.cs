@@ -4,41 +4,15 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Internal/Localization")]
 public class Localization : MonoBehaviour
 {
-	private static Localization mInstance;
-
-	public string startingLanguage = "English";
-
 	public TextAsset[] languages;
 
 	private Dictionary<string, string> mDictionary = new Dictionary<string, string>();
 
+	private static Localization mInstance;
+
 	private string mLanguage;
 
-	public static bool isActive
-	{
-		get
-		{
-			return mInstance != null;
-		}
-	}
-
-	public static Localization instance
-	{
-		get
-		{
-			if (mInstance == null)
-			{
-				mInstance = Object.FindObjectOfType(typeof(Localization)) as Localization;
-				if (mInstance == null)
-				{
-					GameObject gameObject = new GameObject("_Localization");
-					Object.DontDestroyOnLoad(gameObject);
-					mInstance = gameObject.AddComponent<Localization>();
-				}
-			}
-			return mInstance;
-		}
-	}
+	public string startingLanguage = "English";
 
 	public string currentLanguage
 	{
@@ -80,6 +54,32 @@ public class Localization : MonoBehaviour
 		}
 	}
 
+	public static Localization instance
+	{
+		get
+		{
+			if (mInstance == null)
+			{
+				mInstance = Object.FindObjectOfType(typeof(Localization)) as Localization;
+				if (mInstance == null)
+				{
+					GameObject gameObject = new GameObject("_Localization");
+					Object.DontDestroyOnLoad(gameObject);
+					mInstance = gameObject.AddComponent<Localization>();
+				}
+			}
+			return mInstance;
+		}
+	}
+
+	public static bool isActive
+	{
+		get
+		{
+			return mInstance != null;
+		}
+	}
+
 	private void Awake()
 	{
 		if (mInstance == null)
@@ -87,7 +87,7 @@ public class Localization : MonoBehaviour
 			mInstance = this;
 			Object.DontDestroyOnLoad(base.gameObject);
 			currentLanguage = PlayerPrefs.GetString("Language", startingLanguage);
-			if (string.IsNullOrEmpty(mLanguage) && languages != null && languages.Length > 0)
+			if (string.IsNullOrEmpty(mLanguage) && languages != null && languages.Length != 0)
 			{
 				currentLanguage = languages[0].name;
 			}
@@ -98,12 +98,31 @@ public class Localization : MonoBehaviour
 		}
 	}
 
-	private void OnEnable()
+	public string Get(string key)
 	{
-		if (mInstance == null)
+		string value;
+		if (mDictionary.TryGetValue(key, out value))
 		{
-			mInstance = this;
+			return value;
 		}
+		return key;
+	}
+
+	private void Load(TextAsset asset)
+	{
+		mLanguage = asset.name;
+		PlayerPrefs.SetString("Language", mLanguage);
+		mDictionary = new ByteReader(asset).ReadDictionary();
+		UIRoot.Broadcast("OnLocalize", this);
+	}
+
+	public static string Localize(string key)
+	{
+		if (!(instance == null))
+		{
+			return instance.Get(key);
+		}
+		return key;
 	}
 
 	private void OnDestroy()
@@ -114,23 +133,11 @@ public class Localization : MonoBehaviour
 		}
 	}
 
-	private void Load(TextAsset asset)
+	private void OnEnable()
 	{
-		mLanguage = asset.name;
-		PlayerPrefs.SetString("Language", mLanguage);
-		ByteReader byteReader = new ByteReader(asset);
-		mDictionary = byteReader.ReadDictionary();
-		UIRoot.Broadcast("OnLocalize", this);
-	}
-
-	public string Get(string key)
-	{
-		string value;
-		return (!mDictionary.TryGetValue(key, out value)) ? key : value;
-	}
-
-	public static string Localize(string key)
-	{
-		return (!(instance != null)) ? key : instance.Get(key);
+		if (mInstance == null)
+		{
+			mInstance = this;
+		}
 	}
 }

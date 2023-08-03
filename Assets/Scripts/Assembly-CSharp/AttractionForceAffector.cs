@@ -4,19 +4,11 @@ public class AttractionForceAffector : Affector
 {
 	private AnimationCurve AttractionCurve;
 
-	protected Vector3 Position;
-
 	private float Magnitude;
 
-	private bool UseCurve;
+	protected Vector3 Position;
 
-	public AttractionForceAffector(AnimationCurve curve, Vector3 pos, EffectNode node)
-		: base(node)
-	{
-		AttractionCurve = curve;
-		Position = pos;
-		UseCurve = true;
-	}
+	private bool UseCurve;
 
 	public AttractionForceAffector(float magnitude, Vector3 pos, EffectNode node)
 		: base(node)
@@ -24,6 +16,14 @@ public class AttractionForceAffector : Affector
 		Magnitude = magnitude;
 		Position = pos;
 		UseCurve = false;
+	}
+
+	public AttractionForceAffector(AnimationCurve curve, Vector3 pos, EffectNode node)
+		: base(node)
+	{
+		AttractionCurve = curve;
+		Position = pos;
+		UseCurve = true;
 	}
 
 	public override void Update()

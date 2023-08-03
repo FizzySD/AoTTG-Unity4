@@ -1,15 +1,13 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 [assembly: AssemblyCompany("Exit Games GmbH")]
-[assembly: AssemblyTitle("Photon3Unity")]
-[assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration(".NET Framework 3.5")]
+[assembly: AssemblyConfiguration("Unity-Debug")]
 [assembly: AssemblyCopyright("(c) Exit Games GmbH, http://www.exitgames.com")]
-[assembly: AssemblyProduct("PhotonUnity3D")]
-[assembly: AssemblyTrademark("")]
-[assembly: ComVisible(false)]
-[assembly: Guid("cc6a3e2e-6cf3-4dd8-aa50-4b5fd09cc328")]
-[assembly: AssemblyVersion("4.0.0.4")]
+[assembly: AssemblyDescription("Photon .Net Client Library. Debug.")]
+[assembly: AssemblyFileVersion("4.1.4.1")]
+[assembly: AssemblyInformationalVersion("4.1.4.1")]
+[assembly: AssemblyProduct("Photon .Net Client Library. Debug.")]
+[assembly: AssemblyTitle("Photon3Unity3D")]
+[assembly: AssemblyVersion("4.1.4.1")]

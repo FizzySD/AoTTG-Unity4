@@ -3,19 +3,19 @@ using UnityEngine;
 [AddComponentMenu("Camera-Control/Mouse Orbit")]
 public class PlanetMouseOrbit : MonoBehaviour
 {
-	public Transform target;
-
 	public float distance = 10f;
 
+	public Transform target;
+
 	private float x;
+
+	public float xSpeed = 250f;
 
 	private float y;
 
 	public int yMaxLimit = 80;
 
 	public int yMinLimit = -20;
-
-	public float xSpeed = 250f;
 
 	public float ySpeed = 120f;
 

@@ -6,25 +6,25 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class UISpriteAnimation : MonoBehaviour
 {
-	[SerializeField]
+	private bool mActive = true;
+
+	private float mDelta;
+
 	[HideInInspector]
+	[SerializeField]
 	private int mFPS = 30;
 
-	[SerializeField]
-	[HideInInspector]
-	private string mPrefix = string.Empty;
+	private int mIndex;
 
 	[SerializeField]
 	[HideInInspector]
 	private bool mLoop = true;
 
+	[HideInInspector]
+	[SerializeField]
+	private string mPrefix = string.Empty;
+
 	private UISprite mSprite;
-
-	private float mDelta;
-
-	private int mIndex;
-
-	private bool mActive = true;
 
 	private List<string> mSpriteNames = new List<string>();
 
@@ -48,19 +48,11 @@ public class UISpriteAnimation : MonoBehaviour
 		}
 	}
 
-	public string namePrefix
+	public bool isPlaying
 	{
 		get
 		{
-			return mPrefix;
-		}
-		set
-		{
-			if (mPrefix != value)
-			{
-				mPrefix = value;
-				RebuildSpriteList();
-			}
+			return mActive;
 		}
 	}
 
@@ -76,39 +68,18 @@ public class UISpriteAnimation : MonoBehaviour
 		}
 	}
 
-	public bool isPlaying
+	public string namePrefix
 	{
 		get
 		{
-			return mActive;
+			return mPrefix;
 		}
-	}
-
-	private void Start()
-	{
-		RebuildSpriteList();
-	}
-
-	private void Update()
-	{
-		if (!mActive || mSpriteNames.Count <= 1 || !Application.isPlaying || !((float)mFPS > 0f))
+		set
 		{
-			return;
-		}
-		mDelta += Time.deltaTime;
-		float num = 1f / (float)mFPS;
-		if (num < mDelta)
-		{
-			mDelta = ((!(num > 0f)) ? 0f : (mDelta - num));
-			if (++mIndex >= mSpriteNames.Count)
+			if (mPrefix != value)
 			{
-				mIndex = 0;
-				mActive = loop;
-			}
-			if (mActive)
-			{
-				mSprite.spriteName = mSpriteNames[mIndex];
-				mSprite.MakePixelPerfect();
+				mPrefix = value;
+				RebuildSpriteList();
 			}
 		}
 	}
@@ -145,6 +116,35 @@ public class UISpriteAnimation : MonoBehaviour
 		{
 			mSprite.spriteName = mSpriteNames[mIndex];
 			mSprite.MakePixelPerfect();
+		}
+	}
+
+	private void Start()
+	{
+		RebuildSpriteList();
+	}
+
+	private void Update()
+	{
+		if (!mActive || mSpriteNames.Count <= 1 || !Application.isPlaying || !((float)mFPS > 0f))
+		{
+			return;
+		}
+		mDelta += Time.deltaTime;
+		float num = 1f / (float)mFPS;
+		if (num < mDelta)
+		{
+			mDelta = ((num <= 0f) ? 0f : (mDelta - num));
+			if (++mIndex >= mSpriteNames.Count)
+			{
+				mIndex = 0;
+				mActive = loop;
+			}
+			if (mActive)
+			{
+				mSprite.spriteName = mSpriteNames[mIndex];
+				mSprite.MakePixelPerfect();
+			}
 		}
 	}
 }

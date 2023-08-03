@@ -2,8 +2,8 @@ using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
-[AddComponentMenu("NGUI/Interaction/Draggable Panel")]
 [RequireComponent(typeof(UIPanel))]
+[AddComponentMenu("NGUI/Interaction/Draggable Panel")]
 public class UIDraggablePanel : IgnoreTimeScale
 {
 	public enum DragEffect
@@ -13,6 +13,8 @@ public class UIDraggablePanel : IgnoreTimeScale
 		MomentumAndSpring = 2
 	}
 
+	public delegate void OnDragFinished();
+
 	public enum ShowCondition
 	{
 		Always = 0,
@@ -20,71 +22,61 @@ public class UIDraggablePanel : IgnoreTimeScale
 		WhenDragging = 2
 	}
 
-	public delegate void OnDragFinished();
-
-	public bool restrictWithinPanel = true;
-
 	public bool disableDragIfFits;
 
 	public DragEffect dragEffect = DragEffect.MomentumAndSpring;
 
-	public bool smoothDragStart = true;
-
-	public Vector3 scale = Vector3.one;
-
-	public float scrollWheelFactor;
-
-	public float momentumAmount = 35f;
-
-	public Vector2 relativePositionOnReset = Vector2.zero;
-
-	public bool repositionClipping;
-
-	public bool iOSDragEmulation = true;
-
 	public UIScrollBar horizontalScrollBar;
 
-	public UIScrollBar verticalScrollBar;
-
-	public ShowCondition showScrollBars = ShowCondition.OnlyIfNeeded;
-
-	public OnDragFinished onDragFinished;
-
-	private Transform mTrans;
-
-	private UIPanel mPanel;
-
-	private Plane mPlane;
-
-	private Vector3 mLastPos;
-
-	private bool mPressed;
-
-	private Vector3 mMomentum = Vector3.zero;
-
-	private float mScroll;
+	public bool iOSDragEmulation = true;
 
 	private Bounds mBounds;
 
 	private bool mCalculatedBounds;
 
-	private bool mShouldMove;
-
-	private bool mIgnoreCallbacks;
-
 	private int mDragID = -10;
-
-	private Vector2 mDragStartOffset = Vector2.zero;
 
 	private bool mDragStarted;
 
-	public UIPanel panel
-	{
-		get
-		{
-			return mPanel;
-		}
-	}
+	private Vector2 mDragStartOffset = Vector2.zero;
+
+	private bool mIgnoreCallbacks;
+
+	private Vector3 mLastPos;
+
+	private Vector3 mMomentum = Vector3.zero;
+
+	public float momentumAmount = 35f;
+
+	private UIPanel mPanel;
+
+	private Plane mPlane;
+
+	private bool mPressed;
+
+	private float mScroll;
+
+	private bool mShouldMove;
+
+	private Transform mTrans;
+
+	public OnDragFinished onDragFinished;
+
+	public Vector2 relativePositionOnReset = Vector2.zero;
+
+	public bool repositionClipping;
+
+	public bool restrictWithinPanel = true;
+
+	public Vector3 scale = Vector3.one;
+
+	public float scrollWheelFactor;
+
+	public ShowCondition showScrollBars = ShowCondition.OnlyIfNeeded;
+
+	public bool smoothDragStart = true;
+
+	public UIScrollBar verticalScrollBar;
 
 	public Bounds bounds
 	{
@@ -99,29 +91,24 @@ public class UIDraggablePanel : IgnoreTimeScale
 		}
 	}
 
-	public bool shouldMoveHorizontally
+	public Vector3 currentMomentum
 	{
 		get
 		{
-			float num = bounds.size.x;
-			if (mPanel.clipping == UIDrawCall.Clipping.SoftClip)
-			{
-				num += mPanel.clipSoftness.x * 2f;
-			}
-			return num > mPanel.clipRange.z;
+			return mMomentum;
+		}
+		set
+		{
+			mMomentum = value;
+			mShouldMove = true;
 		}
 	}
 
-	public bool shouldMoveVertically
+	public UIPanel panel
 	{
 		get
 		{
-			float num = bounds.size.y;
-			if (mPanel.clipping == UIDrawCall.Clipping.SoftClip)
-			{
-				num += mPanel.clipSoftness.y * 2f;
-			}
-			return num > mPanel.clipRange.w;
+			return mPanel;
 		}
 	}
 
@@ -167,16 +154,29 @@ public class UIDraggablePanel : IgnoreTimeScale
 		}
 	}
 
-	public Vector3 currentMomentum
+	public bool shouldMoveHorizontally
 	{
 		get
 		{
-			return mMomentum;
+			float num = bounds.size.x;
+			if (mPanel.clipping == UIDrawCall.Clipping.SoftClip)
+			{
+				num += mPanel.clipSoftness.x * 2f;
+			}
+			return num > mPanel.clipRange.z;
 		}
-		set
+	}
+
+	public bool shouldMoveVertically
+	{
+		get
 		{
-			mMomentum = value;
-			mShouldMove = true;
+			float num = bounds.size.y;
+			if (mPanel.clipping == UIDrawCall.Clipping.SoftClip)
+			{
+				num += mPanel.clipSoftness.y * 2f;
+			}
+			return num > mPanel.clipRange.w;
 		}
 	}
 
@@ -184,59 +184,7 @@ public class UIDraggablePanel : IgnoreTimeScale
 	{
 		mTrans = base.transform;
 		mPanel = GetComponent<UIPanel>();
-		UIPanel uIPanel = mPanel;
-		uIPanel.onChange = (UIPanel.OnChangeDelegate)Delegate.Combine(uIPanel.onChange, new UIPanel.OnChangeDelegate(OnPanelChange));
-	}
-
-	private void OnDestroy()
-	{
-		if (mPanel != null)
-		{
-			UIPanel uIPanel = mPanel;
-			uIPanel.onChange = (UIPanel.OnChangeDelegate)Delegate.Remove(uIPanel.onChange, new UIPanel.OnChangeDelegate(OnPanelChange));
-		}
-	}
-
-	private void OnPanelChange()
-	{
-		UpdateScrollbars(true);
-	}
-
-	private void Start()
-	{
-		UpdateScrollbars(true);
-		if (horizontalScrollBar != null)
-		{
-			UIScrollBar uIScrollBar = horizontalScrollBar;
-			uIScrollBar.onChange = (UIScrollBar.OnScrollBarChange)Delegate.Combine(uIScrollBar.onChange, new UIScrollBar.OnScrollBarChange(OnHorizontalBar));
-			horizontalScrollBar.alpha = ((showScrollBars != 0 && !shouldMoveHorizontally) ? 0f : 1f);
-		}
-		if (verticalScrollBar != null)
-		{
-			UIScrollBar uIScrollBar2 = verticalScrollBar;
-			uIScrollBar2.onChange = (UIScrollBar.OnScrollBarChange)Delegate.Combine(uIScrollBar2.onChange, new UIScrollBar.OnScrollBarChange(OnVerticalBar));
-			verticalScrollBar.alpha = ((showScrollBars != 0 && !shouldMoveVertically) ? 0f : 1f);
-		}
-	}
-
-	public bool RestrictWithinBounds(bool instant)
-	{
-		Vector3 vector = mPanel.CalculateConstrainOffset(bounds.min, bounds.max);
-		if (vector.magnitude > 0.001f)
-		{
-			if (!instant && dragEffect == DragEffect.MomentumAndSpring)
-			{
-				SpringPanel.Begin(mPanel.gameObject, mTrans.localPosition + vector, 13f);
-			}
-			else
-			{
-				MoveRelative(vector);
-				mMomentum = Vector3.zero;
-				mScroll = 0f;
-			}
-			return true;
-		}
-		return false;
+		mPanel.onChange = (UIPanel.OnChangeDelegate)Delegate.Combine(mPanel.onChange, new UIPanel.OnChangeDelegate(OnPanelChange));
 	}
 
 	public void DisableSpring()
@@ -245,196 +193,6 @@ public class UIDraggablePanel : IgnoreTimeScale
 		if (component != null)
 		{
 			component.enabled = false;
-		}
-	}
-
-	public void UpdateScrollbars(bool recalculateBounds)
-	{
-		if (mPanel == null)
-		{
-			return;
-		}
-		if (horizontalScrollBar != null || verticalScrollBar != null)
-		{
-			if (recalculateBounds)
-			{
-				mCalculatedBounds = false;
-				mShouldMove = shouldMove;
-			}
-			Bounds bounds = this.bounds;
-			Vector2 vector = bounds.min;
-			Vector2 vector2 = bounds.max;
-			if (mPanel.clipping == UIDrawCall.Clipping.SoftClip)
-			{
-				Vector2 clipSoftness = mPanel.clipSoftness;
-				vector -= clipSoftness;
-				vector2 += clipSoftness;
-			}
-			if (horizontalScrollBar != null && vector2.x > vector.x)
-			{
-				Vector4 clipRange = mPanel.clipRange;
-				float num = clipRange.z * 0.5f;
-				float num2 = clipRange.x - num - bounds.min.x;
-				float num3 = bounds.max.x - num - clipRange.x;
-				float num4 = vector2.x - vector.x;
-				num2 = Mathf.Clamp01(num2 / num4);
-				num3 = Mathf.Clamp01(num3 / num4);
-				float num5 = num2 + num3;
-				mIgnoreCallbacks = true;
-				horizontalScrollBar.barSize = 1f - num5;
-				horizontalScrollBar.scrollValue = ((!(num5 > 0.001f)) ? 0f : (num2 / num5));
-				mIgnoreCallbacks = false;
-			}
-			if (verticalScrollBar != null && vector2.y > vector.y)
-			{
-				Vector4 clipRange2 = mPanel.clipRange;
-				float num6 = clipRange2.w * 0.5f;
-				float num7 = clipRange2.y - num6 - vector.y;
-				float num8 = vector2.y - num6 - clipRange2.y;
-				float num9 = vector2.y - vector.y;
-				num7 = Mathf.Clamp01(num7 / num9);
-				num8 = Mathf.Clamp01(num8 / num9);
-				float num10 = num7 + num8;
-				mIgnoreCallbacks = true;
-				verticalScrollBar.barSize = 1f - num10;
-				verticalScrollBar.scrollValue = ((!(num10 > 0.001f)) ? 0f : (1f - num7 / num10));
-				mIgnoreCallbacks = false;
-			}
-		}
-		else if (recalculateBounds)
-		{
-			mCalculatedBounds = false;
-		}
-	}
-
-	public void SetDragAmount(float x, float y, bool updateScrollbars)
-	{
-		DisableSpring();
-		Bounds bounds = this.bounds;
-		if (bounds.min.x == bounds.max.x || bounds.min.y == bounds.max.y)
-		{
-			return;
-		}
-		Vector4 clipRange = mPanel.clipRange;
-		float num = clipRange.z * 0.5f;
-		float num2 = clipRange.w * 0.5f;
-		float num3 = bounds.min.x + num;
-		float num4 = bounds.max.x - num;
-		float num5 = bounds.min.y + num2;
-		float num6 = bounds.max.y - num2;
-		if (mPanel.clipping == UIDrawCall.Clipping.SoftClip)
-		{
-			num3 -= mPanel.clipSoftness.x;
-			num4 += mPanel.clipSoftness.x;
-			num5 -= mPanel.clipSoftness.y;
-			num6 += mPanel.clipSoftness.y;
-		}
-		float num7 = Mathf.Lerp(num3, num4, x);
-		float num8 = Mathf.Lerp(num6, num5, y);
-		if (!updateScrollbars)
-		{
-			Vector3 localPosition = mTrans.localPosition;
-			if (scale.x != 0f)
-			{
-				localPosition.x += clipRange.x - num7;
-			}
-			if (scale.y != 0f)
-			{
-				localPosition.y += clipRange.y - num8;
-			}
-			mTrans.localPosition = localPosition;
-		}
-		clipRange.x = num7;
-		clipRange.y = num8;
-		mPanel.clipRange = clipRange;
-		if (updateScrollbars)
-		{
-			UpdateScrollbars(false);
-		}
-	}
-
-	public void ResetPosition()
-	{
-		mCalculatedBounds = false;
-		SetDragAmount(relativePositionOnReset.x, relativePositionOnReset.y, false);
-		SetDragAmount(relativePositionOnReset.x, relativePositionOnReset.y, true);
-	}
-
-	private void OnHorizontalBar(UIScrollBar sb)
-	{
-		if (!mIgnoreCallbacks)
-		{
-			float x = ((!(horizontalScrollBar != null)) ? 0f : horizontalScrollBar.scrollValue);
-			float y = ((!(verticalScrollBar != null)) ? 0f : verticalScrollBar.scrollValue);
-			SetDragAmount(x, y, false);
-		}
-	}
-
-	private void OnVerticalBar(UIScrollBar sb)
-	{
-		if (!mIgnoreCallbacks)
-		{
-			float x = ((!(horizontalScrollBar != null)) ? 0f : horizontalScrollBar.scrollValue);
-			float y = ((!(verticalScrollBar != null)) ? 0f : verticalScrollBar.scrollValue);
-			SetDragAmount(x, y, false);
-		}
-	}
-
-	public void MoveRelative(Vector3 relative)
-	{
-		mTrans.localPosition += relative;
-		Vector4 clipRange = mPanel.clipRange;
-		clipRange.x -= relative.x;
-		clipRange.y -= relative.y;
-		mPanel.clipRange = clipRange;
-		UpdateScrollbars(false);
-	}
-
-	public void MoveAbsolute(Vector3 absolute)
-	{
-		Vector3 vector = mTrans.InverseTransformPoint(absolute);
-		Vector3 vector2 = mTrans.InverseTransformPoint(Vector3.zero);
-		MoveRelative(vector - vector2);
-	}
-
-	public void Press(bool pressed)
-	{
-		if (smoothDragStart && pressed)
-		{
-			mDragStarted = false;
-			mDragStartOffset = Vector2.zero;
-		}
-		if (!base.enabled || !NGUITools.GetActive(base.gameObject))
-		{
-			return;
-		}
-		if (!pressed && mDragID == UICamera.currentTouchID)
-		{
-			mDragID = -10;
-		}
-		mCalculatedBounds = false;
-		mShouldMove = shouldMove;
-		if (!mShouldMove)
-		{
-			return;
-		}
-		mPressed = pressed;
-		if (pressed)
-		{
-			mMomentum = Vector3.zero;
-			mScroll = 0f;
-			DisableSpring();
-			mLastPos = UICamera.lastHit.point;
-			mPlane = new Plane(mTrans.rotation * Vector3.back, mLastPos);
-			return;
-		}
-		if (restrictWithinPanel && mPanel.clipping != 0 && dragEffect == DragEffect.MomentumAndSpring)
-		{
-			RestrictWithinBounds(false);
-		}
-		if (onDragFinished != null)
-		{
-			onDragFinished();
 		}
 	}
 
@@ -488,20 +246,6 @@ public class UIDraggablePanel : IgnoreTimeScale
 		}
 	}
 
-	public void Scroll(float delta)
-	{
-		if (base.enabled && NGUITools.GetActive(base.gameObject) && scrollWheelFactor != 0f)
-		{
-			DisableSpring();
-			mShouldMove = shouldMove;
-			if (Mathf.Sign(mScroll) != Mathf.Sign(delta))
-			{
-				mScroll = 0f;
-			}
-			mScroll += delta * scrollWheelFactor;
-		}
-	}
-
 	private void LateUpdate()
 	{
 		if (repositionClipping)
@@ -524,24 +268,22 @@ public class UIDraggablePanel : IgnoreTimeScale
 				flag = shouldMoveVertically;
 				flag2 = shouldMoveHorizontally;
 			}
-			if ((bool)verticalScrollBar)
+			if (verticalScrollBar != null)
 			{
-				float alpha = verticalScrollBar.alpha;
-				alpha += ((!flag) ? ((0f - num) * 3f) : (num * 6f));
-				alpha = Mathf.Clamp01(alpha);
-				if (verticalScrollBar.alpha != alpha)
+				float value = verticalScrollBar.alpha + ((!flag) ? ((0f - num) * 3f) : (num * 6f));
+				value = Mathf.Clamp01(value);
+				if (verticalScrollBar.alpha != value)
 				{
-					verticalScrollBar.alpha = alpha;
+					verticalScrollBar.alpha = value;
 				}
 			}
-			if ((bool)horizontalScrollBar)
+			if (horizontalScrollBar != null)
 			{
-				float alpha2 = horizontalScrollBar.alpha;
-				alpha2 += ((!flag2) ? ((0f - num) * 3f) : (num * 6f));
-				alpha2 = Mathf.Clamp01(alpha2);
-				if (horizontalScrollBar.alpha != alpha2)
+				float value2 = horizontalScrollBar.alpha + ((!flag2) ? ((0f - num) * 3f) : (num * 6f));
+				value2 = Mathf.Clamp01(value2);
+				if (horizontalScrollBar.alpha != value2)
 				{
-					horizontalScrollBar.alpha = alpha2;
+					horizontalScrollBar.alpha = value2;
 				}
 			}
 		}
@@ -571,5 +313,257 @@ public class UIDraggablePanel : IgnoreTimeScale
 			mScroll = 0f;
 		}
 		NGUIMath.SpringDampen(ref mMomentum, 9f, num);
+	}
+
+	public void MoveAbsolute(Vector3 absolute)
+	{
+		Vector3 vector = mTrans.InverseTransformPoint(absolute);
+		Vector3 vector2 = mTrans.InverseTransformPoint(Vector3.zero);
+		MoveRelative(vector - vector2);
+	}
+
+	public void MoveRelative(Vector3 relative)
+	{
+		mTrans.localPosition += relative;
+		Vector4 clipRange = mPanel.clipRange;
+		clipRange.x -= relative.x;
+		clipRange.y -= relative.y;
+		mPanel.clipRange = clipRange;
+		UpdateScrollbars(false);
+	}
+
+	private void OnDestroy()
+	{
+		if (mPanel != null)
+		{
+			mPanel.onChange = (UIPanel.OnChangeDelegate)Delegate.Remove(mPanel.onChange, new UIPanel.OnChangeDelegate(OnPanelChange));
+		}
+	}
+
+	private void OnHorizontalBar(UIScrollBar sb)
+	{
+		if (!mIgnoreCallbacks)
+		{
+			float x = ((horizontalScrollBar == null) ? 0f : horizontalScrollBar.scrollValue);
+			float y = ((verticalScrollBar == null) ? 0f : verticalScrollBar.scrollValue);
+			SetDragAmount(x, y, false);
+		}
+	}
+
+	private void OnPanelChange()
+	{
+		UpdateScrollbars(true);
+	}
+
+	private void OnVerticalBar(UIScrollBar sb)
+	{
+		if (!mIgnoreCallbacks)
+		{
+			float x = ((horizontalScrollBar == null) ? 0f : horizontalScrollBar.scrollValue);
+			float y = ((verticalScrollBar == null) ? 0f : verticalScrollBar.scrollValue);
+			SetDragAmount(x, y, false);
+		}
+	}
+
+	public void Press(bool pressed)
+	{
+		if (smoothDragStart && pressed)
+		{
+			mDragStarted = false;
+			mDragStartOffset = Vector2.zero;
+		}
+		if (!base.enabled || !NGUITools.GetActive(base.gameObject))
+		{
+			return;
+		}
+		if (!pressed && mDragID == UICamera.currentTouchID)
+		{
+			mDragID = -10;
+		}
+		mCalculatedBounds = false;
+		mShouldMove = shouldMove;
+		if (!mShouldMove)
+		{
+			return;
+		}
+		mPressed = pressed;
+		if (pressed)
+		{
+			mMomentum = Vector3.zero;
+			mScroll = 0f;
+			DisableSpring();
+			mLastPos = UICamera.lastHit.point;
+			mPlane = new Plane(mTrans.rotation * Vector3.back, mLastPos);
+			return;
+		}
+		if (restrictWithinPanel && mPanel.clipping != 0 && dragEffect == DragEffect.MomentumAndSpring)
+		{
+			RestrictWithinBounds(false);
+		}
+		if (onDragFinished != null)
+		{
+			onDragFinished();
+		}
+	}
+
+	public void ResetPosition()
+	{
+		mCalculatedBounds = false;
+		SetDragAmount(relativePositionOnReset.x, relativePositionOnReset.y, false);
+		SetDragAmount(relativePositionOnReset.x, relativePositionOnReset.y, true);
+	}
+
+	public bool RestrictWithinBounds(bool instant)
+	{
+		Vector3 vector = mPanel.CalculateConstrainOffset(bounds.min, bounds.max);
+		if (vector.magnitude <= 0.001f)
+		{
+			return false;
+		}
+		if (!instant && dragEffect == DragEffect.MomentumAndSpring)
+		{
+			SpringPanel.Begin(mPanel.gameObject, mTrans.localPosition + vector, 13f);
+		}
+		else
+		{
+			MoveRelative(vector);
+			mMomentum = Vector3.zero;
+			mScroll = 0f;
+		}
+		return true;
+	}
+
+	public void Scroll(float delta)
+	{
+		if (base.enabled && NGUITools.GetActive(base.gameObject) && scrollWheelFactor != 0f)
+		{
+			DisableSpring();
+			mShouldMove = shouldMove;
+			if (Mathf.Sign(mScroll) != Mathf.Sign(delta))
+			{
+				mScroll = 0f;
+			}
+			mScroll += delta * scrollWheelFactor;
+		}
+	}
+
+	public void SetDragAmount(float x, float y, bool updateScrollbars)
+	{
+		DisableSpring();
+		Bounds bounds = this.bounds;
+		if (bounds.min.x == bounds.max.x || bounds.min.y == bounds.max.y)
+		{
+			return;
+		}
+		Vector4 clipRange = mPanel.clipRange;
+		float num = clipRange.z * 0.5f;
+		float num2 = clipRange.w * 0.5f;
+		float num3 = bounds.min.x + num;
+		float num4 = bounds.max.x - num;
+		float num5 = bounds.min.y + num2;
+		float num6 = bounds.max.y - num2;
+		if (mPanel.clipping == UIDrawCall.Clipping.SoftClip)
+		{
+			num3 -= mPanel.clipSoftness.x;
+			num4 += mPanel.clipSoftness.x;
+			num5 -= mPanel.clipSoftness.y;
+			num6 += mPanel.clipSoftness.y;
+		}
+		float num7 = Mathf.Lerp(num3, num4, x);
+		float num8 = Mathf.Lerp(num6, num5, y);
+		if (!updateScrollbars)
+		{
+			Vector3 localPosition = mTrans.localPosition;
+			if (scale.x != 0f)
+			{
+				localPosition.x += clipRange.x - num7;
+			}
+			if (scale.y != 0f)
+			{
+				localPosition.y += clipRange.y - num8;
+			}
+			mTrans.localPosition = localPosition;
+		}
+		clipRange.x = num7;
+		clipRange.y = num8;
+		mPanel.clipRange = clipRange;
+		if (updateScrollbars)
+		{
+			UpdateScrollbars(false);
+		}
+	}
+
+	private void Start()
+	{
+		UpdateScrollbars(true);
+		if (horizontalScrollBar != null)
+		{
+			horizontalScrollBar.onChange = (UIScrollBar.OnScrollBarChange)Delegate.Combine(horizontalScrollBar.onChange, new UIScrollBar.OnScrollBarChange(OnHorizontalBar));
+			horizontalScrollBar.alpha = ((showScrollBars != 0 && !shouldMoveHorizontally) ? 0f : 1f);
+		}
+		if (verticalScrollBar != null)
+		{
+			verticalScrollBar.onChange = (UIScrollBar.OnScrollBarChange)Delegate.Combine(verticalScrollBar.onChange, new UIScrollBar.OnScrollBarChange(OnVerticalBar));
+			verticalScrollBar.alpha = ((showScrollBars != 0 && !shouldMoveVertically) ? 0f : 1f);
+		}
+	}
+
+	public void UpdateScrollbars(bool recalculateBounds)
+	{
+		if (!(mPanel != null))
+		{
+			return;
+		}
+		if (horizontalScrollBar != null || verticalScrollBar != null)
+		{
+			if (recalculateBounds)
+			{
+				mCalculatedBounds = false;
+				mShouldMove = shouldMove;
+			}
+			Bounds bounds = this.bounds;
+			Vector2 vector = bounds.min;
+			Vector2 vector2 = bounds.max;
+			if (mPanel.clipping == UIDrawCall.Clipping.SoftClip)
+			{
+				Vector2 clipSoftness = mPanel.clipSoftness;
+				vector -= clipSoftness;
+				vector2 += clipSoftness;
+			}
+			if (horizontalScrollBar != null && vector2.x > vector.x)
+			{
+				Vector4 clipRange = mPanel.clipRange;
+				float num = clipRange.z * 0.5f;
+				float num2 = clipRange.x - num - bounds.min.x;
+				float num3 = bounds.max.x - num - clipRange.x;
+				float num4 = vector2.x - vector.x;
+				num2 = Mathf.Clamp01(num2 / num4);
+				num3 = Mathf.Clamp01(num3 / num4);
+				float num5 = num2 + num3;
+				mIgnoreCallbacks = true;
+				horizontalScrollBar.barSize = 1f - num5;
+				horizontalScrollBar.scrollValue = ((num5 <= 0.001f) ? 0f : (num2 / num5));
+				mIgnoreCallbacks = false;
+			}
+			if (verticalScrollBar != null && vector2.y > vector.y)
+			{
+				Vector4 clipRange2 = mPanel.clipRange;
+				float num6 = clipRange2.w * 0.5f;
+				float num7 = clipRange2.y - num6 - vector.y;
+				float num8 = vector2.y - num6 - clipRange2.y;
+				float num9 = vector2.y - vector.y;
+				num7 = Mathf.Clamp01(num7 / num9);
+				num8 = Mathf.Clamp01(num8 / num9);
+				float num10 = num7 + num8;
+				mIgnoreCallbacks = true;
+				verticalScrollBar.barSize = 1f - num10;
+				verticalScrollBar.scrollValue = ((num10 <= 0.001f) ? 0f : (1f - num7 / num10));
+				mIgnoreCallbacks = false;
+			}
+		}
+		else if (recalculateBounds)
+		{
+			mCalculatedBounds = false;
+		}
 	}
 }

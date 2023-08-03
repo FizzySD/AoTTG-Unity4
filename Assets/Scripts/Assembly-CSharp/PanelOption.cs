@@ -2,23 +2,23 @@ using UnityEngine;
 
 public class PanelOption : MonoBehaviour
 {
+	public GameObject label_back;
+
+	public GameObject label_camera_tilt;
+
+	public GameObject label_change_quality;
+
+	public GameObject label_continue;
+
+	public GameObject label_default;
+
+	public GameObject label_invert_mouse_y;
+
 	public GameObject label_KEY_LEFT;
 
 	public GameObject label_KEY_RIGHT;
 
 	public GameObject label_mouse_sensitivity;
-
-	public GameObject label_change_quality;
-
-	public GameObject label_camera_tilt;
-
-	public GameObject label_invert_mouse_y;
-
-	public GameObject label_default;
-
-	public GameObject label_back;
-
-	public GameObject label_continue;
 
 	public GameObject label_quit;
 

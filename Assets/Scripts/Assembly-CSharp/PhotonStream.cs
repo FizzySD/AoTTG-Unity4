@@ -3,17 +3,17 @@ using UnityEngine;
 
 public class PhotonStream
 {
-	private bool write;
+	private byte currentItem;
 
 	internal List<object> data;
 
-	private byte currentItem;
+	private bool write;
 
-	public bool isWriting
+	public int Count
 	{
 		get
 		{
-			return write;
+			return data.Count;
 		}
 	}
 
@@ -25,11 +25,11 @@ public class PhotonStream
 		}
 	}
 
-	public int Count
+	public bool isWriting
 	{
 		get
 		{
-			return data.Count;
+			return write;
 		}
 	}
 
@@ -70,9 +70,17 @@ public class PhotonStream
 		}
 	}
 
-	public object[] ToArray()
+	public void Serialize(ref PhotonPlayer obj)
 	{
-		return data.ToArray();
+		if (write)
+		{
+			data.Add(obj);
+		}
+		else if (data.Count > currentItem)
+		{
+			obj = (PhotonPlayer)data[currentItem];
+			currentItem++;
+		}
 	}
 
 	public void Serialize(ref bool myBool)
@@ -84,32 +92,6 @@ public class PhotonStream
 		else if (data.Count > currentItem)
 		{
 			myBool = (bool)data[currentItem];
-			currentItem++;
-		}
-	}
-
-	public void Serialize(ref int myInt)
-	{
-		if (write)
-		{
-			data.Add(myInt);
-		}
-		else if (data.Count > currentItem)
-		{
-			myInt = (int)data[currentItem];
-			currentItem++;
-		}
-	}
-
-	public void Serialize(ref string value)
-	{
-		if (write)
-		{
-			data.Add(value);
-		}
-		else if (data.Count > currentItem)
-		{
-			value = (string)data[currentItem];
 			currentItem++;
 		}
 	}
@@ -140,6 +122,19 @@ public class PhotonStream
 		}
 	}
 
+	public void Serialize(ref int myInt)
+	{
+		if (write)
+		{
+			data.Add(myInt);
+		}
+		else if (data.Count > currentItem)
+		{
+			myInt = (int)data[currentItem];
+			currentItem++;
+		}
+	}
+
 	public void Serialize(ref float obj)
 	{
 		if (write)
@@ -153,20 +148,20 @@ public class PhotonStream
 		}
 	}
 
-	public void Serialize(ref PhotonPlayer obj)
+	public void Serialize(ref string value)
 	{
 		if (write)
 		{
-			data.Add(obj);
+			data.Add(value);
 		}
 		else if (data.Count > currentItem)
 		{
-			obj = (PhotonPlayer)data[currentItem];
+			value = (string)data[currentItem];
 			currentItem++;
 		}
 	}
 
-	public void Serialize(ref Vector3 obj)
+	public void Serialize(ref Quaternion obj)
 	{
 		if (write)
 		{
@@ -174,7 +169,7 @@ public class PhotonStream
 		}
 		else if (data.Count > currentItem)
 		{
-			obj = (Vector3)data[currentItem];
+			obj = (Quaternion)data[currentItem];
 			currentItem++;
 		}
 	}
@@ -192,7 +187,7 @@ public class PhotonStream
 		}
 	}
 
-	public void Serialize(ref Quaternion obj)
+	public void Serialize(ref Vector3 obj)
 	{
 		if (write)
 		{
@@ -200,8 +195,13 @@ public class PhotonStream
 		}
 		else if (data.Count > currentItem)
 		{
-			obj = (Quaternion)data[currentItem];
+			obj = (Vector3)data[currentItem];
 			currentItem++;
 		}
+	}
+
+	public object[] ToArray()
+	{
+		return data.ToArray();
 	}
 }

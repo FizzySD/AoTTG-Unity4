@@ -3,17 +3,27 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Examples/Lag Rotation")]
 public class LagRotation : MonoBehaviour
 {
-	public int updateOrder;
-
-	public float speed = 10f;
-
 	public bool ignoreTimeScale;
 
-	private Transform mTrans;
+	private Quaternion mAbsolute;
 
 	private Quaternion mRelative;
 
-	private Quaternion mAbsolute;
+	private Transform mTrans;
+
+	public float speed = 10f;
+
+	public int updateOrder;
+
+	private void CoroutineUpdate(float delta)
+	{
+		Transform parent = mTrans.parent;
+		if (parent != null)
+		{
+			mAbsolute = Quaternion.Slerp(mAbsolute, parent.rotation * mRelative, delta * speed);
+			mTrans.rotation = mAbsolute;
+		}
+	}
 
 	private void Start()
 	{
@@ -27,16 +37,6 @@ public class LagRotation : MonoBehaviour
 		else
 		{
 			UpdateManager.AddLateUpdate(this, updateOrder, CoroutineUpdate);
-		}
-	}
-
-	private void CoroutineUpdate(float delta)
-	{
-		Transform parent = mTrans.parent;
-		if (parent != null)
-		{
-			mAbsolute = Quaternion.Slerp(mAbsolute, parent.rotation * mRelative, delta * speed);
-			mTrans.rotation = mAbsolute;
 		}
 	}
 }

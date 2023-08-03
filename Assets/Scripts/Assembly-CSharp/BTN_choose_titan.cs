@@ -3,14 +3,6 @@ using UnityEngine;
 
 public class BTN_choose_titan : MonoBehaviour
 {
-	private void Start()
-	{
-		if (!LevelInfo.getInfo(FengGameManagerMKII.level).teamTitan)
-		{
-			base.gameObject.GetComponent<UIButton>().isEnabled = false;
-		}
-	}
-
 	private void OnClick()
 	{
 		if (IN_GAME_MAIN_CAMERA.gamemode == GAMEMODE.PVP_AHSS)
@@ -53,7 +45,7 @@ public class BTN_choose_titan : MonoBehaviour
 			}
 			else
 			{
-				GameObject.Find("MultiplayerManager").GetComponent<FengGameManagerMKII>().SpawnNonAITitan(selection);
+				GameObject.Find("MultiplayerManager").GetComponent<FengGameManagerMKII>().SpawnNonAITitan2(selection);
 			}
 			GameObject.Find("MultiplayerManager").GetComponent<FengGameManagerMKII>().needChooseSide = false;
 			NGUITools.SetActive(GameObject.Find("UI_IN_GAME").GetComponent<UIReferArray>().panels[1], false);
@@ -61,6 +53,14 @@ public class BTN_choose_titan : MonoBehaviour
 			NGUITools.SetActive(GameObject.Find("UI_IN_GAME").GetComponent<UIReferArray>().panels[3], false);
 			IN_GAME_MAIN_CAMERA.usingTitan = true;
 			GameObject.Find("MainCamera").GetComponent<IN_GAME_MAIN_CAMERA>().setHUDposition();
+		}
+	}
+
+	private void Start()
+	{
+		if (!LevelInfo.getInfo(FengGameManagerMKII.level).teamTitan)
+		{
+			base.gameObject.GetComponent<UIButton>().isEnabled = false;
 		}
 	}
 }

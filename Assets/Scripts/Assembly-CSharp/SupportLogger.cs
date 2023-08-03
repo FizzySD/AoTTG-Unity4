@@ -6,13 +6,11 @@ public class SupportLogger : MonoBehaviour
 
 	public void Start()
 	{
-		GameObject gameObject = GameObject.Find("PunSupportLogger");
-		if (gameObject == null)
+		if (GameObject.Find("PunSupportLogger") == null)
 		{
-			gameObject = new GameObject("PunSupportLogger");
+			GameObject gameObject = new GameObject("PunSupportLogger");
 			Object.DontDestroyOnLoad(gameObject);
-			SupportLogging supportLogging = gameObject.AddComponent<SupportLogging>();
-			supportLogging.LogTrafficStats = LogTrafficStats;
+			gameObject.AddComponent<SupportLogging>().LogTrafficStats = LogTrafficStats;
 		}
 	}
 }

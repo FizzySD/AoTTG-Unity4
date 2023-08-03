@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class BTN_LEADERBOARD_QUIT : MonoBehaviour
 {
-	public GameObject mainMenu;
-
 	public GameObject leaderboard;
+
+	public GameObject mainMenu;
 
 	private void OnClick()
 	{

@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class PanelCredits : MonoBehaviour
 {
-	public GameObject label_title;
-
 	public GameObject label_back;
+
+	public GameObject label_title;
 
 	private int lang = -1;
 

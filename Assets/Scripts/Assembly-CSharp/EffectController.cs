@@ -2,14 +2,9 @@ using UnityEngine;
 
 public class EffectController : MonoBehaviour
 {
-	public Transform ObjectCache;
-
 	protected XffectCache EffectCache;
 
-	private void Start()
-	{
-		EffectCache = ObjectCache.GetComponent<XffectCache>();
-	}
+	public Transform ObjectCache;
 
 	protected Vector3 GetFaceDirection()
 	{
@@ -42,9 +37,8 @@ public class EffectController : MonoBehaviour
 		}
 		case "crystal":
 		{
-			Xffect component = EffectCache.GetObject("crystal_surround").GetComponent<Xffect>();
-			component.Active();
-			component = EffectCache.GetObject("crystal").GetComponent<Xffect>();
+			EffectCache.GetObject("crystal_surround").GetComponent<Xffect>().Active();
+			Xffect component = EffectCache.GetObject("crystal").GetComponent<Xffect>();
 			component.SetEmitPosition(new Vector3(0f, 1.9f, 1.4f));
 			component.Active();
 			component = EffectCache.GetObject("crystal_lightn").GetComponent<Xffect>();
@@ -59,11 +53,8 @@ public class EffectController : MonoBehaviour
 			break;
 		}
 		default:
-		{
-			Xffect component = EffectCache.GetObject(eftname).GetComponent<Xffect>();
-			component.Active();
+			EffectCache.GetObject(eftname).GetComponent<Xffect>().Active();
 			break;
-		}
 		}
 	}
 
@@ -103,5 +94,10 @@ public class EffectController : MonoBehaviour
 		{
 			OnEffect("rain");
 		}
+	}
+
+	private void Start()
+	{
+		EffectCache = ObjectCache.GetComponent<XffectCache>();
 	}
 }

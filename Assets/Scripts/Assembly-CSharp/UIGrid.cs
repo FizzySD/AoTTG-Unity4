@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("NGUI/Interaction/Grid")]
+[ExecuteInEditMode]
 public class UIGrid : MonoBehaviour
 {
 	public enum Arrangement
@@ -13,39 +13,19 @@ public class UIGrid : MonoBehaviour
 
 	public Arrangement arrangement;
 
-	public int maxPerLine;
+	public float cellHeight = 200f;
 
 	public float cellWidth = 200f;
 
-	public float cellHeight = 200f;
+	public bool hideInactive = true;
+
+	public int maxPerLine;
+
+	private bool mStarted;
 
 	public bool repositionNow;
 
 	public bool sorted;
-
-	public bool hideInactive = true;
-
-	private bool mStarted;
-
-	private void Start()
-	{
-		mStarted = true;
-		Reposition();
-	}
-
-	private void Update()
-	{
-		if (repositionNow)
-		{
-			repositionNow = false;
-			Reposition();
-		}
-	}
-
-	public static int SortByName(Transform a, Transform b)
-	{
-		return string.Compare(a.name, b.name);
-	}
 
 	public void Reposition()
 	{
@@ -63,7 +43,7 @@ public class UIGrid : MonoBehaviour
 			for (int i = 0; i < transform.childCount; i++)
 			{
 				Transform child = transform.GetChild(i);
-				if ((bool)child && (!hideInactive || NGUITools.GetActive(child.gameObject)))
+				if (child != null && (!hideInactive || NGUITools.GetActive(child.gameObject)))
 				{
 					list.Add(child);
 				}
@@ -106,6 +86,26 @@ public class UIGrid : MonoBehaviour
 		if (uIDraggablePanel != null)
 		{
 			uIDraggablePanel.UpdateScrollbars(true);
+		}
+	}
+
+	public static int SortByName(Transform a, Transform b)
+	{
+		return string.Compare(a.name, b.name);
+	}
+
+	private void Start()
+	{
+		mStarted = true;
+		Reposition();
+	}
+
+	private void Update()
+	{
+		if (repositionNow)
+		{
+			repositionNow = false;
+			Reposition();
 		}
 	}
 }

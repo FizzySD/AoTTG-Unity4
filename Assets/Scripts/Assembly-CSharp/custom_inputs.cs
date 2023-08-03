@@ -2,55 +2,77 @@ using UnityEngine;
 
 public class custom_inputs : MonoBehaviour
 {
-	private float buttonHeight = 20f;
-
-	public bool menuOn;
-
-	public string[] DescriptionString;
-
-	private KeyCode[] inputKey;
-
-	private KeyCode[] inputKey2;
-
-	public KeyCode[] default_inputKeys;
+	public bool allowDuplicates;
 
 	public KeyCode[] alt_default_inputKeys;
 
+	private float AltInputBox_X = 120f;
+
 	private bool altInputson;
 
-	private float DescBox_X = -320f;
+	[HideInInspector]
+	public float analogFeel_down;
 
-	private float InputBox_X = -100f;
+	public float analogFeel_gravity = 0.2f;
 
-	private float AltInputBox_X = 120f;
+	[HideInInspector]
+	public float analogFeel_jump;
+
+	[HideInInspector]
+	public float analogFeel_left;
+
+	[HideInInspector]
+	public float analogFeel_right;
+
+	public float analogFeel_sensitivity = 0.8f;
+
+	[HideInInspector]
+	public float analogFeel_up;
 
 	public float Boxes_Y = 300f;
 
 	public float BoxesMargin_Y = 30f;
 
-	public int DescriptionSize = 200;
+	private float buttonHeight = 20f;
 
 	public int buttonSize = 200;
 
-	private float resetbuttonLocX = -100f;
+	public KeyCode[] default_inputKeys;
 
-	public float resetbuttonLocY = 600f;
+	private float DescBox_X = -320f;
 
-	public string resetbuttonText = "Reset to defaults";
+	private float DescriptionBox_X;
 
-	public bool mouseAxisOn;
+	public int DescriptionSize = 200;
 
-	public bool mouseButtonsOn = true;
-
-	public bool allowDuplicates;
+	public string[] DescriptionString;
 
 	private bool[] inputBool;
 
 	private bool[] inputBool2;
 
+	private float InputBox_X = -100f;
+
+	private float InputBox1_X;
+
+	private float InputBox2_X;
+
+	private KeyCode[] inputKey;
+
+	private KeyCode[] inputKey2;
+
 	private string[] inputString;
 
 	private string[] inputString2;
+
+	[HideInInspector]
+	public bool[] isInput;
+
+	[HideInInspector]
+	public bool[] isInputDown;
+
+	[HideInInspector]
+	public bool[] isInputUp;
 
 	[HideInInspector]
 	public bool[] joystickActive;
@@ -64,331 +86,88 @@ public class custom_inputs : MonoBehaviour
 	[HideInInspector]
 	public string[] joystickString2;
 
+	private float lastInterval;
+
+	public bool menuOn;
+
+	public bool mouseAxisOn;
+
+	public bool mouseButtonsOn = true;
+
+	public GUISkin OurSkin;
+
+	private float resetbuttonLocX = -100f;
+
+	public float resetbuttonLocY = 600f;
+
+	public string resetbuttonText = "Reset to defaults";
+
+	private float resetbuttonX;
+
+	private bool tempbool;
+
 	private bool[] tempjoy1;
 
 	private bool[] tempjoy2;
 
-	[HideInInspector]
-	public bool[] isInput;
-
-	[HideInInspector]
-	public bool[] isInputDown;
-
-	[HideInInspector]
-	public bool[] isInputUp;
-
 	private string tempkeyPressed;
-
-	private bool tempbool;
-
-	public GUISkin OurSkin;
-
-	private float lastInterval;
-
-	[HideInInspector]
-	public float analogFeel_up;
-
-	[HideInInspector]
-	public float analogFeel_down;
-
-	[HideInInspector]
-	public float analogFeel_left;
-
-	[HideInInspector]
-	public float analogFeel_right;
-
-	[HideInInspector]
-	public float analogFeel_jump;
-
-	public float analogFeel_gravity = 0.2f;
-
-	public float analogFeel_sensitivity = 0.8f;
 
 	private int tempLength;
 
-	private float DescriptionBox_X;
-
-	private float InputBox1_X;
-
-	private float InputBox2_X;
-
-	private float resetbuttonX;
-
-	private void Start()
+	private void checDoubleAxis(string testAxisString, int o, int p)
 	{
-		if (alt_default_inputKeys.Length == default_inputKeys.Length)
+		if (allowDuplicates)
 		{
-			altInputson = true;
-		}
-		inputBool = new bool[DescriptionString.Length];
-		inputString = new string[DescriptionString.Length];
-		inputKey = new KeyCode[DescriptionString.Length];
-		joystickActive = new bool[DescriptionString.Length];
-		joystickString = new string[DescriptionString.Length];
-		inputBool2 = new bool[DescriptionString.Length];
-		inputString2 = new string[DescriptionString.Length];
-		inputKey2 = new KeyCode[DescriptionString.Length];
-		joystickActive2 = new bool[DescriptionString.Length];
-		joystickString2 = new string[DescriptionString.Length];
-		isInput = new bool[DescriptionString.Length];
-		isInputDown = new bool[DescriptionString.Length];
-		isInputUp = new bool[DescriptionString.Length];
-		tempLength = PlayerPrefs.GetInt("KeyLength");
-		tempjoy1 = new bool[DescriptionString.Length];
-		tempjoy2 = new bool[DescriptionString.Length];
-		if (!PlayerPrefs.HasKey("KeyCodes") || !PlayerPrefs.HasKey("KeyCodes2"))
-		{
-			reset2defaults();
-		}
-		tempLength = PlayerPrefs.GetInt("KeyLength");
-		if (PlayerPrefs.HasKey("KeyCodes") && tempLength == DescriptionString.Length)
-		{
-			loadConfig();
-		}
-		else
-		{
-			PlayerPrefs.DeleteAll();
-			reset2defaults();
-			loadConfig();
-			saveInputs();
+			return;
 		}
 		for (int i = 0; i < DescriptionString.Length; i++)
 		{
-			isInput[i] = false;
-			isInputDown[i] = false;
-			isInputUp[i] = false;
-			tempjoy1[i] = true;
-			tempjoy2[i] = false;
-		}
-	}
-
-	private void Update()
-	{
-		DescriptionBox_X = (float)(Screen.width / 2) + DescBox_X;
-		InputBox1_X = (float)(Screen.width / 2) + InputBox_X;
-		InputBox2_X = (float)(Screen.width / 2) + AltInputBox_X;
-		resetbuttonX = (float)(Screen.width / 2) + resetbuttonLocX;
-		if (!menuOn)
-		{
-			inputSetBools();
-		}
-		if (Input.GetKeyDown("escape"))
-		{
-			if (menuOn)
+			if (testAxisString == joystickString[i] && (i != o || p == 2))
 			{
-				Time.timeScale = 1f;
-				tempbool = false;
-				menuOn = false;
+				inputKey[i] = KeyCode.None;
+				inputBool[i] = false;
+				inputString[i] = inputKey[i].ToString();
+				joystickActive[i] = false;
+				joystickString[i] = "#";
 				saveInputs();
 			}
-			else
+			if (testAxisString == joystickString2[i] && (i != o || p == 1))
 			{
-				Time.timeScale = 0f;
-				menuOn = true;
-				Screen.showCursor = true;
-				Screen.lockCursor = false;
-			}
-		}
-	}
-
-	private void OnGUI()
-	{
-		if (Time.realtimeSinceStartup > lastInterval + 3f)
-		{
-			tempbool = false;
-		}
-		if (menuOn)
-		{
-			drawButtons1();
-			if (altInputson)
-			{
-				drawButtons2();
-			}
-		}
-	}
-
-	private void inputSetBools()
-	{
-		for (int i = 0; i < DescriptionString.Length; i++)
-		{
-			if (Input.GetKey(inputKey[i]) || (joystickActive[i] && Input.GetAxis(joystickString[i]) > 0.95f) || Input.GetKey(inputKey2[i]) || (joystickActive2[i] && Input.GetAxis(joystickString2[i]) > 0.95f))
-			{
-				isInput[i] = true;
-			}
-			else
-			{
-				isInput[i] = false;
-			}
-			if (Input.GetKeyDown(inputKey[i]) || Input.GetKeyDown(inputKey2[i]))
-			{
-				isInputDown[i] = true;
-			}
-			else
-			{
-				isInputDown[i] = false;
-			}
-			if ((joystickActive[i] && Input.GetAxis(joystickString[i]) > 0.95f) || (joystickActive2[i] && Input.GetAxis(joystickString2[i]) > 0.95f))
-			{
-				if (!tempjoy1[i])
-				{
-					isInputDown[i] = false;
-				}
-				if (tempjoy1[i])
-				{
-					isInputDown[i] = true;
-					tempjoy1[i] = false;
-				}
-			}
-			if (!tempjoy1[i] && joystickActive[i] && Input.GetAxis(joystickString[i]) < 0.1f && joystickActive2[i] && Input.GetAxis(joystickString2[i]) < 0.1f)
-			{
-				isInputDown[i] = false;
-				tempjoy1[i] = true;
-			}
-			if (!tempjoy1[i] && !joystickActive[i] && joystickActive2[i] && Input.GetAxis(joystickString2[i]) < 0.1f)
-			{
-				isInputDown[i] = false;
-				tempjoy1[i] = true;
-			}
-			if (!tempjoy1[i] && !joystickActive2[i] && joystickActive[i] && Input.GetAxis(joystickString[i]) < 0.1f)
-			{
-				isInputDown[i] = false;
-				tempjoy1[i] = true;
-			}
-			if (Input.GetKeyUp(inputKey[i]) || Input.GetKeyUp(inputKey2[i]))
-			{
-				isInputUp[i] = true;
-			}
-			else
-			{
-				isInputUp[i] = false;
-			}
-			if ((joystickActive[i] && Input.GetAxis(joystickString[i]) > 0.95f) || (joystickActive2[i] && Input.GetAxis(joystickString2[i]) > 0.95f))
-			{
-				if (tempjoy2[i])
-				{
-					isInputUp[i] = false;
-				}
-				if (!tempjoy2[i])
-				{
-					isInputUp[i] = false;
-					tempjoy2[i] = true;
-				}
-			}
-			if (tempjoy2[i] && joystickActive[i] && Input.GetAxis(joystickString[i]) < 0.1f && joystickActive2[i] && Input.GetAxis(joystickString2[i]) < 0.1f)
-			{
-				isInputUp[i] = true;
-				tempjoy2[i] = false;
-			}
-			if (tempjoy2[i] && !joystickActive[i] && joystickActive2[i] && Input.GetAxis(joystickString2[i]) < 0.1f)
-			{
-				isInputUp[i] = true;
-				tempjoy2[i] = false;
-			}
-			if (tempjoy2[i] && !joystickActive2[i] && joystickActive[i] && Input.GetAxis(joystickString[i]) < 0.1f)
-			{
-				isInputUp[i] = true;
-				tempjoy2[i] = false;
-			}
-		}
-	}
-
-	private void saveInputs()
-	{
-		string text = string.Empty;
-		string text2 = string.Empty;
-		string text3 = string.Empty;
-		string text4 = string.Empty;
-		string text5 = string.Empty;
-		string text6 = string.Empty;
-		for (int num = DescriptionString.Length - 1; num > -1; num--)
-		{
-			text = (int)inputKey[num] + "*" + text;
-			text2 = joystickString[num] + "*" + text2;
-			text3 = inputString[num] + "*" + text3;
-			text4 = (int)inputKey2[num] + "*" + text4;
-			text5 = joystickString2[num] + "*" + text5;
-			text6 = inputString2[num] + "*" + text6;
-		}
-		PlayerPrefs.SetString("KeyCodes", text);
-		PlayerPrefs.SetString("Joystick_input", text2);
-		PlayerPrefs.SetString("Names_input", text3);
-		PlayerPrefs.SetString("KeyCodes2", text4);
-		PlayerPrefs.SetString("Joystick_input2", text5);
-		PlayerPrefs.SetString("Names_input2", text6);
-		PlayerPrefs.SetInt("KeyLength", DescriptionString.Length);
-	}
-
-	private void reset2defaults()
-	{
-		if (default_inputKeys.Length != DescriptionString.Length)
-		{
-			default_inputKeys = new KeyCode[DescriptionString.Length];
-		}
-		if (alt_default_inputKeys.Length != default_inputKeys.Length)
-		{
-			alt_default_inputKeys = new KeyCode[default_inputKeys.Length];
-		}
-		string text = string.Empty;
-		string text2 = string.Empty;
-		string text3 = string.Empty;
-		string text4 = string.Empty;
-		string text5 = string.Empty;
-		string text6 = string.Empty;
-		for (int num = DescriptionString.Length - 1; num > -1; num--)
-		{
-			text = (int)default_inputKeys[num] + "*" + text;
-			text2 += "#*";
-			text3 = default_inputKeys[num].ToString() + "*" + text3;
-			PlayerPrefs.SetString("KeyCodes", text);
-			PlayerPrefs.SetString("Joystick_input", text2);
-			PlayerPrefs.SetString("Names_input", text3);
-			text4 = (int)alt_default_inputKeys[num] + "*" + text4;
-			text5 += "#*";
-			text6 = alt_default_inputKeys[num].ToString() + "*" + text6;
-			PlayerPrefs.SetString("KeyCodes2", text4);
-			PlayerPrefs.SetString("Joystick_input2", text5);
-			PlayerPrefs.SetString("Names_input2", text6);
-			PlayerPrefs.SetInt("KeyLength", DescriptionString.Length);
-		}
-	}
-
-	private void loadConfig()
-	{
-		string @string = PlayerPrefs.GetString("KeyCodes");
-		string string2 = PlayerPrefs.GetString("Joystick_input");
-		string string3 = PlayerPrefs.GetString("Names_input");
-		string string4 = PlayerPrefs.GetString("KeyCodes2");
-		string string5 = PlayerPrefs.GetString("Joystick_input2");
-		string string6 = PlayerPrefs.GetString("Names_input2");
-		string[] array = @string.Split('*');
-		joystickString = string2.Split('*');
-		inputString = string3.Split('*');
-		string[] array2 = string4.Split('*');
-		joystickString2 = string5.Split('*');
-		inputString2 = string6.Split('*');
-		for (int i = 0; i < DescriptionString.Length; i++)
-		{
-			int result;
-			int.TryParse(array[i], out result);
-			inputKey[i] = (KeyCode)result;
-			int result2;
-			int.TryParse(array2[i], out result2);
-			inputKey2[i] = (KeyCode)result2;
-			if (joystickString[i] == "#")
-			{
-				joystickActive[i] = false;
-			}
-			else
-			{
-				joystickActive[i] = true;
-			}
-			if (joystickString2[i] == "#")
-			{
+				inputKey2[i] = KeyCode.None;
+				inputBool2[i] = false;
+				inputString2[i] = inputKey2[i].ToString();
 				joystickActive2[i] = false;
+				joystickString2[i] = "#";
+				saveInputs();
 			}
-			else
+		}
+	}
+
+	private void checDoubles(KeyCode testkey, int o, int p)
+	{
+		if (allowDuplicates)
+		{
+			return;
+		}
+		for (int i = 0; i < DescriptionString.Length; i++)
+		{
+			if (testkey == inputKey[i] && (i != o || p == 2))
 			{
-				joystickActive2[i] = true;
+				inputKey[i] = KeyCode.None;
+				inputBool[i] = false;
+				inputString[i] = inputKey[i].ToString();
+				joystickActive[i] = false;
+				joystickString[i] = "#";
+				saveInputs();
+			}
+			if (testkey == inputKey2[i] && (i != o || p == 1))
+			{
+				inputKey2[i] = KeyCode.None;
+				inputBool2[i] = false;
+				inputString2[i] = inputKey2[i].ToString();
+				joystickActive2[i] = false;
+				joystickString2[i] = "#";
+				saveInputs();
 			}
 		}
 	}
@@ -1009,60 +788,291 @@ public class custom_inputs : MonoBehaviour
 		}
 	}
 
-	private void checDoubles(KeyCode testkey, int o, int p)
+	private void inputSetBools()
 	{
-		if (allowDuplicates)
-		{
-			return;
-		}
 		for (int i = 0; i < DescriptionString.Length; i++)
 		{
-			if (testkey == inputKey[i] && (i != o || p == 2))
+			if (Input.GetKey(inputKey[i]) || (joystickActive[i] && Input.GetAxis(joystickString[i]) > 0.95f) || Input.GetKey(inputKey2[i]) || (joystickActive2[i] && Input.GetAxis(joystickString2[i]) > 0.95f))
 			{
-				inputKey[i] = KeyCode.None;
-				inputBool[i] = false;
-				inputString[i] = inputKey[i].ToString();
-				joystickActive[i] = false;
-				joystickString[i] = "#";
-				saveInputs();
+				isInput[i] = true;
 			}
-			if (testkey == inputKey2[i] && (i != o || p == 1))
+			else
 			{
-				inputKey2[i] = KeyCode.None;
-				inputBool2[i] = false;
-				inputString2[i] = inputKey2[i].ToString();
-				joystickActive2[i] = false;
-				joystickString2[i] = "#";
-				saveInputs();
+				isInput[i] = false;
+			}
+			if (Input.GetKeyDown(inputKey[i]) || Input.GetKeyDown(inputKey2[i]))
+			{
+				isInputDown[i] = true;
+			}
+			else
+			{
+				isInputDown[i] = false;
+			}
+			if ((joystickActive[i] && Input.GetAxis(joystickString[i]) > 0.95f) || (joystickActive2[i] && Input.GetAxis(joystickString2[i]) > 0.95f))
+			{
+				if (!tempjoy1[i])
+				{
+					isInputDown[i] = false;
+				}
+				if (tempjoy1[i])
+				{
+					isInputDown[i] = true;
+					tempjoy1[i] = false;
+				}
+			}
+			if (!tempjoy1[i] && joystickActive[i] && Input.GetAxis(joystickString[i]) < 0.1f && joystickActive2[i] && Input.GetAxis(joystickString2[i]) < 0.1f)
+			{
+				isInputDown[i] = false;
+				tempjoy1[i] = true;
+			}
+			if (!tempjoy1[i] && !joystickActive[i] && joystickActive2[i] && Input.GetAxis(joystickString2[i]) < 0.1f)
+			{
+				isInputDown[i] = false;
+				tempjoy1[i] = true;
+			}
+			if (!tempjoy1[i] && !joystickActive2[i] && joystickActive[i] && Input.GetAxis(joystickString[i]) < 0.1f)
+			{
+				isInputDown[i] = false;
+				tempjoy1[i] = true;
+			}
+			if (Input.GetKeyUp(inputKey[i]) || Input.GetKeyUp(inputKey2[i]))
+			{
+				isInputUp[i] = true;
+			}
+			else
+			{
+				isInputUp[i] = false;
+			}
+			if ((joystickActive[i] && Input.GetAxis(joystickString[i]) > 0.95f) || (joystickActive2[i] && Input.GetAxis(joystickString2[i]) > 0.95f))
+			{
+				if (tempjoy2[i])
+				{
+					isInputUp[i] = false;
+				}
+				if (!tempjoy2[i])
+				{
+					isInputUp[i] = false;
+					tempjoy2[i] = true;
+				}
+			}
+			if (tempjoy2[i] && joystickActive[i] && Input.GetAxis(joystickString[i]) < 0.1f && joystickActive2[i] && Input.GetAxis(joystickString2[i]) < 0.1f)
+			{
+				isInputUp[i] = true;
+				tempjoy2[i] = false;
+			}
+			if (tempjoy2[i] && !joystickActive[i] && joystickActive2[i] && Input.GetAxis(joystickString2[i]) < 0.1f)
+			{
+				isInputUp[i] = true;
+				tempjoy2[i] = false;
+			}
+			if (tempjoy2[i] && !joystickActive2[i] && joystickActive[i] && Input.GetAxis(joystickString[i]) < 0.1f)
+			{
+				isInputUp[i] = true;
+				tempjoy2[i] = false;
 			}
 		}
 	}
 
-	private void checDoubleAxis(string testAxisString, int o, int p)
+	private void loadConfig()
 	{
-		if (allowDuplicates)
+		string @string = PlayerPrefs.GetString("KeyCodes");
+		string string2 = PlayerPrefs.GetString("Joystick_input");
+		string string3 = PlayerPrefs.GetString("Names_input");
+		string string4 = PlayerPrefs.GetString("KeyCodes2");
+		string string5 = PlayerPrefs.GetString("Joystick_input2");
+		string string6 = PlayerPrefs.GetString("Names_input2");
+		char[] separator = new char[1] { '*' };
+		string[] array = @string.Split(separator);
+		char[] separator2 = new char[1] { '*' };
+		joystickString = string2.Split(separator2);
+		char[] separator3 = new char[1] { '*' };
+		inputString = string3.Split(separator3);
+		char[] separator4 = new char[1] { '*' };
+		string[] array2 = string4.Split(separator4);
+		char[] separator5 = new char[1] { '*' };
+		joystickString2 = string5.Split(separator5);
+		char[] separator6 = new char[1] { '*' };
+		inputString2 = string6.Split(separator6);
+		for (int i = 0; i < DescriptionString.Length; i++)
 		{
-			return;
+			int result;
+			int.TryParse(array[i], out result);
+			inputKey[i] = (KeyCode)result;
+			int result2;
+			int.TryParse(array2[i], out result2);
+			inputKey2[i] = (KeyCode)result2;
+			if (joystickString[i] == "#")
+			{
+				joystickActive[i] = false;
+			}
+			else
+			{
+				joystickActive[i] = true;
+			}
+			if (joystickString2[i] == "#")
+			{
+				joystickActive2[i] = false;
+			}
+			else
+			{
+				joystickActive2[i] = true;
+			}
+		}
+	}
+
+	private void OnGUI()
+	{
+		if (Time.realtimeSinceStartup > lastInterval + 3f)
+		{
+			tempbool = false;
+		}
+		if (menuOn)
+		{
+			drawButtons1();
+			if (altInputson)
+			{
+				drawButtons2();
+			}
+		}
+	}
+
+	private void reset2defaults()
+	{
+		if (default_inputKeys.Length != DescriptionString.Length)
+		{
+			default_inputKeys = new KeyCode[DescriptionString.Length];
+		}
+		if (alt_default_inputKeys.Length != default_inputKeys.Length)
+		{
+			alt_default_inputKeys = new KeyCode[default_inputKeys.Length];
+		}
+		string text = string.Empty;
+		string text2 = string.Empty;
+		string text3 = string.Empty;
+		string text4 = string.Empty;
+		string text5 = string.Empty;
+		string text6 = string.Empty;
+		for (int num = DescriptionString.Length - 1; num > -1; num--)
+		{
+			int num2 = (int)default_inputKeys[num];
+			text = num2 + "*" + text;
+			text2 += "#*";
+			text3 = default_inputKeys[num].ToString() + "*" + text3;
+			PlayerPrefs.SetString("KeyCodes", text);
+			PlayerPrefs.SetString("Joystick_input", text2);
+			PlayerPrefs.SetString("Names_input", text3);
+			num2 = (int)alt_default_inputKeys[num];
+			text4 = num2 + "*" + text4;
+			text5 += "#*";
+			text6 = alt_default_inputKeys[num].ToString() + "*" + text6;
+			PlayerPrefs.SetString("KeyCodes2", text4);
+			PlayerPrefs.SetString("Joystick_input2", text5);
+			PlayerPrefs.SetString("Names_input2", text6);
+			PlayerPrefs.SetInt("KeyLength", DescriptionString.Length);
+		}
+	}
+
+	private void saveInputs()
+	{
+		string text = string.Empty;
+		string text2 = string.Empty;
+		string text3 = string.Empty;
+		string text4 = string.Empty;
+		string text5 = string.Empty;
+		string text6 = string.Empty;
+		for (int num = DescriptionString.Length - 1; num > -1; num--)
+		{
+			int num2 = (int)inputKey[num];
+			text = num2 + "*" + text;
+			text2 = joystickString[num] + "*" + text2;
+			text3 = inputString[num] + "*" + text3;
+			num2 = (int)inputKey2[num];
+			text4 = num2 + "*" + text4;
+			text5 = joystickString2[num] + "*" + text5;
+			text6 = inputString2[num] + "*" + text6;
+		}
+		PlayerPrefs.SetString("KeyCodes", text);
+		PlayerPrefs.SetString("Joystick_input", text2);
+		PlayerPrefs.SetString("Names_input", text3);
+		PlayerPrefs.SetString("KeyCodes2", text4);
+		PlayerPrefs.SetString("Joystick_input2", text5);
+		PlayerPrefs.SetString("Names_input2", text6);
+		PlayerPrefs.SetInt("KeyLength", DescriptionString.Length);
+	}
+
+	private void Start()
+	{
+		if (alt_default_inputKeys.Length == default_inputKeys.Length)
+		{
+			altInputson = true;
+		}
+		inputBool = new bool[DescriptionString.Length];
+		inputString = new string[DescriptionString.Length];
+		inputKey = new KeyCode[DescriptionString.Length];
+		joystickActive = new bool[DescriptionString.Length];
+		joystickString = new string[DescriptionString.Length];
+		inputBool2 = new bool[DescriptionString.Length];
+		inputString2 = new string[DescriptionString.Length];
+		inputKey2 = new KeyCode[DescriptionString.Length];
+		joystickActive2 = new bool[DescriptionString.Length];
+		joystickString2 = new string[DescriptionString.Length];
+		isInput = new bool[DescriptionString.Length];
+		isInputDown = new bool[DescriptionString.Length];
+		isInputUp = new bool[DescriptionString.Length];
+		tempLength = PlayerPrefs.GetInt("KeyLength");
+		tempjoy1 = new bool[DescriptionString.Length];
+		tempjoy2 = new bool[DescriptionString.Length];
+		if (!PlayerPrefs.HasKey("KeyCodes") || !PlayerPrefs.HasKey("KeyCodes2"))
+		{
+			reset2defaults();
+		}
+		tempLength = PlayerPrefs.GetInt("KeyLength");
+		if (PlayerPrefs.HasKey("KeyCodes") && tempLength == DescriptionString.Length)
+		{
+			loadConfig();
+		}
+		else
+		{
+			PlayerPrefs.DeleteAll();
+			reset2defaults();
+			loadConfig();
+			saveInputs();
 		}
 		for (int i = 0; i < DescriptionString.Length; i++)
 		{
-			if (testAxisString == joystickString[i] && (i != o || p == 2))
+			isInput[i] = false;
+			isInputDown[i] = false;
+			isInputUp[i] = false;
+			tempjoy1[i] = true;
+			tempjoy2[i] = false;
+		}
+	}
+
+	private void Update()
+	{
+		DescriptionBox_X = (float)(Screen.width / 2) + DescBox_X;
+		InputBox1_X = (float)(Screen.width / 2) + InputBox_X;
+		InputBox2_X = (float)(Screen.width / 2) + AltInputBox_X;
+		resetbuttonX = (float)(Screen.width / 2) + resetbuttonLocX;
+		if (!menuOn)
+		{
+			inputSetBools();
+		}
+		if (Input.GetKeyDown("escape"))
+		{
+			if (menuOn)
 			{
-				inputKey[i] = KeyCode.None;
-				inputBool[i] = false;
-				inputString[i] = inputKey[i].ToString();
-				joystickActive[i] = false;
-				joystickString[i] = "#";
+				Time.timeScale = 1f;
+				tempbool = false;
+				menuOn = false;
 				saveInputs();
 			}
-			if (testAxisString == joystickString2[i] && (i != o || p == 1))
+			else
 			{
-				inputKey2[i] = KeyCode.None;
-				inputBool2[i] = false;
-				inputString2[i] = inputKey2[i].ToString();
-				joystickActive2[i] = false;
-				joystickString2[i] = "#";
-				saveInputs();
+				Time.timeScale = 0f;
+				menuOn = true;
+				Screen.showCursor = true;
+				Screen.lockCursor = false;
 			}
 		}
 	}

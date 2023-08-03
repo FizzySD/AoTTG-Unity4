@@ -2,29 +2,29 @@ using UnityEngine;
 
 public class PanelSingleSet : MonoBehaviour
 {
-	public GameObject label_START;
+	public GameObject label_ab;
 
 	public GameObject label_BACK;
 
 	public GameObject label_camera;
 
-	public GameObject label_original;
-
-	public GameObject label_wow;
-
-	public GameObject label_tps;
-
-	public GameObject label_difficulty;
-
-	public GameObject label_normal;
-
-	public GameObject label_hard;
-
-	public GameObject label_ab;
+	public GameObject label_choose_character;
 
 	public GameObject label_choose_map;
 
-	public GameObject label_choose_character;
+	public GameObject label_difficulty;
+
+	public GameObject label_hard;
+
+	public GameObject label_normal;
+
+	public GameObject label_original;
+
+	public GameObject label_START;
+
+	public GameObject label_tps;
+
+	public GameObject label_wow;
 
 	private int lang = -1;
 

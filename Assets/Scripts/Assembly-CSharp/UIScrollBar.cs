@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("NGUI/Interaction/Scroll Bar")]
+[ExecuteInEditMode]
 public class UIScrollBar : MonoBehaviour
 {
 	public enum Direction
@@ -11,13 +11,19 @@ public class UIScrollBar : MonoBehaviour
 		Vertical = 1
 	}
 
-	public delegate void OnScrollBarChange(UIScrollBar sb);
-
 	public delegate void OnDragFinished();
+
+	public delegate void OnScrollBarChange(UIScrollBar sb);
 
 	[HideInInspector]
 	[SerializeField]
 	private UISprite mBG;
+
+	private Camera mCam;
+
+	[HideInInspector]
+	[SerializeField]
+	private Direction mDir;
 
 	[HideInInspector]
 	[SerializeField]
@@ -25,14 +31,14 @@ public class UIScrollBar : MonoBehaviour
 
 	[SerializeField]
 	[HideInInspector]
-	private Direction mDir;
-
-	[SerializeField]
-	[HideInInspector]
 	private bool mInverted;
 
-	[HideInInspector]
+	private bool mIsDirty;
+
+	private Vector2 mScreenPos = Vector2.zero;
+
 	[SerializeField]
+	[HideInInspector]
 	private float mScroll;
 
 	[HideInInspector]
@@ -41,37 +47,36 @@ public class UIScrollBar : MonoBehaviour
 
 	private Transform mTrans;
 
-	private bool mIsDirty;
-
-	private Camera mCam;
-
-	private Vector2 mScreenPos = Vector2.zero;
-
 	public OnScrollBarChange onChange;
 
 	public OnDragFinished onDragFinished;
 
-	public Transform cachedTransform
+	public float alpha
 	{
 		get
 		{
-			if (mTrans == null)
+			if (mFG != null)
 			{
-				mTrans = base.transform;
+				return mFG.alpha;
 			}
-			return mTrans;
+			if (mBG != null)
+			{
+				return mBG.alpha;
+			}
+			return 0f;
 		}
-	}
-
-	public Camera cachedCamera
-	{
-		get
+		set
 		{
-			if (mCam == null)
+			if (mFG != null)
 			{
-				mCam = NGUITools.FindCameraForLayer(base.gameObject.layer);
+				mFG.alpha = value;
+				NGUITools.SetActiveSelf(mFG.gameObject, mFG.alpha > 0.001f);
 			}
-			return mCam;
+			if (mBG != null)
+			{
+				mBG.alpha = value;
+				NGUITools.SetActiveSelf(mBG.gameObject, mBG.alpha > 0.001f);
+			}
 		}
 	}
 
@@ -91,19 +96,48 @@ public class UIScrollBar : MonoBehaviour
 		}
 	}
 
-	public UISprite foreground
+	public float barSize
 	{
 		get
 		{
-			return mFG;
+			return mSize;
 		}
 		set
 		{
-			if (mFG != value)
+			float num = Mathf.Clamp01(value);
+			if (mSize != num)
 			{
-				mFG = value;
+				mSize = num;
 				mIsDirty = true;
+				if (onChange != null)
+				{
+					onChange(this);
+				}
 			}
+		}
+	}
+
+	public Camera cachedCamera
+	{
+		get
+		{
+			if (mCam == null)
+			{
+				mCam = NGUITools.FindCameraForLayer(base.gameObject.layer);
+			}
+			return mCam;
+		}
+	}
+
+	public Transform cachedTransform
+	{
+		get
+		{
+			if (mTrans == null)
+			{
+				mTrans = base.transform;
+			}
+			return mTrans;
 		}
 	}
 
@@ -146,6 +180,22 @@ public class UIScrollBar : MonoBehaviour
 		}
 	}
 
+	public UISprite foreground
+	{
+		get
+		{
+			return mFG;
+		}
+		set
+		{
+			if (mFG != value)
+			{
+				mFG = value;
+				mIsDirty = true;
+			}
+		}
+	}
+
 	public bool inverted
 	{
 		get
@@ -183,59 +233,9 @@ public class UIScrollBar : MonoBehaviour
 		}
 	}
 
-	public float barSize
-	{
-		get
-		{
-			return mSize;
-		}
-		set
-		{
-			float num = Mathf.Clamp01(value);
-			if (mSize != num)
-			{
-				mSize = num;
-				mIsDirty = true;
-				if (onChange != null)
-				{
-					onChange(this);
-				}
-			}
-		}
-	}
-
-	public float alpha
-	{
-		get
-		{
-			if (mFG != null)
-			{
-				return mFG.alpha;
-			}
-			if (mBG != null)
-			{
-				return mBG.alpha;
-			}
-			return 0f;
-		}
-		set
-		{
-			if (mFG != null)
-			{
-				mFG.alpha = value;
-				NGUITools.SetActiveSelf(mFG.gameObject, mFG.alpha > 0.001f);
-			}
-			if (mBG != null)
-			{
-				mBG.alpha = value;
-				NGUITools.SetActiveSelf(mBG.gameObject, mBG.alpha > 0.001f);
-			}
-		}
-	}
-
 	private void CenterOnPos(Vector2 localPos)
 	{
-		if (!(mBG == null) && !(mFG == null))
+		if (mBG != null && mFG != null)
 		{
 			Bounds bounds = NGUIMath.CalculateRelativeInnerBounds(cachedTransform, mBG);
 			Bounds bounds2 = NGUIMath.CalculateRelativeInnerBounds(cachedTransform, mFG);
@@ -244,7 +244,7 @@ public class UIScrollBar : MonoBehaviour
 				float num = bounds.size.x - bounds2.size.x;
 				float num2 = num * 0.5f;
 				float num3 = bounds.center.x - num2;
-				float num4 = ((!(num > 0f)) ? 0f : ((localPos.x - num3) / num));
+				float num4 = ((num <= 0f) ? 0f : ((localPos.x - num3) / num));
 				scrollValue = ((!mInverted) ? num4 : (1f - num4));
 			}
 			else
@@ -252,82 +252,9 @@ public class UIScrollBar : MonoBehaviour
 				float num5 = bounds.size.y - bounds2.size.y;
 				float num6 = num5 * 0.5f;
 				float num7 = bounds.center.y - num6;
-				float num8 = ((!(num5 > 0f)) ? 0f : (1f - (localPos.y - num7) / num5));
+				float num8 = ((num5 <= 0f) ? 0f : (1f - (localPos.y - num7) / num5));
 				scrollValue = ((!mInverted) ? num8 : (1f - num8));
 			}
-		}
-	}
-
-	private void Reposition(Vector2 screenPos)
-	{
-		Transform transform = cachedTransform;
-		Plane plane = new Plane(transform.rotation * Vector3.back, transform.position);
-		Ray ray = cachedCamera.ScreenPointToRay(screenPos);
-		float enter;
-		if (plane.Raycast(ray, out enter))
-		{
-			CenterOnPos(transform.InverseTransformPoint(ray.GetPoint(enter)));
-		}
-	}
-
-	private void OnPressBackground(GameObject go, bool isPressed)
-	{
-		mCam = UICamera.currentCamera;
-		Reposition(UICamera.lastTouchPosition);
-		if (!isPressed && onDragFinished != null)
-		{
-			onDragFinished();
-		}
-	}
-
-	private void OnDragBackground(GameObject go, Vector2 delta)
-	{
-		mCam = UICamera.currentCamera;
-		Reposition(UICamera.lastTouchPosition);
-	}
-
-	private void OnPressForeground(GameObject go, bool isPressed)
-	{
-		if (isPressed)
-		{
-			mCam = UICamera.currentCamera;
-			Bounds bounds = NGUIMath.CalculateAbsoluteWidgetBounds(mFG.cachedTransform);
-			mScreenPos = mCam.WorldToScreenPoint(bounds.center);
-		}
-		else if (onDragFinished != null)
-		{
-			onDragFinished();
-		}
-	}
-
-	private void OnDragForeground(GameObject go, Vector2 delta)
-	{
-		mCam = UICamera.currentCamera;
-		Reposition(mScreenPos + UICamera.currentTouch.totalDelta);
-	}
-
-	private void Start()
-	{
-		if (background != null && background.collider != null)
-		{
-			UIEventListener uIEventListener = UIEventListener.Get(background.gameObject);
-			uIEventListener.onPress = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener.onPress, new UIEventListener.BoolDelegate(OnPressBackground));
-			uIEventListener.onDrag = (UIEventListener.VectorDelegate)Delegate.Combine(uIEventListener.onDrag, new UIEventListener.VectorDelegate(OnDragBackground));
-		}
-		if (foreground != null && foreground.collider != null)
-		{
-			UIEventListener uIEventListener2 = UIEventListener.Get(foreground.gameObject);
-			uIEventListener2.onPress = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener2.onPress, new UIEventListener.BoolDelegate(OnPressForeground));
-			uIEventListener2.onDrag = (UIEventListener.VectorDelegate)Delegate.Combine(uIEventListener2.onDrag, new UIEventListener.VectorDelegate(OnDragForeground));
-		}
-		ForceUpdate();
-	}
-
-	private void Update()
-	{
-		if (mIsDirty)
-		{
-			ForceUpdate();
 		}
 	}
 
@@ -369,6 +296,79 @@ public class UIScrollBar : MonoBehaviour
 			{
 				mFG.MakePixelPerfect();
 			}
+		}
+	}
+
+	private void OnDragBackground(GameObject go, Vector2 delta)
+	{
+		mCam = UICamera.currentCamera;
+		Reposition(UICamera.lastTouchPosition);
+	}
+
+	private void OnDragForeground(GameObject go, Vector2 delta)
+	{
+		mCam = UICamera.currentCamera;
+		Reposition(mScreenPos + UICamera.currentTouch.totalDelta);
+	}
+
+	private void OnPressBackground(GameObject go, bool isPressed)
+	{
+		mCam = UICamera.currentCamera;
+		Reposition(UICamera.lastTouchPosition);
+		if (!isPressed && onDragFinished != null)
+		{
+			onDragFinished();
+		}
+	}
+
+	private void OnPressForeground(GameObject go, bool isPressed)
+	{
+		if (isPressed)
+		{
+			mCam = UICamera.currentCamera;
+			Bounds bounds = NGUIMath.CalculateAbsoluteWidgetBounds(mFG.cachedTransform);
+			mScreenPos = mCam.WorldToScreenPoint(bounds.center);
+		}
+		else if (onDragFinished != null)
+		{
+			onDragFinished();
+		}
+	}
+
+	private void Reposition(Vector2 screenPos)
+	{
+		Transform transform = cachedTransform;
+		Plane plane = new Plane(transform.rotation * Vector3.back, transform.position);
+		Ray ray = cachedCamera.ScreenPointToRay(screenPos);
+		float enter;
+		if (plane.Raycast(ray, out enter))
+		{
+			CenterOnPos(transform.InverseTransformPoint(ray.GetPoint(enter)));
+		}
+	}
+
+	private void Start()
+	{
+		if (background != null && background.collider != null)
+		{
+			UIEventListener uIEventListener = UIEventListener.Get(background.gameObject);
+			uIEventListener.onPress = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener.onPress, new UIEventListener.BoolDelegate(OnPressBackground));
+			uIEventListener.onDrag = (UIEventListener.VectorDelegate)Delegate.Combine(uIEventListener.onDrag, new UIEventListener.VectorDelegate(OnDragBackground));
+		}
+		if (foreground != null && foreground.collider != null)
+		{
+			UIEventListener uIEventListener2 = UIEventListener.Get(foreground.gameObject);
+			uIEventListener2.onPress = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener2.onPress, new UIEventListener.BoolDelegate(OnPressForeground));
+			uIEventListener2.onDrag = (UIEventListener.VectorDelegate)Delegate.Combine(uIEventListener2.onDrag, new UIEventListener.VectorDelegate(OnDragForeground));
+		}
+		ForceUpdate();
+	}
+
+	private void Update()
+	{
+		if (mIsDirty)
+		{
+			ForceUpdate();
 		}
 	}
 }

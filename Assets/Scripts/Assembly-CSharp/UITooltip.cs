@@ -3,29 +3,29 @@ using UnityEngine;
 [AddComponentMenu("NGUI/UI/Tooltip")]
 public class UITooltip : MonoBehaviour
 {
-	private static UITooltip mInstance;
-
-	public Camera uiCamera;
-
-	public UILabel text;
+	public float appearSpeed = 10f;
 
 	public UISprite background;
 
-	public float appearSpeed = 10f;
-
-	public bool scalingTransitions = true;
-
-	private Transform mTrans;
-
-	private float mTarget;
-
 	private float mCurrent;
+
+	private static UITooltip mInstance;
 
 	private Vector3 mPos;
 
 	private Vector3 mSize;
 
+	private float mTarget;
+
+	private Transform mTrans;
+
 	private UIWidget[] mWidgets;
+
+	public bool scalingTransitions = true;
+
+	public UILabel text;
+
+	public Camera uiCamera;
 
 	private void Awake()
 	{
@@ -35,41 +35,6 @@ public class UITooltip : MonoBehaviour
 	private void OnDestroy()
 	{
 		mInstance = null;
-	}
-
-	private void Start()
-	{
-		mTrans = base.transform;
-		mWidgets = GetComponentsInChildren<UIWidget>();
-		mPos = mTrans.localPosition;
-		mSize = mTrans.localScale;
-		if (uiCamera == null)
-		{
-			uiCamera = NGUITools.FindCameraForLayer(base.gameObject.layer);
-		}
-		SetAlpha(0f);
-	}
-
-	private void Update()
-	{
-		if (mCurrent != mTarget)
-		{
-			mCurrent = Mathf.Lerp(mCurrent, mTarget, Time.deltaTime * appearSpeed);
-			if (Mathf.Abs(mCurrent - mTarget) < 0.001f)
-			{
-				mCurrent = mTarget;
-			}
-			SetAlpha(mCurrent * mCurrent);
-			if (scalingTransitions)
-			{
-				Vector3 vector = mSize * 0.25f;
-				vector.y = 0f - vector.y;
-				Vector3 localScale = Vector3.one * (1.5f - mCurrent * 0.5f);
-				Vector3 localPosition = Vector3.Lerp(mPos - vector, mPos, mCurrent);
-				mTrans.localPosition = localPosition;
-				mTrans.localScale = localScale;
-			}
-		}
 	}
 
 	private void SetAlpha(float val)
@@ -148,6 +113,41 @@ public class UITooltip : MonoBehaviour
 		if (mInstance != null)
 		{
 			mInstance.SetText(tooltipText);
+		}
+	}
+
+	private void Start()
+	{
+		mTrans = base.transform;
+		mWidgets = GetComponentsInChildren<UIWidget>();
+		mPos = mTrans.localPosition;
+		mSize = mTrans.localScale;
+		if (uiCamera == null)
+		{
+			uiCamera = NGUITools.FindCameraForLayer(base.gameObject.layer);
+		}
+		SetAlpha(0f);
+	}
+
+	private void Update()
+	{
+		if (mCurrent != mTarget)
+		{
+			mCurrent = Mathf.Lerp(mCurrent, mTarget, Time.deltaTime * appearSpeed);
+			if (Mathf.Abs(mCurrent - mTarget) < 0.001f)
+			{
+				mCurrent = mTarget;
+			}
+			SetAlpha(mCurrent * mCurrent);
+			if (scalingTransitions)
+			{
+				Vector3 vector = mSize * 0.25f;
+				vector.y = 0f - vector.y;
+				Vector3 localScale = Vector3.one * (1.5f - mCurrent * 0.5f);
+				Vector3 localPosition = Vector3.Lerp(mPos - vector, mPos, mCurrent);
+				mTrans.localPosition = localPosition;
+				mTrans.localScale = localScale;
+			}
 		}
 	}
 }

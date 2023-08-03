@@ -10,12 +10,16 @@ public class UIButton : UIButtonColor
 		get
 		{
 			Collider collider = base.collider;
-			return (bool)collider && collider.enabled;
+			if (collider != null)
+			{
+				return collider.enabled;
+			}
+			return false;
 		}
 		set
 		{
 			Collider collider = base.collider;
-			if ((bool)collider && collider.enabled != value)
+			if (collider != null && collider.enabled != value)
 			{
 				collider.enabled = value;
 				UpdateColor(value, false);
@@ -53,7 +57,7 @@ public class UIButton : UIButtonColor
 
 	public void UpdateColor(bool shouldBeEnabled, bool immediate)
 	{
-		if ((bool)tweenTarget)
+		if (tweenTarget != null)
 		{
 			if (!mStarted)
 			{

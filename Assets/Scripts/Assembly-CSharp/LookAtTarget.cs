@@ -5,28 +5,27 @@ public class LookAtTarget : MonoBehaviour
 {
 	public int level;
 
-	public Transform target;
+	private Transform mTrans;
 
 	public float speed = 8f;
 
-	private Transform mTrans;
-
-	private void Start()
-	{
-		mTrans = base.transform;
-	}
+	public Transform target;
 
 	private void LateUpdate()
 	{
 		if (target != null)
 		{
 			Vector3 forward = target.position - mTrans.position;
-			float magnitude = forward.magnitude;
-			if (magnitude > 0.001f)
+			if (forward.magnitude > 0.001f)
 			{
 				Quaternion to = Quaternion.LookRotation(forward);
 				mTrans.rotation = Quaternion.Slerp(mTrans.rotation, to, Mathf.Clamp01(speed * Time.deltaTime));
 			}
 		}
+	}
+
+	private void Start()
+	{
+		mTrans = base.transform;
 	}
 }

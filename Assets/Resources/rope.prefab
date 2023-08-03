@@ -9,18 +9,18 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1132086415765035}
+  m_RootGameObject: {fileID: 1486365574202233}
   m_IsPrefabParent: 1
   m_IsExploded: 0
---- !u!1 &1132086415765035
+--- !u!1 &1486365574202233
 GameObject:
   serializedVersion: 4
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_Component:
-  - 4: {fileID: 4614486759045557}
-  - 120: {fileID: 120824351210652325}
+  - 4: {fileID: 4825251160256721}
+  - 120: {fileID: 120126784483550626}
   m_Layer: 0
   m_Name: rope
   m_TagString: Untagged
@@ -28,31 +28,31 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4614486759045557
+--- !u!4 &4825251160256721
 Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1132086415765035}
+  m_GameObject: {fileID: 1486365574202233}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 2.5790741, y: 2.1856115, z: 1.0199091}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!120 &120824351210652325
+--- !u!120 &120126784483550626
 LineRenderer:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1132086415765035}
+  m_GameObject: {fileID: 1486365574202233}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_LightmapIndex: 255
   m_LightmapTilingOffset: {x: 1, y: 1, z: 0, w: 0}
   m_Materials:
-  - {fileID: 2100000, guid: d0b157faba2c6f743aee5eca909936b7, type: 2}
+  - {fileID: 2100000, guid: 039a5d5659669b44db6046b37f0fff7e, type: 2}
   m_SubsetIndices: []
   m_StaticBatchRoot: {fileID: 0}
   m_UseLightProbes: 0

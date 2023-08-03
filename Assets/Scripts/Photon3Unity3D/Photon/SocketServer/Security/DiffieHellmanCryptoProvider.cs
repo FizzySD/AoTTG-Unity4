@@ -4,7 +4,7 @@ using Photon.SocketServer.Numeric;
 
 namespace Photon.SocketServer.Security
 {
-	internal class DiffieHellmanCryptoProvider : IDisposable
+	internal class DiffieHellmanCryptoProvider : ICryptoProvider, IDisposable
 	{
 		private static readonly BigInteger primeRoot = new BigInteger(OakleyGroups.Generator);
 
@@ -34,19 +34,19 @@ namespace Photon.SocketServer.Security
 			}
 		}
 
-		public byte[] SharedKey
-		{
-			get
-			{
-				return sharedKey;
-			}
-		}
-
 		public DiffieHellmanCryptoProvider()
 		{
 			prime = new BigInteger(OakleyGroups.OakleyPrime768);
 			secret = GenerateRandomSecret(160);
 			publicKey = CalculatePublicKey();
+		}
+
+		public DiffieHellmanCryptoProvider(byte[] cryptoKey)
+		{
+			crypto = new RijndaelManaged();
+			crypto.Key = cryptoKey;
+			crypto.IV = new byte[16];
+			crypto.Padding = PaddingMode.PKCS7;
 		}
 
 		public void DeriveSharedKey(byte[] otherPartyPublicKey)
@@ -57,7 +57,7 @@ namespace Photon.SocketServer.Security
 			byte[] key;
 			using (SHA256 sHA = new SHA256Managed())
 			{
-				key = sHA.ComputeHash(SharedKey);
+				key = sHA.ComputeHash(sharedKey);
 			}
 			crypto = new RijndaelManaged();
 			crypto.Key = key;

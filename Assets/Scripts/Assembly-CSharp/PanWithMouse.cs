@@ -5,13 +5,13 @@ public class PanWithMouse : IgnoreTimeScale
 {
 	public Vector2 degrees = new Vector2(5f, 3f);
 
-	public float range = 1f;
-
-	private Transform mTrans;
+	private Vector2 mRot = Vector2.zero;
 
 	private Quaternion mStart;
 
-	private Vector2 mRot = Vector2.zero;
+	private Transform mTrans;
+
+	public float range = 1f;
 
 	private void Start()
 	{

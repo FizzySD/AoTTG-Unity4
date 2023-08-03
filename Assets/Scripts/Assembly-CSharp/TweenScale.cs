@@ -5,13 +5,13 @@ public class TweenScale : UITweener
 {
 	public Vector3 from = Vector3.one;
 
-	public Vector3 to = Vector3.one;
-
-	public bool updateTable;
+	private UITable mTable;
 
 	private Transform mTrans;
 
-	private UITable mTable;
+	public Vector3 to = Vector3.one;
+
+	public bool updateTable;
 
 	public Transform cachedTransform
 	{
@@ -37,6 +37,19 @@ public class TweenScale : UITweener
 		}
 	}
 
+	public static TweenScale Begin(GameObject go, float duration, Vector3 scale)
+	{
+		TweenScale tweenScale = UITweener.Begin<TweenScale>(go, duration);
+		tweenScale.from = tweenScale.scale;
+		tweenScale.to = scale;
+		if (duration <= 0f)
+		{
+			tweenScale.Sample(1f, true);
+			tweenScale.enabled = false;
+		}
+		return tweenScale;
+	}
+
 	protected override void OnUpdate(float factor, bool isFinished)
 	{
 		cachedTransform.localScale = from * (1f - factor) + to * factor;
@@ -54,18 +67,5 @@ public class TweenScale : UITweener
 			}
 		}
 		mTable.repositionNow = true;
-	}
-
-	public static TweenScale Begin(GameObject go, float duration, Vector3 scale)
-	{
-		TweenScale tweenScale = UITweener.Begin<TweenScale>(go, duration);
-		tweenScale.from = tweenScale.scale;
-		tweenScale.to = scale;
-		if (duration <= 0f)
-		{
-			tweenScale.Sample(1f, true);
-			tweenScale.enabled = false;
-		}
-		return tweenScale;
 	}
 }

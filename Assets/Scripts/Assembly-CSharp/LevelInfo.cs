@@ -1,12 +1,34 @@
+using UnityEngine;
+
 public class LevelInfo
 {
-	public string name;
-
-	public string mapName;
-
 	public string desc;
 
 	public int enemyNumber;
+
+	public bool hint;
+
+	public bool horse;
+
+	private static bool init;
+
+	public bool lavaMode;
+
+	public static LevelInfo[] levels;
+
+	public string mapName;
+
+	public Minimap.Preset minimapPreset;
+
+	public string name;
+
+	public bool noCrawler;
+
+	public bool punk = true;
+
+	public bool pvp;
+
+	public RespawnMode respawnMode;
 
 	public bool supply = true;
 
@@ -14,56 +36,55 @@ public class LevelInfo
 
 	public GAMEMODE type;
 
-	public RespawnMode respawnMode;
+	public static LevelInfo getInfo(string name)
+	{
+		Init();
+		LevelInfo[] array = levels;
+		foreach (LevelInfo levelInfo in array)
+		{
+			if (levelInfo.name == name)
+			{
+				return levelInfo;
+			}
+		}
+		return null;
+	}
 
-	public bool noCrawler;
-
-	public bool hint;
-
-	public bool lavaMode;
-
-	public bool horse = true;
-
-	public bool punk = true;
-
-	public bool pvp;
-
-	public static LevelInfo[] levels;
-
-	private static bool init;
-
-	private static void initData()
+	public static void Init()
 	{
 		if (!init)
 		{
 			init = true;
-			levels = new LevelInfo[26];
-			levels[0] = new LevelInfo();
-			levels[1] = new LevelInfo();
-			levels[2] = new LevelInfo();
-			levels[3] = new LevelInfo();
-			levels[4] = new LevelInfo();
-			levels[5] = new LevelInfo();
-			levels[6] = new LevelInfo();
-			levels[7] = new LevelInfo();
-			levels[8] = new LevelInfo();
-			levels[9] = new LevelInfo();
-			levels[10] = new LevelInfo();
-			levels[11] = new LevelInfo();
-			levels[12] = new LevelInfo();
-			levels[13] = new LevelInfo();
-			levels[14] = new LevelInfo();
-			levels[15] = new LevelInfo();
-			levels[16] = new LevelInfo();
-			levels[17] = new LevelInfo();
-			levels[18] = new LevelInfo();
-			levels[19] = new LevelInfo();
-			levels[20] = new LevelInfo();
-			levels[21] = new LevelInfo();
-			levels[22] = new LevelInfo();
-			levels[23] = new LevelInfo();
-			levels[24] = new LevelInfo();
-			levels[25] = new LevelInfo();
+			levels = new LevelInfo[27]
+			{
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo(),
+				new LevelInfo()
+			};
 			levels[0].name = "The City";
 			levels[0].mapName = "The City I";
 			levels[0].desc = "kill all the titans with your friends.(No RESPAWN/SUPPLY/PLAY AS TITAN)";
@@ -233,7 +254,7 @@ public class LevelInfo
 			levels[21].type = GAMEMODE.PVP_CAPTURE;
 			levels[21].respawnMode = RespawnMode.DEATHMATCH;
 			levels[21].supply = true;
-			levels[21].horse = true;
+			levels[21].horse = false;
 			levels[21].teamTitan = true;
 			levels[22].name = "Cave Fight";
 			levels[22].mapName = "CaveFight";
@@ -242,7 +263,7 @@ public class LevelInfo
 			levels[22].type = GAMEMODE.PVP_AHSS;
 			levels[22].respawnMode = RespawnMode.NEVER;
 			levels[22].supply = true;
-			levels[22].horse = true;
+			levels[22].horse = false;
 			levels[22].teamTitan = true;
 			levels[22].pvp = true;
 			levels[23].name = "House Fight";
@@ -252,7 +273,7 @@ public class LevelInfo
 			levels[23].type = GAMEMODE.PVP_AHSS;
 			levels[23].respawnMode = RespawnMode.NEVER;
 			levels[23].supply = true;
-			levels[23].horse = true;
+			levels[23].horse = false;
 			levels[23].teamTitan = true;
 			levels[23].pvp = true;
 			levels[24].name = "[S]Forest Survive(no crawler no punk)";
@@ -264,20 +285,33 @@ public class LevelInfo
 			levels[24].supply = true;
 			levels[24].noCrawler = true;
 			levels[24].punk = false;
+			levels[25].name = "Custom";
+			levels[25].mapName = "The Forest";
+			levels[25].desc = "Custom Map.";
+			levels[25].enemyNumber = 1;
+			levels[25].type = GAMEMODE.KILL_TITAN;
+			levels[25].respawnMode = RespawnMode.NEVER;
+			levels[25].supply = true;
+			levels[25].teamTitan = true;
+			levels[25].pvp = true;
+			levels[25].punk = true;
+			levels[26].name = "Custom (No PT)";
+			levels[26].mapName = "The Forest";
+			levels[26].desc = "Custom Map (No Player Titans).";
+			levels[26].enemyNumber = 1;
+			levels[26].type = GAMEMODE.KILL_TITAN;
+			levels[26].respawnMode = RespawnMode.NEVER;
+			levels[26].pvp = true;
+			levels[26].punk = true;
+			levels[26].supply = true;
+			levels[26].teamTitan = false;
+			levels[0].minimapPreset = new Minimap.Preset(new Vector3(22.6f, 0f, 13f), 731.9738f);
+			levels[8].minimapPreset = new Minimap.Preset(new Vector3(8.8f, 0f, 65f), 765.5751f);
+			levels[9].minimapPreset = new Minimap.Preset(new Vector3(8.8f, 0f, 65f), 765.5751f);
+			levels[18].minimapPreset = new Minimap.Preset(new Vector3(443.2f, 0f, 1912.6f), 1929.042f);
+			levels[19].minimapPreset = new Minimap.Preset(new Vector3(443.2f, 0f, 1912.6f), 1929.042f);
+			levels[20].minimapPreset = new Minimap.Preset(new Vector3(2549.4f, 0f, 3042.4f), 3697.16f);
+			levels[21].minimapPreset = new Minimap.Preset(new Vector3(22.6f, 0f, 13f), 734.9738f);
 		}
-	}
-
-	public static LevelInfo getInfo(string name)
-	{
-		initData();
-		LevelInfo[] array = levels;
-		foreach (LevelInfo levelInfo in array)
-		{
-			if (levelInfo.name == name)
-			{
-				return levelInfo;
-			}
-		}
-		return null;
 	}
 }

@@ -15,25 +15,25 @@ public class UIStretch : MonoBehaviour
 		FitInternalKeepingRatio = 6
 	}
 
-	public Camera uiCamera;
-
-	public UIWidget widgetContainer;
-
-	public UIPanel panelContainer;
-
-	public Style style;
-
-	public Vector2 relativeSize = Vector2.one;
-
 	public Vector2 initialSize = Vector2.one;
-
-	private Transform mTrans;
-
-	private UIRoot mRoot;
 
 	private Animation mAnim;
 
 	private Rect mRect;
+
+	private UIRoot mRoot;
+
+	private Transform mTrans;
+
+	public UIPanel panelContainer;
+
+	public Vector2 relativeSize = Vector2.one;
+
+	public Style style;
+
+	public Camera uiCamera;
+
+	public UIWidget widgetContainer;
 
 	private void Awake()
 	{
@@ -53,7 +53,7 @@ public class UIStretch : MonoBehaviour
 
 	private void Update()
 	{
-		if ((mAnim != null && mAnim.isPlaying) || style == Style.None)
+		if ((!(mAnim == null) && mAnim.isPlaying) || style == Style.None)
 		{
 			return;
 		}

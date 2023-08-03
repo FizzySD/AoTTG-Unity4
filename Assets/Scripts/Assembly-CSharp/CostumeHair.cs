@@ -2,17 +2,17 @@ public class CostumeHair
 {
 	public string hair = string.Empty;
 
-	public string texture = string.Empty;
-
-	public bool hasCloth;
-
 	public string hair_1 = string.Empty;
-
-	public static CostumeHair[] hairsM;
 
 	public static CostumeHair[] hairsF;
 
+	public static CostumeHair[] hairsM;
+
+	public bool hasCloth;
+
 	public int id;
+
+	public string texture = string.Empty;
 
 	public static void init()
 	{

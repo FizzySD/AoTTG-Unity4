@@ -6,13 +6,13 @@ public class PlayIdleAnimations : MonoBehaviour
 {
 	private Animation mAnim;
 
-	private AnimationClip mIdle;
-
 	private List<AnimationClip> mBreaks = new List<AnimationClip>();
 
-	private float mNextBreak;
+	private AnimationClip mIdle;
 
 	private int mLastIndex;
+
+	private float mNextBreak;
 
 	private void Start()
 	{

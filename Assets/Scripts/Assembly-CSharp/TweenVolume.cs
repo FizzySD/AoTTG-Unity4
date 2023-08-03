@@ -5,9 +5,9 @@ public class TweenVolume : UITweener
 {
 	public float from;
 
-	public float to = 1f;
-
 	private AudioSource mSource;
+
+	public float to = 1f;
 
 	public AudioSource audioSource
 	{
@@ -42,12 +42,6 @@ public class TweenVolume : UITweener
 		}
 	}
 
-	protected override void OnUpdate(float factor, bool isFinished)
-	{
-		volume = from * (1f - factor) + to * factor;
-		mSource.enabled = mSource.volume > 0.01f;
-	}
-
 	public static TweenVolume Begin(GameObject go, float duration, float targetVolume)
 	{
 		TweenVolume tweenVolume = UITweener.Begin<TweenVolume>(go, duration);
@@ -59,5 +53,11 @@ public class TweenVolume : UITweener
 			tweenVolume.enabled = false;
 		}
 		return tweenVolume;
+	}
+
+	protected override void OnUpdate(float factor, bool isFinished)
+	{
+		volume = from * (1f - factor) + to * factor;
+		mSource.enabled = mSource.volume > 0.01f;
 	}
 }

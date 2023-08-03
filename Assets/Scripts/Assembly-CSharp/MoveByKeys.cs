@@ -6,6 +6,11 @@ public class MoveByKeys : Photon.MonoBehaviour
 {
 	public float speed = 10f;
 
+	private void Start()
+	{
+		base.enabled = base.photonView.isMine;
+	}
+
 	private void Update()
 	{
 		if (Input.GetKey(KeyCode.A))
@@ -24,10 +29,5 @@ public class MoveByKeys : Photon.MonoBehaviour
 		{
 			base.transform.position += Vector3.back * (speed * Time.deltaTime);
 		}
-	}
-
-	private void Start()
-	{
-		base.enabled = base.photonView.isMine;
 	}
 }

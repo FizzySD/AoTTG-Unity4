@@ -3,9 +3,13 @@ using UnityEngine;
 [AddComponentMenu("Camera-Control/3dsMax Camera Style")]
 public class MaxCamera : MonoBehaviour
 {
-	public Transform target;
+	private float currentDistance;
 
-	public Vector3 targetOffset;
+	private Quaternion currentRotation;
+
+	private float desiredDistance;
+
+	private Quaternion desiredRotation;
 
 	public float distance = 5f;
 
@@ -13,52 +17,52 @@ public class MaxCamera : MonoBehaviour
 
 	public float minDistance = 0.6f;
 
-	public float xSpeed = 200f;
-
-	public float ySpeed = 200f;
-
-	public int yMinLimit = -80;
-
-	public int yMaxLimit = 80;
-
-	public int zoomRate = 40;
-
 	public float panSpeed = 0.3f;
-
-	public float zoomDampening = 5f;
-
-	private float xDeg;
-
-	private float yDeg;
-
-	private float currentDistance;
-
-	private float desiredDistance;
-
-	private Quaternion currentRotation;
-
-	private Quaternion desiredRotation;
-
-	private Quaternion rotation;
 
 	private Vector3 position;
 
-	private void Start()
-	{
-		Init();
-	}
+	private Quaternion rotation;
 
-	private void OnEnable()
+	public Transform target;
+
+	public Vector3 targetOffset;
+
+	private float xDeg;
+
+	public float xSpeed = 200f;
+
+	private float yDeg;
+
+	public int yMaxLimit = 80;
+
+	public int yMinLimit = -80;
+
+	public float ySpeed = 200f;
+
+	public float zoomDampening = 5f;
+
+	public int zoomRate = 40;
+
+	private static float ClampAngle(float angle, float min, float max)
 	{
-		Init();
+		if (angle < -360f)
+		{
+			angle += 360f;
+		}
+		if (angle > 360f)
+		{
+			angle -= 360f;
+		}
+		return Mathf.Clamp(angle, min, max);
 	}
 
 	public void Init()
 	{
-		if (!target)
+		if (target == null)
 		{
-			GameObject gameObject = new GameObject("Cam Target");
-			gameObject.transform.position = base.transform.position + base.transform.forward * distance;
+			GameObject obj = new GameObject("Cam Target");
+			obj.transform.position = base.transform.position + base.transform.forward * distance;
+			GameObject gameObject = obj;
 			target = gameObject.transform;
 		}
 		distance = Vector3.Distance(base.transform.position, target.position);
@@ -95,16 +99,13 @@ public class MaxCamera : MonoBehaviour
 		base.transform.position = position;
 	}
 
-	private static float ClampAngle(float angle, float min, float max)
+	private void OnEnable()
 	{
-		if (angle < -360f)
-		{
-			angle += 360f;
-		}
-		if (angle > 360f)
-		{
-			angle -= 360f;
-		}
-		return Mathf.Clamp(angle, min, max);
+		Init();
+	}
+
+	private void Start()
+	{
+		Init();
 	}
 }
