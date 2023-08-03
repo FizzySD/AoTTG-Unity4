@@ -1,10 +1,12 @@
 using UnityEngine;
 
+[ExecuteInEditMode]
 [AddComponentMenu("NGUI/Examples/Slider Colors")]
 [RequireComponent(typeof(UISlider))]
-[ExecuteInEditMode]
 public class UISliderColors : MonoBehaviour
 {
+	public UISprite sprite;
+
 	public Color[] colors = new Color[3]
 	{
 		Color.red,
@@ -14,8 +16,6 @@ public class UISliderColors : MonoBehaviour
 
 	private UISlider mSlider;
 
-	public UISprite sprite;
-
 	private void Start()
 	{
 		mSlider = GetComponent<UISlider>();
@@ -24,23 +24,24 @@ public class UISliderColors : MonoBehaviour
 
 	private void Update()
 	{
-		if (!(sprite != null) || colors.Length == 0)
+		if (sprite == null || colors.Length == 0)
 		{
 			return;
 		}
-		float num = mSlider.sliderValue * (float)(colors.Length - 1);
-		int num2 = Mathf.FloorToInt(num);
+		float sliderValue = mSlider.sliderValue;
+		sliderValue *= (float)(colors.Length - 1);
+		int num = Mathf.FloorToInt(sliderValue);
 		Color color = colors[0];
-		if (num2 >= 0)
+		if (num >= 0)
 		{
-			if (num2 + 1 >= colors.Length)
+			if (num + 1 >= colors.Length)
 			{
-				color = ((num2 >= colors.Length) ? colors[colors.Length - 1] : colors[num2]);
+				color = ((num >= colors.Length) ? colors[colors.Length - 1] : colors[num]);
 			}
 			else
 			{
-				float t = num - (float)num2;
-				color = Color.Lerp(colors[num2], colors[num2 + 1], t);
+				float t = sliderValue - (float)num;
+				color = Color.Lerp(colors[num], colors[num + 1], t);
 			}
 		}
 		color.a = sprite.color.a;

@@ -3,9 +3,9 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Examples/Equipment")]
 public class InvEquipment : MonoBehaviour
 {
-	private InvAttachmentPoint[] mAttachments;
-
 	private InvGameItem[] mItems;
+
+	private InvAttachmentPoint[] mAttachments;
 
 	public InvGameItem[] equippedItems
 	{
@@ -13,66 +13,6 @@ public class InvEquipment : MonoBehaviour
 		{
 			return mItems;
 		}
-	}
-
-	public InvGameItem Equip(InvGameItem item)
-	{
-		if (item != null)
-		{
-			InvBaseItem baseItem = item.baseItem;
-			if (baseItem != null)
-			{
-				return Replace(baseItem.slot, item);
-			}
-			Debug.LogWarning("Can't resolve the item ID of " + item.baseItemID);
-		}
-		return item;
-	}
-
-	public InvGameItem GetItem(InvBaseItem.Slot slot)
-	{
-		if (slot != 0)
-		{
-			int num = (int)(slot - 1);
-			if (mItems != null && num < mItems.Length)
-			{
-				return mItems[num];
-			}
-		}
-		return null;
-	}
-
-	public bool HasEquipped(InvBaseItem.Slot slot)
-	{
-		if (mItems != null)
-		{
-			int i = 0;
-			for (int num = mItems.Length; i < num; i++)
-			{
-				InvBaseItem baseItem = mItems[i].baseItem;
-				if (baseItem != null && baseItem.slot == slot)
-				{
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	public bool HasEquipped(InvGameItem item)
-	{
-		if (mItems != null)
-		{
-			int i = 0;
-			for (int num = mItems.Length; i < num; i++)
-			{
-				if (mItems[i] == item)
-				{
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 
 	public InvGameItem Replace(InvBaseItem.Slot slot, InvGameItem item)
@@ -122,9 +62,18 @@ public class InvEquipment : MonoBehaviour
 		return item;
 	}
 
-	public InvGameItem Unequip(InvBaseItem.Slot slot)
+	public InvGameItem Equip(InvGameItem item)
 	{
-		return Replace(slot, null);
+		if (item != null)
+		{
+			InvBaseItem baseItem = item.baseItem;
+			if (baseItem != null)
+			{
+				return Replace(baseItem.slot, item);
+			}
+			Debug.LogWarning("Can't resolve the item ID of " + item.baseItemID);
+		}
+		return item;
 	}
 
 	public InvGameItem Unequip(InvGameItem item)
@@ -138,5 +87,56 @@ public class InvEquipment : MonoBehaviour
 			}
 		}
 		return item;
+	}
+
+	public InvGameItem Unequip(InvBaseItem.Slot slot)
+	{
+		return Replace(slot, null);
+	}
+
+	public bool HasEquipped(InvGameItem item)
+	{
+		if (mItems != null)
+		{
+			int i = 0;
+			for (int num = mItems.Length; i < num; i++)
+			{
+				if (mItems[i] == item)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public bool HasEquipped(InvBaseItem.Slot slot)
+	{
+		if (mItems != null)
+		{
+			int i = 0;
+			for (int num = mItems.Length; i < num; i++)
+			{
+				InvBaseItem baseItem = mItems[i].baseItem;
+				if (baseItem != null && baseItem.slot == slot)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public InvGameItem GetItem(InvBaseItem.Slot slot)
+	{
+		if (slot != 0)
+		{
+			int num = (int)(slot - 1);
+			if (mItems != null && num < mItems.Length)
+			{
+				return mItems[num];
+			}
+		}
+		return null;
 	}
 }

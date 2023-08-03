@@ -10,9 +10,13 @@ public class CubeCollector : MonoBehaviour
 
 	private void Update()
 	{
-		if (GameObject.FindGameObjectWithTag("Player") != null && Vector3.Distance(GameObject.FindGameObjectWithTag("Player").transform.position, base.transform.position) < 8f)
+		if (!(GameObject.FindGameObjectWithTag("Player") == null))
 		{
-			Object.Destroy(base.gameObject);
+			GameObject gameObject = GameObject.FindGameObjectWithTag("Player");
+			if (Vector3.Distance(gameObject.transform.position, base.transform.position) < 8f)
+			{
+				Object.Destroy(base.gameObject);
+			}
 		}
 	}
 }

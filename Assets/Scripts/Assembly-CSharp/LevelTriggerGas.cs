@@ -2,6 +2,10 @@ using UnityEngine;
 
 public class LevelTriggerGas : MonoBehaviour
 {
+	private void Start()
+	{
+	}
+
 	private void OnTriggerStay(Collider other)
 	{
 		if (other.gameObject.tag == "Player")
@@ -17,9 +21,5 @@ public class LevelTriggerGas : MonoBehaviour
 				Object.Destroy(base.gameObject);
 			}
 		}
-	}
-
-	private void Start()
-	{
 	}
 }

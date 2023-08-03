@@ -1,88 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class BetterList<T>
 {
-	[CompilerGenerated]
-	private sealed class GetEnumeratorcIterator9<T> : IEnumerator, IDisposable, IEnumerator<T>
-	{
-		internal T Scurrent;
-
-		internal int SPC;
-
-		internal BetterList<T> fthis;
-
-		internal int i0;
-
-		T IEnumerator<T>.Current
-		{
-			[DebuggerHidden]
-			get
-			{
-				return Scurrent;
-			}
-		}
-
-		object IEnumerator.Current
-		{
-			[DebuggerHidden]
-			get
-			{
-				return Scurrent;
-			}
-		}
-
-		[DebuggerHidden]
-		public void Dispose()
-		{
-			SPC = -1;
-		}
-
-		public bool MoveNext()
-		{
-			uint sPC = (uint)SPC;
-			SPC = -1;
-			if (sPC != 0)
-			{
-				if (sPC != 1)
-				{
-					goto IL_007a;
-				}
-				i0++;
-			}
-			else
-			{
-				if (fthis.buffer == null)
-				{
-					goto IL_0073;
-				}
-				i0 = 0;
-			}
-			if (i0 < fthis.size)
-			{
-				Scurrent = fthis.buffer[i0];
-				SPC = 1;
-				return true;
-			}
-			goto IL_0073;
-			IL_0073:
-			SPC = -1;
-			goto IL_007a;
-			IL_007a:
-			return false;
-		}
-
-		[DebuggerHidden]
-		public void Reset()
-		{
-			throw new NotSupportedException();
-		}
-	}
-
 	public T[] buffer;
 
 	public int size;
@@ -99,13 +20,15 @@ public class BetterList<T>
 		}
 	}
 
-	public void Add(T item)
+	public IEnumerator<T> GetEnumerator()
 	{
-		if (buffer == null || size == buffer.Length)
+		if (buffer != null)
 		{
-			AllocateMore();
+			for (int i = 0; i < size; i++)
+			{
+				yield return buffer[i];
+			}
 		}
-		buffer[size++] = item;
 	}
 
 	private void AllocateMore()
@@ -118,34 +41,44 @@ public class BetterList<T>
 		buffer = array;
 	}
 
+	private void Trim()
+	{
+		if (size > 0)
+		{
+			if (size < buffer.Length)
+			{
+				T[] array = new T[size];
+				for (int i = 0; i < size; i++)
+				{
+					array[i] = buffer[i];
+				}
+				buffer = array;
+			}
+		}
+		else
+		{
+			buffer = null;
+		}
+	}
+
 	public void Clear()
 	{
 		size = 0;
 	}
 
-	public bool Contains(T item)
+	public void Release()
 	{
-		if (buffer != null)
-		{
-			for (int i = 0; i < size; i++)
-			{
-				if (buffer[i].Equals(item))
-				{
-					return true;
-				}
-			}
-		}
-		return false;
+		size = 0;
+		buffer = null;
 	}
 
-	[DebuggerHidden]
-	public IEnumerator<T> GetEnumerator()
+	public void Add(T item)
 	{
-		//yield-return decompiler failed: Could not find currentField
-		return new GetEnumeratorcIterator9<T>
+		if (buffer == null || size == buffer.Length)
 		{
-			fthis = this
-		};
+			AllocateMore();
+		}
+		buffer[size++] = item;
 	}
 
 	public void Insert(int index, T item)
@@ -169,21 +102,20 @@ public class BetterList<T>
 		}
 	}
 
-	public T Pop()
+	public bool Contains(T item)
 	{
-		if (buffer != null && size != 0)
+		if (buffer == null)
 		{
-			T result = buffer[--size];
-			buffer[size] = default(T);
-			return result;
+			return false;
 		}
-		return default(T);
-	}
-
-	public void Release()
-	{
-		size = 0;
-		buffer = null;
+		for (int i = 0; i < size; i++)
+		{
+			if (buffer[i].Equals(item))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public bool Remove(T item)
@@ -221,6 +153,23 @@ public class BetterList<T>
 		}
 	}
 
+	public T Pop()
+	{
+		if (buffer != null && size != 0)
+		{
+			T result = buffer[--size];
+			buffer[size] = default(T);
+			return result;
+		}
+		return default(T);
+	}
+
+	public T[] ToArray()
+	{
+		Trim();
+		return buffer;
+	}
+
 	public void Sort(Comparison<T> comparer)
 	{
 		bool flag = true;
@@ -237,32 +186,6 @@ public class BetterList<T>
 					flag = true;
 				}
 			}
-		}
-	}
-
-	public T[] ToArray()
-	{
-		Trim();
-		return buffer;
-	}
-
-	private void Trim()
-	{
-		if (size > 0)
-		{
-			if (size < buffer.Length)
-			{
-				T[] array = new T[size];
-				for (int i = 0; i < size; i++)
-				{
-					array[i] = buffer[i];
-				}
-				buffer = array;
-			}
-		}
-		else
-		{
-			buffer = null;
 		}
 	}
 }

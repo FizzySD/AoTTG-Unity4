@@ -1,15 +1,10 @@
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
-[AddComponentMenu("NGUI/Examples/Set Color on Selection")]
 [ExecuteInEditMode]
+[AddComponentMenu("NGUI/Examples/Set Color on Selection")]
 [RequireComponent(typeof(UIWidget))]
 public class SetColorOnSelection : MonoBehaviour
 {
-	[CompilerGenerated]
-	private static Dictionary<string, int> fswitchSmap4;
-
 	private UIWidget mWidget;
 
 	private void OnSelectionChange(string val)

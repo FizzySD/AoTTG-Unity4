@@ -22,14 +22,22 @@ public class InvGameItem
 		_LastDoNotUse = 12
 	}
 
-	public int itemLevel;
-
-	private InvBaseItem mBaseItem;
-
 	[SerializeField]
 	private int mBaseItemID;
 
-	public Quality quality;
+	public Quality quality = Quality.Sturdy;
+
+	public int itemLevel = 1;
+
+	private InvBaseItem mBaseItem;
+
+	public int baseItemID
+	{
+		get
+		{
+			return mBaseItemID;
+		}
+	}
 
 	public InvBaseItem baseItem
 	{
@@ -40,51 +48,6 @@ public class InvGameItem
 				mBaseItem = InvDatabase.FindByID(baseItemID);
 			}
 			return mBaseItem;
-		}
-	}
-
-	public int baseItemID
-	{
-		get
-		{
-			return mBaseItemID;
-		}
-	}
-
-	public Color color
-	{
-		get
-		{
-			Color white = Color.white;
-			switch (quality)
-			{
-			case Quality.Broken:
-				return new Color(0.4f, 0.2f, 0.2f);
-			case Quality.Cursed:
-				return Color.red;
-			case Quality.Damaged:
-				return new Color(0.4f, 0.4f, 0.4f);
-			case Quality.Worn:
-				return new Color(0.7f, 0.7f, 0.7f);
-			case Quality.Sturdy:
-				return new Color(1f, 1f, 1f);
-			case Quality.Polished:
-				return NGUIMath.HexToColor(3774856959u);
-			case Quality.Improved:
-				return NGUIMath.HexToColor(2480359935u);
-			case Quality.Crafted:
-				return NGUIMath.HexToColor(1325334783u);
-			case Quality.Superior:
-				return NGUIMath.HexToColor(12255231u);
-			case Quality.Enchanted:
-				return NGUIMath.HexToColor(1937178111u);
-			case Quality.Epic:
-				return NGUIMath.HexToColor(2516647935u);
-			case Quality.Legendary:
-				return NGUIMath.HexToColor(4287627519u);
-			default:
-				return white;
-			}
 		}
 	}
 
@@ -107,11 +70,11 @@ public class InvGameItem
 			float num = 0f;
 			switch (quality)
 			{
-			case Quality.Broken:
-				num = 0f;
-				break;
 			case Quality.Cursed:
 				num = -1f;
+				break;
+			case Quality.Broken:
+				num = 0f;
 				break;
 			case Quality.Damaged:
 				num = 0.25f;
@@ -149,17 +112,61 @@ public class InvGameItem
 		}
 	}
 
+	public Color color
+	{
+		get
+		{
+			Color result = Color.white;
+			switch (quality)
+			{
+			case Quality.Cursed:
+				result = Color.red;
+				break;
+			case Quality.Broken:
+				result = new Color(0.4f, 0.2f, 0.2f);
+				break;
+			case Quality.Damaged:
+				result = new Color(0.4f, 0.4f, 0.4f);
+				break;
+			case Quality.Worn:
+				result = new Color(0.7f, 0.7f, 0.7f);
+				break;
+			case Quality.Sturdy:
+				result = new Color(1f, 1f, 1f);
+				break;
+			case Quality.Polished:
+				result = NGUIMath.HexToColor(3774856959u);
+				break;
+			case Quality.Improved:
+				result = NGUIMath.HexToColor(2480359935u);
+				break;
+			case Quality.Crafted:
+				result = NGUIMath.HexToColor(1325334783u);
+				break;
+			case Quality.Superior:
+				result = NGUIMath.HexToColor(12255231u);
+				break;
+			case Quality.Enchanted:
+				result = NGUIMath.HexToColor(1937178111u);
+				break;
+			case Quality.Epic:
+				result = NGUIMath.HexToColor(2516647935u);
+				break;
+			case Quality.Legendary:
+				result = NGUIMath.HexToColor(4287627519u);
+				break;
+			}
+			return result;
+		}
+	}
+
 	public InvGameItem(int id)
 	{
-		quality = Quality.Sturdy;
-		itemLevel = 1;
 		mBaseItemID = id;
 	}
 
 	public InvGameItem(int id, InvBaseItem bi)
 	{
-		quality = Quality.Sturdy;
-		itemLevel = 1;
 		mBaseItemID = id;
 		mBaseItem = bi;
 	}
@@ -194,13 +201,11 @@ public class InvGameItem
 				}
 				if (!flag)
 				{
-					InvStat item = new InvStat
-					{
-						id = invStat.id,
-						amount = num2,
-						modifier = invStat.modifier
-					};
-					list.Add(item);
+					InvStat invStat3 = new InvStat();
+					invStat3.id = invStat.id;
+					invStat3.amount = num2;
+					invStat3.modifier = invStat.modifier;
+					list.Add(invStat3);
 				}
 			}
 			list.Sort(InvStat.CompareArmor);

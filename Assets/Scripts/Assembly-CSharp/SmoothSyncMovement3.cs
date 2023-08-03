@@ -3,23 +3,24 @@ using UnityEngine;
 
 public class SmoothSyncMovement3 : Photon.MonoBehaviour
 {
+	public float SmoothingDelay = 5f;
+
+	public bool disabled;
+
 	private Vector3 correctPlayerPos = Vector3.zero;
 
 	private Quaternion correctPlayerRot = Quaternion.identity;
 
-	public bool disabled;
-
-	public float SmoothingDelay = 5f;
-
 	public void Awake()
 	{
-		SmoothingDelay = 10f;
+		if (base.photonView == null || base.photonView.observed != this)
+		{
+			Debug.LogWarning(string.Concat(this, " is not observed by this object's photonView! OnPhotonSerializeView() in this class won't be used."));
+		}
 		if (IN_GAME_MAIN_CAMERA.gametype == GAMETYPE.SINGLE)
 		{
 			base.enabled = false;
 		}
-		correctPlayerPos = base.transform.position;
-		correctPlayerRot = base.transform.rotation;
 	}
 
 	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)

@@ -4,31 +4,27 @@ using UnityEngine;
 [AddComponentMenu("NGUI/UI/Image Button")]
 public class UIImageButton : MonoBehaviour
 {
-	public string disabledSprite;
-
-	public string hoverSprite;
+	public UISprite target;
 
 	public string normalSprite;
 
+	public string hoverSprite;
+
 	public string pressedSprite;
 
-	public UISprite target;
+	public string disabledSprite;
 
 	public bool isEnabled
 	{
 		get
 		{
 			Collider collider = base.collider;
-			if (collider != null)
-			{
-				return collider.enabled;
-			}
-			return false;
+			return (bool)collider && collider.enabled;
 		}
 		set
 		{
 			Collider collider = base.collider;
-			if (collider != null && collider.enabled != value)
+			if ((bool)collider && collider.enabled != value)
 			{
 				collider.enabled = value;
 				UpdateImage();
@@ -47,6 +43,22 @@ public class UIImageButton : MonoBehaviour
 	private void OnEnable()
 	{
 		UpdateImage();
+	}
+
+	private void UpdateImage()
+	{
+		if (target != null)
+		{
+			if (isEnabled)
+			{
+				target.spriteName = ((!UICamera.IsHighlighted(base.gameObject)) ? normalSprite : hoverSprite);
+			}
+			else
+			{
+				target.spriteName = disabledSprite;
+			}
+			target.MakePixelPerfect();
+		}
 	}
 
 	private void OnHover(bool isOver)
@@ -68,22 +80,6 @@ public class UIImageButton : MonoBehaviour
 		else
 		{
 			UpdateImage();
-		}
-	}
-
-	private void UpdateImage()
-	{
-		if (target != null)
-		{
-			if (isEnabled)
-			{
-				target.spriteName = ((!UICamera.IsHighlighted(base.gameObject)) ? normalSprite : hoverSprite);
-			}
-			else
-			{
-				target.spriteName = disabledSprite;
-			}
-			target.MakePixelPerfect();
 		}
 	}
 }

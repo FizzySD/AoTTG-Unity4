@@ -4,11 +4,34 @@ using UnityEngine;
 [RequireComponent(typeof(UITexture))]
 public class DownloadTexture : MonoBehaviour
 {
+	public string url = "http://www.tasharen.com/misc/logo.png";
+
 	private Material mMat;
 
 	private Texture2D mTex;
 
-	public string url = "http://www.tasharen.com/misc/logo.png";
+	private IEnumerator Start()
+	{
+		WWW www = new WWW(url);
+		yield return www;
+		mTex = www.texture;
+		if (mTex != null)
+		{
+			UITexture ut = GetComponent<UITexture>();
+			if (ut.material == null)
+			{
+				mMat = new Material(Shader.Find("Unlit/Transparent Colored"));
+			}
+			else
+			{
+				mMat = new Material(ut.material);
+			}
+			ut.material = mMat;
+			mMat.mainTexture = mTex;
+			ut.MakePixelPerfect();
+		}
+		www.Dispose();
+	}
 
 	private void OnDestroy()
 	{
@@ -20,28 +43,5 @@ public class DownloadTexture : MonoBehaviour
 		{
 			Object.Destroy(mTex);
 		}
-	}
-
-	private IEnumerator Start()
-	{
-		WWW wWW = new WWW(url);
-		yield return wWW;
-		mTex = wWW.texture;
-		if (!(mTex == null))
-		{
-			UITexture component = GetComponent<UITexture>();
-			if (component.material != null)
-			{
-				mMat = new Material(component.material);
-			}
-			else
-			{
-				mMat = new Material(Shader.Find("Unlit/Transparent Colored"));
-			}
-			component.material = mMat;
-			mMat.mainTexture = mTex;
-			component.MakePixelPerfect();
-		}
-		wWW.Dispose();
 	}
 }

@@ -7,7 +7,7 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: slash01_distort_small
-  m_Shader: {fileID: 4800000, guid: cbdeefdbc95652448bc27ca3441f1303, type: 3}
+  m_Shader: {fileID: 4800000, guid: e76cda06e5ae41f4fbce39afeec2b9b9, type: 3}
   m_ShaderKeywords: []
   m_CustomRenderQueue: -1
   m_SavedProperties:
@@ -16,13 +16,13 @@ Material:
     - first:
         name: _DispMap
       second:
-        m_Texture: {fileID: 2800000, guid: 99d2c39e850e88d4e901a67fdd8d32fd, type: 3}
+        m_Texture: {fileID: 2800000, guid: c99efd2f1fc8ed14687120698583b438, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - first:
         name: _MaskTex
       second:
-        m_Texture: {fileID: 2800000, guid: 1f21e5639de862b42be57f65669a0a58, type: 3}
+        m_Texture: {fileID: 2800000, guid: 56a3446249c952b4eac7ac819373c9c8, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:

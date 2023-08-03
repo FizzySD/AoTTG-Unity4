@@ -18,25 +18,25 @@ public class InvBaseItem
 		_LastDoNotUse = 8
 	}
 
+	public int id16;
+
+	public string name;
+
+	public string description;
+
+	public Slot slot;
+
+	public int minItemLevel = 1;
+
+	public int maxItemLevel = 50;
+
+	public List<InvStat> stats = new List<InvStat>();
+
 	public GameObject attachment;
 
 	public Color color = Color.white;
 
-	public string description;
-
 	public UIAtlas iconAtlas;
 
 	public string iconName = string.Empty;
-
-	public int id16;
-
-	public int maxItemLevel = 50;
-
-	public int minItemLevel = 1;
-
-	public string name;
-
-	public Slot slot;
-
-	public List<InvStat> stats = new List<InvStat>();
 }

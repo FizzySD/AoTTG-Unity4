@@ -3,30 +3,30 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Button Rotation")]
 public class UIButtonRotation : MonoBehaviour
 {
-	public float duration = 0.2f;
+	public Transform tweenTarget;
 
 	public Vector3 hover = Vector3.zero;
 
-	private bool mHighlighted;
+	public Vector3 pressed = Vector3.zero;
+
+	public float duration = 0.2f;
 
 	private Quaternion mRot;
 
 	private bool mStarted;
 
-	public Vector3 pressed = Vector3.zero;
+	private bool mHighlighted;
 
-	public Transform tweenTarget;
-
-	private void OnDisable()
+	private void Start()
 	{
-		if (mStarted && tweenTarget != null)
+		if (!mStarted)
 		{
-			TweenRotation component = tweenTarget.GetComponent<TweenRotation>();
-			if (component != null)
+			mStarted = true;
+			if (tweenTarget == null)
 			{
-				component.rotation = mRot;
-				component.enabled = false;
+				tweenTarget = base.transform;
 			}
+			mRot = tweenTarget.localRotation;
 		}
 	}
 
@@ -38,16 +38,16 @@ public class UIButtonRotation : MonoBehaviour
 		}
 	}
 
-	private void OnHover(bool isOver)
+	private void OnDisable()
 	{
-		if (base.enabled)
+		if (mStarted && tweenTarget != null)
 		{
-			if (!mStarted)
+			TweenRotation component = tweenTarget.GetComponent<TweenRotation>();
+			if (component != null)
 			{
-				Start();
+				component.rotation = mRot;
+				component.enabled = false;
 			}
-			TweenRotation.Begin(tweenTarget.gameObject, duration, (!isOver) ? mRot : (mRot * Quaternion.Euler(hover))).method = UITweener.Method.EaseInOut;
-			mHighlighted = isOver;
 		}
 	}
 
@@ -63,16 +63,16 @@ public class UIButtonRotation : MonoBehaviour
 		}
 	}
 
-	private void Start()
+	private void OnHover(bool isOver)
 	{
-		if (!mStarted)
+		if (base.enabled)
 		{
-			mStarted = true;
-			if (tweenTarget == null)
+			if (!mStarted)
 			{
-				tweenTarget = base.transform;
+				Start();
 			}
-			mRot = tweenTarget.localRotation;
+			TweenRotation.Begin(tweenTarget.gameObject, duration, (!isOver) ? mRot : (mRot * Quaternion.Euler(hover))).method = UITweener.Method.EaseInOut;
+			mHighlighted = isOver;
 		}
 	}
 }

@@ -130,7 +130,7 @@ MonoBehaviour:
     a: 1
   mPivot: 4
   mDepth: -10
-  mAtlas: {fileID: 114545857489073028, guid: a622e55237b57d949a7dde3967aa119e, type: 2}
+  mAtlas: {fileID: 114218518663121805, guid: 5c7d491ddf8c2ed45bbcfc486c38aa32, type: 2}
   mSpriteName: ui_common_bg
   mFillCenter: 1
   mType: 0
@@ -157,7 +157,7 @@ MonoBehaviour:
     a: 1
   mPivot: 8
   mDepth: 3
-  mFont: {fileID: 114147872061215054, guid: d2de15ceb34675a4992571b89aa15da8, type: 2}
+  mFont: {fileID: 114827694409775006, guid: 81534d2f84527374d977802a032849bb, type: 2}
   mText: info
   mMaxLineWidth: 0
   mEncoding: 1
@@ -197,7 +197,7 @@ MonoBehaviour:
     a: 1
   mPivot: 4
   mDepth: 2
-  mFont: {fileID: 114147872061215054, guid: d2de15ceb34675a4992571b89aa15da8, type: 2}
+  mFont: {fileID: 114827694409775006, guid: 81534d2f84527374d977802a032849bb, type: 2}
   mText: Saving
   mMaxLineWidth: 0
   mEncoding: 1
@@ -252,7 +252,7 @@ MonoBehaviour:
     a: 1
   mPivot: 4
   mDepth: 0
-  mAtlas: {fileID: 114545857489073028, guid: a622e55237b57d949a7dde3967aa119e, type: 2}
+  mAtlas: {fileID: 114218518663121805, guid: 5c7d491ddf8c2ed45bbcfc486c38aa32, type: 2}
   mSpriteName: ui_button_pgDn
   mFillCenter: 1
   mType: 1
@@ -279,7 +279,7 @@ MonoBehaviour:
     a: 1
   mPivot: 4
   mDepth: -11
-  mAtlas: {fileID: 114545857489073028, guid: a622e55237b57d949a7dde3967aa119e, type: 2}
+  mAtlas: {fileID: 114218518663121805, guid: 5c7d491ddf8c2ed45bbcfc486c38aa32, type: 2}
   mSpriteName: bg
   mFillCenter: 1
   mType: 0
@@ -558,7 +558,7 @@ MonoBehaviour:
     a: 1
   mPivot: 2
   mDepth: 3
-  mFont: {fileID: 114219763349864322, guid: 4631a7039fe6f374fa988efd97141de4, type: 2}
+  mFont: {fileID: 114258028708035752, guid: 6def9dab959a23047a949d960cfad073, type: 2}
   mText: 123
   mMaxLineWidth: 0
   mEncoding: 1
@@ -598,7 +598,7 @@ MonoBehaviour:
     a: 1
   mPivot: 4
   mDepth: 3
-  mFont: {fileID: 114407232983785635, guid: 3ce92a1676ed6394d85924a54e75c38a, type: 2}
+  mFont: {fileID: 114674537079788441, guid: 3356516e03713304b8b5774882e7be9d, type: 2}
   mText: 66/99
   mMaxLineWidth: 0
   mEncoding: 1
@@ -638,7 +638,7 @@ MonoBehaviour:
     a: 1
   mPivot: 4
   mDepth: 0
-  mAtlas: {fileID: 114545857489073028, guid: a622e55237b57d949a7dde3967aa119e, type: 2}
+  mAtlas: {fileID: 114218518663121805, guid: 5c7d491ddf8c2ed45bbcfc486c38aa32, type: 2}
   mSpriteName: ui_button_pgUp
   mFillCenter: 1
   mType: 1
@@ -681,7 +681,7 @@ MonoBehaviour:
     a: 1
   mPivot: 4
   mDepth: 1
-  mAtlas: {fileID: 114545857489073028, guid: a622e55237b57d949a7dde3967aa119e, type: 2}
+  mAtlas: {fileID: 114218518663121805, guid: 5c7d491ddf8c2ed45bbcfc486c38aa32, type: 2}
   mSpriteName: ui_button_2
   mFillCenter: 1
   mType: 1
@@ -708,7 +708,7 @@ MonoBehaviour:
     a: 1
   mPivot: 4
   mDepth: 1
-  mAtlas: {fileID: 114545857489073028, guid: a622e55237b57d949a7dde3967aa119e, type: 2}
+  mAtlas: {fileID: 114218518663121805, guid: 5c7d491ddf8c2ed45bbcfc486c38aa32, type: 2}
   mSpriteName: ui_button_2
   mFillCenter: 1
   mType: 1
@@ -735,7 +735,7 @@ MonoBehaviour:
     a: 1
   mPivot: 4
   mDepth: 2
-  mFont: {fileID: 114407232983785635, guid: 3ce92a1676ed6394d85924a54e75c38a, type: 2}
+  mFont: {fileID: 114674537079788441, guid: 3356516e03713304b8b5774882e7be9d, type: 2}
   mText: Back
   mMaxLineWidth: 0
   mEncoding: 1
@@ -862,7 +862,7 @@ MonoBehaviour:
     a: 1
   mPivot: 4
   mDepth: 3
-  mFont: {fileID: 114407232983785635, guid: 3ce92a1676ed6394d85924a54e75c38a, type: 2}
+  mFont: {fileID: 114674537079788441, guid: 3356516e03713304b8b5774882e7be9d, type: 2}
   mText: Snap Shot
   mMaxLineWidth: 0
   mEncoding: 1
@@ -999,7 +999,7 @@ MonoBehaviour:
     a: 1
   mPivot: 4
   mDepth: 2
-  mFont: {fileID: 114407232983785635, guid: 3ce92a1676ed6394d85924a54e75c38a, type: 2}
+  mFont: {fileID: 114674537079788441, guid: 3356516e03713304b8b5774882e7be9d, type: 2}
   mText: Save
   mMaxLineWidth: 0
   mEncoding: 1

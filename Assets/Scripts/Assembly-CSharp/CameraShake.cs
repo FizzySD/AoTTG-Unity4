@@ -2,13 +2,21 @@ using UnityEngine;
 
 public class CameraShake : MonoBehaviour
 {
-	private float decay;
+	private float R;
 
 	private float duration;
 
+	private float decay;
+
 	private bool flip;
 
-	private float R;
+	private void Start()
+	{
+	}
+
+	private void Update()
+	{
+	}
 
 	private void FixedUpdate()
 	{
@@ -32,10 +40,6 @@ public class CameraShake : MonoBehaviour
 		}
 	}
 
-	private void Start()
-	{
-	}
-
 	public void startShake(float R, float duration, float decay = 0.95f)
 	{
 		if (this.duration < duration)
@@ -44,9 +48,5 @@ public class CameraShake : MonoBehaviour
 			this.duration = duration;
 			this.decay = decay;
 		}
-	}
-
-	private void Update()
-	{
 	}
 }

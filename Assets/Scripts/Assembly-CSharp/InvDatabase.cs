@@ -5,15 +5,15 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class InvDatabase : MonoBehaviour
 {
-	public int databaseID;
-
-	public UIAtlas iconAtlas;
-
-	public List<InvBaseItem> items = new List<InvBaseItem>();
+	private static InvDatabase[] mList;
 
 	private static bool mIsDirty = true;
 
-	private static InvDatabase[] mList;
+	public int databaseID;
+
+	public List<InvBaseItem> items = new List<InvBaseItem>();
+
+	public UIAtlas iconAtlas;
 
 	public static InvDatabase[] list
 	{
@@ -28,14 +28,48 @@ public class InvDatabase : MonoBehaviour
 		}
 	}
 
+	private void OnEnable()
+	{
+		mIsDirty = true;
+	}
+
+	private void OnDisable()
+	{
+		mIsDirty = true;
+	}
+
+	private InvBaseItem GetItem(int id16)
+	{
+		int i = 0;
+		for (int count = items.Count; i < count; i++)
+		{
+			InvBaseItem invBaseItem = items[i];
+			if (invBaseItem.id16 == id16)
+			{
+				return invBaseItem;
+			}
+		}
+		return null;
+	}
+
+	private static InvDatabase GetDatabase(int dbID)
+	{
+		int i = 0;
+		for (int num = list.Length; i < num; i++)
+		{
+			InvDatabase invDatabase = list[i];
+			if (invDatabase.databaseID == dbID)
+			{
+				return invDatabase;
+			}
+		}
+		return null;
+	}
+
 	public static InvBaseItem FindByID(int id32)
 	{
 		InvDatabase database = GetDatabase(id32 >> 16);
-		if (!(database == null))
-		{
-			return database.GetItem(id32 & 0xFFFF);
-		}
-		return null;
+		return (!(database != null)) ? null : database.GetItem(id32 & 0xFFFF);
 	}
 
 	public static InvBaseItem FindByName(string exact)
@@ -69,43 +103,5 @@ public class InvDatabase : MonoBehaviour
 			}
 		}
 		return -1;
-	}
-
-	private static InvDatabase GetDatabase(int dbID)
-	{
-		int i = 0;
-		for (int num = list.Length; i < num; i++)
-		{
-			InvDatabase invDatabase = list[i];
-			if (invDatabase.databaseID == dbID)
-			{
-				return invDatabase;
-			}
-		}
-		return null;
-	}
-
-	private InvBaseItem GetItem(int id16)
-	{
-		int i = 0;
-		for (int count = items.Count; i < count; i++)
-		{
-			InvBaseItem invBaseItem = items[i];
-			if (invBaseItem.id16 == id16)
-			{
-				return invBaseItem;
-			}
-		}
-		return null;
-	}
-
-	private void OnDisable()
-	{
-		mIsDirty = true;
-	}
-
-	private void OnEnable()
-	{
-		mIsDirty = true;
 	}
 }

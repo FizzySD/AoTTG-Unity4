@@ -2,11 +2,11 @@ using UnityEngine;
 
 public class OnJoinedInstantiate : MonoBehaviour
 {
+	public Transform SpawnPosition;
+
 	public float PositionOffset = 2f;
 
 	public GameObject[] PrefabsToInstantiate;
-
-	public Transform SpawnPosition;
 
 	public void OnJoinedRoom()
 	{

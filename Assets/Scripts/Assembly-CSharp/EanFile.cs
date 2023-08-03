@@ -2,15 +2,15 @@ using System.IO;
 
 internal class EanFile
 {
-	public int AnimCount;
-
-	public EanAnimation[] Anims;
-
 	public int Header;
+
+	public int Version;
 
 	public int Reserved;
 
-	public int Version;
+	public int AnimCount;
+
+	public EanAnimation[] Anims;
 
 	public void Load(BinaryReader br, FileStream fs)
 	{

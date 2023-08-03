@@ -5,41 +5,23 @@ public class SpringPosition : IgnoreTimeScale
 {
 	public delegate void OnFinished(SpringPosition spring);
 
-	public string callWhenFinished;
-
-	public GameObject eventReceiver;
-
-	public bool ignoreTimeScale;
-
-	private float mThreshold;
-
-	private Transform mTrans;
-
-	public OnFinished onFinished;
+	public Vector3 target = Vector3.zero;
 
 	public float strength = 10f;
 
-	public Vector3 target = Vector3.zero;
-
 	public bool worldSpace;
 
-	public static SpringPosition Begin(GameObject go, Vector3 pos, float strength)
-	{
-		SpringPosition springPosition = go.GetComponent<SpringPosition>();
-		if (springPosition == null)
-		{
-			springPosition = go.AddComponent<SpringPosition>();
-		}
-		springPosition.target = pos;
-		springPosition.strength = strength;
-		springPosition.onFinished = null;
-		if (!springPosition.enabled)
-		{
-			springPosition.mThreshold = 0f;
-			springPosition.enabled = true;
-		}
-		return springPosition;
-	}
+	public bool ignoreTimeScale;
+
+	public GameObject eventReceiver;
+
+	public string callWhenFinished;
+
+	public OnFinished onFinished;
+
+	private Transform mTrans;
+
+	private float mThreshold;
 
 	private void Start()
 	{
@@ -56,8 +38,7 @@ public class SpringPosition : IgnoreTimeScale
 				mThreshold = (target - mTrans.position).magnitude * 0.001f;
 			}
 			mTrans.position = NGUIMath.SpringLerp(mTrans.position, target, strength, deltaTime);
-			Vector3 vector = target - mTrans.position;
-			if (mThreshold >= vector.magnitude)
+			if (mThreshold >= (target - mTrans.position).magnitude)
 			{
 				mTrans.position = target;
 				if (onFinished != null)
@@ -77,8 +58,7 @@ public class SpringPosition : IgnoreTimeScale
 			mThreshold = (target - mTrans.localPosition).magnitude * 0.001f;
 		}
 		mTrans.localPosition = NGUIMath.SpringLerp(mTrans.localPosition, target, strength, deltaTime);
-		Vector3 vector2 = target - mTrans.localPosition;
-		if (mThreshold >= vector2.magnitude)
+		if (mThreshold >= (target - mTrans.localPosition).magnitude)
 		{
 			mTrans.localPosition = target;
 			if (onFinished != null)
@@ -91,5 +71,23 @@ public class SpringPosition : IgnoreTimeScale
 			}
 			base.enabled = false;
 		}
+	}
+
+	public static SpringPosition Begin(GameObject go, Vector3 pos, float strength)
+	{
+		SpringPosition springPosition = go.GetComponent<SpringPosition>();
+		if (springPosition == null)
+		{
+			springPosition = go.AddComponent<SpringPosition>();
+		}
+		springPosition.target = pos;
+		springPosition.strength = strength;
+		springPosition.onFinished = null;
+		if (!springPosition.enabled)
+		{
+			springPosition.mThreshold = 0f;
+			springPosition.enabled = true;
+		}
+		return springPosition;
 	}
 }

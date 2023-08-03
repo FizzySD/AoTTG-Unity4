@@ -3,13 +3,13 @@ using ExitGames.Client.Photon;
 
 public class WebRpcResponse
 {
-	public string DebugMessage { get; private set; }
-
 	public string Name { get; private set; }
 
-	public Dictionary<string, object> Parameters { get; private set; }
-
 	public int ReturnCode { get; private set; }
+
+	public string DebugMessage { get; private set; }
+
+	public Dictionary<string, object> Parameters { get; private set; }
 
 	public WebRpcResponse(OperationResponse response)
 	{
@@ -26,13 +26,6 @@ public class WebRpcResponse
 
 	public string ToStringFull()
 	{
-		object[] args = new object[4]
-		{
-			Name,
-			SupportClass.DictionaryToString(Parameters),
-			ReturnCode,
-			DebugMessage
-		};
-		return string.Format("{0}={2}: {1} \"{3}\"", args);
+		return string.Format("{0}={2}: {1} \"{3}\"", Name, SupportClass.DictionaryToString(Parameters), ReturnCode, DebugMessage);
 	}
 }

@@ -5,19 +5,11 @@ namespace Xft
 {
 	public class Spline
 	{
-		public int Granularity = 20;
-
 		private List<SplineControlPoint> mControlPoints = new List<SplineControlPoint>();
 
 		private List<SplineControlPoint> mSegments = new List<SplineControlPoint>();
 
-		public List<SplineControlPoint> ControlPoints
-		{
-			get
-			{
-				return mControlPoints;
-			}
-		}
+		public int Granularity = 20;
 
 		public SplineControlPoint this[int index]
 		{
@@ -39,60 +31,80 @@ namespace Xft
 			}
 		}
 
-		public SplineControlPoint AddControlPoint(Vector3 pos, Vector3 up)
+		public List<SplineControlPoint> ControlPoints
 		{
-			SplineControlPoint splineControlPoint = new SplineControlPoint();
-			splineControlPoint.Init(this);
-			splineControlPoint.Position = pos;
-			splineControlPoint.Normal = up;
-			mControlPoints.Add(splineControlPoint);
-			splineControlPoint.ControlPointIndex = mControlPoints.Count - 1;
-			return splineControlPoint;
+			get
+			{
+				return mControlPoints;
+			}
 		}
 
-		public static Vector3 CatmulRom(Vector3 T0, Vector3 P0, Vector3 P1, Vector3 T1, float f)
+		public SplineControlPoint NextControlPoint(SplineControlPoint controlpoint)
 		{
-			double num = -0.5;
-			double num2 = 1.5;
-			double num3 = -1.5;
-			double num4 = 0.5;
-			double num5 = -2.5;
-			double num6 = 2.0;
-			double num7 = -0.5;
-			double num8 = -0.5;
-			double num9 = 0.5;
-			double num10 = num * (double)T0.x + num2 * (double)P0.x + num3 * (double)P1.x + num4 * (double)T1.x;
-			double num11 = (double)T0.x + num5 * (double)P0.x + num6 * (double)P1.x + num7 * (double)T1.x;
-			double num12 = num8 * (double)T0.x + num9 * (double)P1.x;
-			double num13 = P0.x;
-			double num14 = num * (double)T0.y + num2 * (double)P0.y + num3 * (double)P1.y + num4 * (double)T1.y;
-			double num15 = (double)T0.y + num5 * (double)P0.y + num6 * (double)P1.y + num7 * (double)T1.y;
-			double num16 = num8 * (double)T0.y + num9 * (double)P1.y;
-			double num17 = P0.y;
-			double num18 = num * (double)T0.z + num2 * (double)P0.z + num3 * (double)P1.z + num4 * (double)T1.z;
-			double num19 = (double)T0.z + num5 * (double)P0.z + num6 * (double)P1.z + num7 * (double)T1.z;
-			double num20 = num8 * (double)T0.z + num9 * (double)P1.z;
-			double num21 = P0.z;
-			float x = (float)(((num10 * (double)f + num11) * (double)f + num12) * (double)f + num13);
-			float y = (float)(((num14 * (double)f + num15) * (double)f + num16) * (double)f + num17);
-			return new Vector3(x, y, (float)(((num18 * (double)f + num19) * (double)f + num20) * (double)f + num21));
+			if (mControlPoints.Count == 0)
+			{
+				return null;
+			}
+			int num = controlpoint.ControlPointIndex + 1;
+			if (num >= mControlPoints.Count)
+			{
+				return null;
+			}
+			return mControlPoints[num];
 		}
 
-		public void Clear()
+		public SplineControlPoint PreviousControlPoint(SplineControlPoint controlpoint)
 		{
-			mControlPoints.Clear();
+			if (mControlPoints.Count == 0)
+			{
+				return null;
+			}
+			int num = controlpoint.ControlPointIndex - 1;
+			if (num < 0)
+			{
+				return null;
+			}
+			return mControlPoints[num];
 		}
 
-		public Vector3 InterpolateByLen(float tl)
+		public Vector3 NextPosition(SplineControlPoint controlpoint)
 		{
-			float localF;
-			return LenToSegment(tl, out localF).Interpolate(localF);
+			SplineControlPoint splineControlPoint = NextControlPoint(controlpoint);
+			if (splineControlPoint != null)
+			{
+				return splineControlPoint.Position;
+			}
+			return controlpoint.Position;
 		}
 
-		public Vector3 InterpolateNormalByLen(float tl)
+		public Vector3 PreviousPosition(SplineControlPoint controlpoint)
 		{
-			float localF;
-			return LenToSegment(tl, out localF).InterpolateNormal(localF);
+			SplineControlPoint splineControlPoint = PreviousControlPoint(controlpoint);
+			if (splineControlPoint != null)
+			{
+				return splineControlPoint.Position;
+			}
+			return controlpoint.Position;
+		}
+
+		public Vector3 PreviousNormal(SplineControlPoint controlpoint)
+		{
+			SplineControlPoint splineControlPoint = PreviousControlPoint(controlpoint);
+			if (splineControlPoint != null)
+			{
+				return splineControlPoint.Normal;
+			}
+			return controlpoint.Normal;
+		}
+
+		public Vector3 NextNormal(SplineControlPoint controlpoint)
+		{
+			SplineControlPoint splineControlPoint = NextControlPoint(controlpoint);
+			if (splineControlPoint != null)
+			{
+				return splineControlPoint.Normal;
+			}
+			return controlpoint.Normal;
 		}
 
 		public SplineControlPoint LenToSegment(float t, out float localF)
@@ -122,72 +134,63 @@ namespace Xft
 			return splineControlPoint2;
 		}
 
-		public SplineControlPoint NextControlPoint(SplineControlPoint controlpoint)
+		public static Vector3 CatmulRom(Vector3 T0, Vector3 P0, Vector3 P1, Vector3 T1, float f)
 		{
-			if (mControlPoints.Count == 0)
-			{
-				return null;
-			}
-			int num = controlpoint.ControlPointIndex + 1;
-			if (num >= mControlPoints.Count)
-			{
-				return null;
-			}
-			return mControlPoints[num];
+			double num = -0.5;
+			double num2 = 1.5;
+			double num3 = -1.5;
+			double num4 = 0.5;
+			double num5 = -2.5;
+			double num6 = 2.0;
+			double num7 = -0.5;
+			double num8 = -0.5;
+			double num9 = 0.5;
+			double num10 = num * (double)T0.x + num2 * (double)P0.x + num3 * (double)P1.x + num4 * (double)T1.x;
+			double num11 = (double)T0.x + num5 * (double)P0.x + num6 * (double)P1.x + num7 * (double)T1.x;
+			double num12 = num8 * (double)T0.x + num9 * (double)P1.x;
+			double num13 = P0.x;
+			double num14 = num * (double)T0.y + num2 * (double)P0.y + num3 * (double)P1.y + num4 * (double)T1.y;
+			double num15 = (double)T0.y + num5 * (double)P0.y + num6 * (double)P1.y + num7 * (double)T1.y;
+			double num16 = num8 * (double)T0.y + num9 * (double)P1.y;
+			double num17 = P0.y;
+			double num18 = num * (double)T0.z + num2 * (double)P0.z + num3 * (double)P1.z + num4 * (double)T1.z;
+			double num19 = (double)T0.z + num5 * (double)P0.z + num6 * (double)P1.z + num7 * (double)T1.z;
+			double num20 = num8 * (double)T0.z + num9 * (double)P1.z;
+			double num21 = P0.z;
+			float x = (float)(((num10 * (double)f + num11) * (double)f + num12) * (double)f + num13);
+			float y = (float)(((num14 * (double)f + num15) * (double)f + num16) * (double)f + num17);
+			float z = (float)(((num18 * (double)f + num19) * (double)f + num20) * (double)f + num21);
+			return new Vector3(x, y, z);
 		}
 
-		public Vector3 NextNormal(SplineControlPoint controlpoint)
+		public Vector3 InterpolateByLen(float tl)
 		{
-			SplineControlPoint splineControlPoint = NextControlPoint(controlpoint);
-			if (splineControlPoint != null)
-			{
-				return splineControlPoint.Normal;
-			}
-			return controlpoint.Normal;
+			float localF;
+			SplineControlPoint splineControlPoint = LenToSegment(tl, out localF);
+			return splineControlPoint.Interpolate(localF);
 		}
 
-		public Vector3 NextPosition(SplineControlPoint controlpoint)
+		public Vector3 InterpolateNormalByLen(float tl)
 		{
-			SplineControlPoint splineControlPoint = NextControlPoint(controlpoint);
-			if (splineControlPoint != null)
-			{
-				return splineControlPoint.Position;
-			}
-			return controlpoint.Position;
+			float localF;
+			SplineControlPoint splineControlPoint = LenToSegment(tl, out localF);
+			return splineControlPoint.InterpolateNormal(localF);
 		}
 
-		public SplineControlPoint PreviousControlPoint(SplineControlPoint controlpoint)
+		public SplineControlPoint AddControlPoint(Vector3 pos, Vector3 up)
 		{
-			if (mControlPoints.Count == 0)
-			{
-				return null;
-			}
-			int num = controlpoint.ControlPointIndex - 1;
-			if (num < 0)
-			{
-				return null;
-			}
-			return mControlPoints[num];
+			SplineControlPoint splineControlPoint = new SplineControlPoint();
+			splineControlPoint.Init(this);
+			splineControlPoint.Position = pos;
+			splineControlPoint.Normal = up;
+			mControlPoints.Add(splineControlPoint);
+			splineControlPoint.ControlPointIndex = mControlPoints.Count - 1;
+			return splineControlPoint;
 		}
 
-		public Vector3 PreviousNormal(SplineControlPoint controlpoint)
+		public void Clear()
 		{
-			SplineControlPoint splineControlPoint = PreviousControlPoint(controlpoint);
-			if (splineControlPoint != null)
-			{
-				return splineControlPoint.Normal;
-			}
-			return controlpoint.Normal;
-		}
-
-		public Vector3 PreviousPosition(SplineControlPoint controlpoint)
-		{
-			SplineControlPoint splineControlPoint = PreviousControlPoint(controlpoint);
-			if (splineControlPoint != null)
-			{
-				return splineControlPoint.Position;
-			}
-			return controlpoint.Position;
+			mControlPoints.Clear();
 		}
 
 		private void RefreshDistance()

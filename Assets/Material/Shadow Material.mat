@@ -7,7 +7,7 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: Shadow Material
-  m_Shader: {fileID: 4800000, guid: 976778ae0ff3a924aa4ec6b6e2264994, type: 3}
+  m_Shader: {fileID: 4800000, guid: 2fb4e11c07470574c960ff1efd5e5309, type: 3}
   m_ShaderKeywords: []
   m_CustomRenderQueue: -1
   m_SavedProperties:
@@ -16,13 +16,13 @@ Material:
     - first:
         name: _ShadowTex
       second:
-        m_Texture: {fileID: 2800000, guid: 73deb581aefd36543bf31084f27f1386, type: 3}
+        m_Texture: {fileID: 2800000, guid: 1c7178c9199b7414cbd9560df87a69f4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - first:
         name: _FalloffTex
       second:
-        m_Texture: {fileID: 2800000, guid: 2886340401e97ac49bef8d55ba747a22, type: 3}
+        m_Texture: {fileID: 2800000, guid: 8e107fe8cc3781a41978af56f7f4caf7, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:

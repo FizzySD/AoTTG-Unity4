@@ -9,19 +9,19 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1395186983128725}
+  m_RootGameObject: {fileID: 1819535508722828}
   m_IsPrefabParent: 1
   m_IsExploded: 0
---- !u!1 &1395186983128725
+--- !u!1 &1819535508722828
 GameObject:
   serializedVersion: 4
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_Component:
-  - 4: {fileID: 4209002836166938}
-  - 137: {fileID: 137710164813899265}
-  - 163: {fileID: 163015882445058522}
+  - 4: {fileID: 4078378466163498}
+  - 137: {fileID: 137202362516782349}
+  - 163: {fileID: 163569377454411717}
   m_Layer: 0
   m_Name: character_cape
   m_TagString: Untagged
@@ -29,32 +29,32 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4209002836166938
+--- !u!4 &4078378466163498
 Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1395186983128725}
+  m_GameObject: {fileID: 1819535508722828}
   m_LocalRotation: {x: 0, y: -0, z: 0, w: 1}
   m_LocalPosition: {x: 0.14251804, y: -0.0048237294, z: 0}
   m_LocalScale: {x: 0.23512985, y: 0.23512985, z: 0.23512985}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!137 &137710164813899265
+--- !u!137 &137202362516782349
 SkinnedMeshRenderer:
   serializedVersion: 2
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1395186983128725}
+  m_GameObject: {fileID: 1819535508722828}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_LightmapIndex: 255
   m_LightmapTilingOffset: {x: 1, y: 1, z: 0, w: 0}
   m_Materials:
-  - {fileID: 2100000, guid: 912213446f1d0404dbf7a72e4a381b09, type: 2}
+  - {fileID: 2100000, guid: 48670e062b679114c8f01c69492a5b09, type: 2}
   m_SubsetIndices: []
   m_StaticBatchRoot: {fileID: 0}
   m_UseLightProbes: 0
@@ -106,12 +106,12 @@ SkinnedMeshRenderer:
     m_Center: {x: 5.9604645E-08, y: 0.10120767, z: 0.31012517}
     m_Extent: {x: 0.29019716, y: 0.2827612, z: 0.308361}
   m_DirtyAABB: 0
---- !u!163 &163015882445058522
+--- !u!163 &163569377454411717
 SkinnedCloth:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1395186983128725}
+  m_GameObject: {fileID: 1819535508722828}
   m_Enabled: 1
   m_BendingStiffness: 0
   m_StretchingStiffness: 0.001

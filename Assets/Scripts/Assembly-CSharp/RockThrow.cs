@@ -7,9 +7,81 @@ public class RockThrow : Photon.MonoBehaviour
 
 	private Vector3 oldP;
 
+	private Vector3 v;
+
 	private Vector3 r;
 
-	private Vector3 v;
+	private void Start()
+	{
+		r = new Vector3(Random.Range(-5f, 5f), Random.Range(-5f, 5f), Random.Range(-5f, 5f));
+	}
+
+	private void Update()
+	{
+		if (!launched)
+		{
+			return;
+		}
+		base.transform.Rotate(r);
+		v -= 20f * Vector3.up * Time.deltaTime;
+		base.transform.position += v * Time.deltaTime;
+		if (IN_GAME_MAIN_CAMERA.gametype == GAMETYPE.MULTIPLAYER && !PhotonNetwork.isMasterClient)
+		{
+			return;
+		}
+		LayerMask layerMask = 1 << LayerMask.NameToLayer("Ground");
+		LayerMask layerMask2 = 1 << LayerMask.NameToLayer("Players");
+		LayerMask layerMask3 = 1 << LayerMask.NameToLayer("EnemyAABB");
+		LayerMask layerMask4 = (int)layerMask2 | (int)layerMask | (int)layerMask3;
+		RaycastHit[] array = Physics.SphereCastAll(base.transform.position, 2.5f * base.transform.lossyScale.x, base.transform.position - oldP, Vector3.Distance(base.transform.position, oldP), layerMask4);
+		RaycastHit[] array2 = array;
+		for (int i = 0; i < array2.Length; i++)
+		{
+			RaycastHit raycastHit = array2[i];
+			if (LayerMask.LayerToName(raycastHit.collider.gameObject.layer) == "EnemyAABB")
+			{
+				GameObject gameObject = raycastHit.collider.gameObject.transform.root.gameObject;
+				if ((bool)gameObject.GetComponent<TITAN>() && !gameObject.GetComponent<TITAN>().hasDie)
+				{
+					gameObject.GetComponent<TITAN>().hitAnkle();
+					Vector3 position = base.transform.position;
+					if (IN_GAME_MAIN_CAMERA.gametype == GAMETYPE.SINGLE)
+					{
+						gameObject.GetComponent<TITAN>().hitAnkle();
+					}
+					else
+					{
+						if (base.transform.root.gameObject.GetComponent<EnemyfxIDcontainer>() != null && (bool)PhotonView.Find(base.transform.root.gameObject.GetComponent<EnemyfxIDcontainer>().myOwnerViewID))
+						{
+							position = PhotonView.Find(base.transform.root.gameObject.GetComponent<EnemyfxIDcontainer>().myOwnerViewID).transform.position;
+						}
+						gameObject.GetComponent<HERO>().photonView.RPC("hitAnkleRPC", PhotonTargets.All);
+					}
+				}
+				explore();
+			}
+			else if (LayerMask.LayerToName(raycastHit.collider.gameObject.layer) == "Players")
+			{
+				GameObject gameObject2 = raycastHit.collider.gameObject.transform.root.gameObject;
+				if ((bool)gameObject2.GetComponent<TITAN_EREN>())
+				{
+					if (!gameObject2.GetComponent<TITAN_EREN>().isHit)
+					{
+						gameObject2.GetComponent<TITAN_EREN>().hitByTitan();
+					}
+				}
+				else if ((bool)gameObject2.GetComponent<HERO>() && !gameObject2.GetComponent<HERO>().isInvincible())
+				{
+					hitPlayer(gameObject2);
+				}
+			}
+			else if (LayerMask.LayerToName(raycastHit.collider.gameObject.layer) == "Ground")
+			{
+				explore();
+			}
+		}
+		oldP = base.transform.position;
+	}
 
 	private void explore()
 	{
@@ -41,6 +113,37 @@ public class RockThrow : Photon.MonoBehaviour
 		}
 	}
 
+	public void launch(Vector3 v1)
+	{
+		launched = true;
+		oldP = base.transform.position;
+		v = v1;
+		if (IN_GAME_MAIN_CAMERA.gametype == GAMETYPE.MULTIPLAYER && PhotonNetwork.isMasterClient)
+		{
+			base.photonView.RPC("launchRPC", PhotonTargets.Others, v, oldP);
+		}
+	}
+
+	[RPC]
+	private void launchRPC(Vector3 v, Vector3 p)
+	{
+		launched = true;
+		base.transform.position = p;
+		oldP = p;
+		base.transform.parent = null;
+		launch(v);
+	}
+
+	[RPC]
+	private void initRPC(int viewID, Vector3 scale, Vector3 pos, float level)
+	{
+		GameObject gameObject = PhotonView.Find(viewID).gameObject;
+		Transform parent = gameObject.transform.Find("Amarture/Core/Controller_Body/hip/spine/chest/shoulder_R/upper_arm_R/forearm_R/hand_R/hand_R_001");
+		base.transform.localScale = gameObject.transform.localScale;
+		base.transform.parent = parent;
+		base.transform.localPosition = pos;
+	}
+
 	private void hitPlayer(GameObject hero)
 	{
 		if (!(hero != null) || hero.GetComponent<HERO>().HasDied() || hero.GetComponent<HERO>().isInvincible())
@@ -64,118 +167,8 @@ public class RockThrow : Photon.MonoBehaviour
 				num = base.transform.root.gameObject.GetComponent<EnemyfxIDcontainer>().myOwnerViewID;
 				text = base.transform.root.gameObject.GetComponent<EnemyfxIDcontainer>().titanName;
 			}
-			object[] parameters = new object[5]
-			{
-				v.normalized * 1000f + Vector3.up * 50f,
-				false,
-				num,
-				text,
-				true
-			};
-			hero.GetComponent<HERO>().photonView.RPC("netDie", PhotonTargets.All, parameters);
+			Debug.Log("rock hit player " + text);
+			hero.GetComponent<HERO>().photonView.RPC("netDie", PhotonTargets.All, v.normalized * 1000f + Vector3.up * 50f, false, num, text, true);
 		}
-	}
-
-	[RPC]
-	private void initRPC(int viewID, Vector3 scale, Vector3 pos, float level)
-	{
-		GameObject gameObject = PhotonView.Find(viewID).gameObject;
-		Transform parent = gameObject.transform.Find("Amarture/Core/Controller_Body/hip/spine/chest/shoulder_R/upper_arm_R/forearm_R/hand_R/hand_R_001");
-		base.transform.localScale = gameObject.transform.localScale;
-		base.transform.parent = parent;
-		base.transform.localPosition = pos;
-	}
-
-	public void launch(Vector3 v1)
-	{
-		launched = true;
-		oldP = base.transform.position;
-		v = v1;
-		if (IN_GAME_MAIN_CAMERA.gametype == GAMETYPE.MULTIPLAYER && PhotonNetwork.isMasterClient)
-		{
-			object[] parameters = new object[2] { v, oldP };
-			base.photonView.RPC("launchRPC", PhotonTargets.Others, parameters);
-		}
-	}
-
-	[RPC]
-	private void launchRPC(Vector3 v, Vector3 p)
-	{
-		launched = true;
-		base.transform.position = p;
-		oldP = p;
-		base.transform.parent = null;
-		launch(v);
-	}
-
-	private void Start()
-	{
-		r = new Vector3(Random.Range(-5f, 5f), Random.Range(-5f, 5f), Random.Range(-5f, 5f));
-	}
-
-	private void Update()
-	{
-		if (!launched)
-		{
-			return;
-		}
-		base.transform.Rotate(r);
-		v -= 20f * Vector3.up * Time.deltaTime;
-		base.transform.position += v * Time.deltaTime;
-		if (IN_GAME_MAIN_CAMERA.gametype == GAMETYPE.MULTIPLAYER && !PhotonNetwork.isMasterClient)
-		{
-			return;
-		}
-		LayerMask layerMask = 1 << LayerMask.NameToLayer("Ground");
-		LayerMask layerMask2 = 1 << LayerMask.NameToLayer("Players");
-		LayerMask layerMask3 = 1 << LayerMask.NameToLayer("EnemyAABB");
-		LayerMask layerMask4 = (int)layerMask2 | (int)layerMask | (int)layerMask3;
-		RaycastHit[] array = Physics.SphereCastAll(base.transform.position, 2.5f * base.transform.lossyScale.x, base.transform.position - oldP, Vector3.Distance(base.transform.position, oldP), layerMask4);
-		for (int i = 0; i < array.Length; i++)
-		{
-			RaycastHit raycastHit = array[i];
-			if (LayerMask.LayerToName(raycastHit.collider.gameObject.layer) == "EnemyAABB")
-			{
-				GameObject gameObject = raycastHit.collider.gameObject.transform.root.gameObject;
-				if (gameObject.GetComponent<TITAN>() != null && !gameObject.GetComponent<TITAN>().hasDie)
-				{
-					gameObject.GetComponent<TITAN>().hitAnkle();
-					Vector3 position = base.transform.position;
-					if (IN_GAME_MAIN_CAMERA.gametype == GAMETYPE.SINGLE)
-					{
-						gameObject.GetComponent<TITAN>().hitAnkle();
-					}
-					else
-					{
-						if (base.transform.root.gameObject.GetComponent<EnemyfxIDcontainer>() != null && PhotonView.Find(base.transform.root.gameObject.GetComponent<EnemyfxIDcontainer>().myOwnerViewID) != null)
-						{
-							position = PhotonView.Find(base.transform.root.gameObject.GetComponent<EnemyfxIDcontainer>().myOwnerViewID).transform.position;
-						}
-						gameObject.GetComponent<HERO>().photonView.RPC("hitAnkleRPC", PhotonTargets.All);
-					}
-				}
-				explore();
-			}
-			else if (LayerMask.LayerToName(raycastHit.collider.gameObject.layer) == "Players")
-			{
-				GameObject gameObject2 = raycastHit.collider.gameObject.transform.root.gameObject;
-				if (gameObject2.GetComponent<TITAN_EREN>() != null)
-				{
-					if (!gameObject2.GetComponent<TITAN_EREN>().isHit)
-					{
-						gameObject2.GetComponent<TITAN_EREN>().hitByTitan();
-					}
-				}
-				else if (gameObject2.GetComponent<HERO>() != null && !gameObject2.GetComponent<HERO>().isInvincible())
-				{
-					hitPlayer(gameObject2);
-				}
-			}
-			else if (LayerMask.LayerToName(raycastHit.collider.gameObject.layer) == "Ground")
-			{
-				explore();
-			}
-		}
-		oldP = base.transform.position;
 	}
 }

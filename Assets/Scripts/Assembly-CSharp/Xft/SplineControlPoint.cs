@@ -4,47 +4,23 @@ namespace Xft
 {
 	public class SplineControlPoint
 	{
+		public Vector3 Position;
+
+		public Vector3 Normal;
+
 		public int ControlPointIndex = -1;
+
+		public int SegmentIndex = -1;
 
 		public float Dist;
 
 		protected Spline mSpline;
-
-		public Vector3 Normal;
-
-		public Vector3 Position;
-
-		public int SegmentIndex = -1;
-
-		public bool IsValid
-		{
-			get
-			{
-				return NextControlPoint != null;
-			}
-		}
 
 		public SplineControlPoint NextControlPoint
 		{
 			get
 			{
 				return mSpline.NextControlPoint(this);
-			}
-		}
-
-		public Vector3 NextNormal
-		{
-			get
-			{
-				return mSpline.NextNormal(this);
-			}
-		}
-
-		public Vector3 NextPosition
-		{
-			get
-			{
-				return mSpline.NextPosition(this);
 			}
 		}
 
@@ -56,11 +32,11 @@ namespace Xft
 			}
 		}
 
-		public Vector3 PreviousNormal
+		public Vector3 NextPosition
 		{
 			get
 			{
-				return mSpline.PreviousNormal(this);
+				return mSpline.NextPosition(this);
 			}
 		}
 
@@ -72,14 +48,28 @@ namespace Xft
 			}
 		}
 
-		private Vector3 GetNext2Normal()
+		public Vector3 NextNormal
 		{
-			SplineControlPoint nextControlPoint = NextControlPoint;
-			if (nextControlPoint != null)
+			get
 			{
-				return nextControlPoint.NextNormal;
+				return mSpline.NextNormal(this);
 			}
-			return Normal;
+		}
+
+		public Vector3 PreviousNormal
+		{
+			get
+			{
+				return mSpline.PreviousNormal(this);
+			}
+		}
+
+		public bool IsValid
+		{
+			get
+			{
+				return NextControlPoint != null;
+			}
 		}
 
 		private Vector3 GetNext2Position()
@@ -92,10 +82,14 @@ namespace Xft
 			return NextPosition;
 		}
 
-		public void Init(Spline owner)
+		private Vector3 GetNext2Normal()
 		{
-			mSpline = owner;
-			SegmentIndex = -1;
+			SplineControlPoint nextControlPoint = NextControlPoint;
+			if (nextControlPoint != null)
+			{
+				return nextControlPoint.NextNormal;
+			}
+			return Normal;
 		}
 
 		public Vector3 Interpolate(float localF)
@@ -108,6 +102,12 @@ namespace Xft
 		{
 			localF = Mathf.Clamp01(localF);
 			return Spline.CatmulRom(PreviousNormal, Normal, NextNormal, GetNext2Normal(), localF);
+		}
+
+		public void Init(Spline owner)
+		{
+			mSpline = owner;
+			SegmentIndex = -1;
 		}
 	}
 }

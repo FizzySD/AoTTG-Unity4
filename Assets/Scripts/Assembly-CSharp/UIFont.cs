@@ -22,41 +22,27 @@ public class UIFont : MonoBehaviour
 
 	[HideInInspector]
 	[SerializeField]
-	private UIAtlas mAtlas;
-
-	private static CharacterInfo mChar;
-
-	private List<Color> mColors = new List<Color>();
-
-	[HideInInspector]
-	[SerializeField]
-	private Font mDynamicFont;
-
-	[HideInInspector]
-	[SerializeField]
-	private float mDynamicFontOffset;
-
-	[SerializeField]
-	[HideInInspector]
-	private int mDynamicFontSize = 16;
-
-	[SerializeField]
-	[HideInInspector]
-	private FontStyle mDynamicFontStyle;
-
-	[SerializeField]
-	[HideInInspector]
-	private BMFont mFont = new BMFont();
-
-	[SerializeField]
-	[HideInInspector]
 	private Material mMat;
 
-	[SerializeField]
 	[HideInInspector]
-	private float mPixelSize = 1f;
+	[SerializeField]
+	private Rect mUVRect = new Rect(0f, 0f, 1f, 1f);
 
-	private int mPMA = -1;
+	[HideInInspector]
+	[SerializeField]
+	private BMFont mFont = new BMFont();
+
+	[HideInInspector]
+	[SerializeField]
+	private int mSpacingX;
+
+	[HideInInspector]
+	[SerializeField]
+	private int mSpacingY;
+
+	[HideInInspector]
+	[SerializeField]
+	private UIAtlas mAtlas;
 
 	[HideInInspector]
 	[SerializeField]
@@ -64,15 +50,7 @@ public class UIFont : MonoBehaviour
 
 	[HideInInspector]
 	[SerializeField]
-	private int mSpacingX;
-
-	[SerializeField]
-	[HideInInspector]
-	private int mSpacingY;
-
-	private UIAtlas.Sprite mSprite;
-
-	private bool mSpriteSet;
+	private float mPixelSize = 1f;
 
 	[SerializeField]
 	[HideInInspector]
@@ -80,17 +58,75 @@ public class UIFont : MonoBehaviour
 
 	[HideInInspector]
 	[SerializeField]
-	private Rect mUVRect = new Rect(0f, 0f, 1f, 1f);
+	private Font mDynamicFont;
+
+	[HideInInspector]
+	[SerializeField]
+	private int mDynamicFontSize = 16;
+
+	[HideInInspector]
+	[SerializeField]
+	private FontStyle mDynamicFontStyle;
+
+	[HideInInspector]
+	[SerializeField]
+	private float mDynamicFontOffset;
+
+	private UIAtlas.Sprite mSprite;
+
+	private int mPMA = -1;
+
+	private bool mSpriteSet;
+
+	private List<Color> mColors = new List<Color>();
+
+	private static CharacterInfo mChar;
+
+	public BMFont bmFont
+	{
+		get
+		{
+			return (!(mReplacement != null)) ? mFont : mReplacement.bmFont;
+		}
+	}
+
+	public int texWidth
+	{
+		get
+		{
+			return (mReplacement != null) ? mReplacement.texWidth : ((mFont == null) ? 1 : mFont.texWidth);
+		}
+	}
+
+	public int texHeight
+	{
+		get
+		{
+			return (mReplacement != null) ? mReplacement.texHeight : ((mFont == null) ? 1 : mFont.texHeight);
+		}
+	}
+
+	public bool hasSymbols
+	{
+		get
+		{
+			return (!(mReplacement != null)) ? (mSymbols.Count != 0) : mReplacement.hasSymbols;
+		}
+	}
+
+	public List<BMSymbol> symbols
+	{
+		get
+		{
+			return (!(mReplacement != null)) ? mSymbols : mReplacement.symbols;
+		}
+	}
 
 	public UIAtlas atlas
 	{
 		get
 		{
-			if (!(mReplacement == null))
-			{
-				return mReplacement.atlas;
-			}
-			return mAtlas;
+			return (!(mReplacement != null)) ? mAtlas : mReplacement.atlas;
 		}
 		set
 		{
@@ -119,168 +155,6 @@ public class UIFont : MonoBehaviour
 				mAtlas = value;
 				MarkAsDirty();
 			}
-		}
-	}
-
-	public BMFont bmFont
-	{
-		get
-		{
-			if (!(mReplacement == null))
-			{
-				return mReplacement.bmFont;
-			}
-			return mFont;
-		}
-	}
-
-	public Font dynamicFont
-	{
-		get
-		{
-			if (!(mReplacement == null))
-			{
-				return mReplacement.dynamicFont;
-			}
-			return mDynamicFont;
-		}
-		set
-		{
-			if (mReplacement != null)
-			{
-				mReplacement.dynamicFont = value;
-			}
-			else if (mDynamicFont != value)
-			{
-				if (mDynamicFont != null)
-				{
-					material = null;
-				}
-				mDynamicFont = value;
-				MarkAsDirty();
-			}
-		}
-	}
-
-	public int dynamicFontSize
-	{
-		get
-		{
-			if (!(mReplacement == null))
-			{
-				return mReplacement.dynamicFontSize;
-			}
-			return mDynamicFontSize;
-		}
-		set
-		{
-			if (mReplacement != null)
-			{
-				mReplacement.dynamicFontSize = value;
-				return;
-			}
-			value = Mathf.Clamp(value, 4, 128);
-			if (mDynamicFontSize != value)
-			{
-				mDynamicFontSize = value;
-				MarkAsDirty();
-			}
-		}
-	}
-
-	public FontStyle dynamicFontStyle
-	{
-		get
-		{
-			if (!(mReplacement == null))
-			{
-				return mReplacement.dynamicFontStyle;
-			}
-			return mDynamicFontStyle;
-		}
-		set
-		{
-			if (mReplacement != null)
-			{
-				mReplacement.dynamicFontStyle = value;
-			}
-			else if (mDynamicFontStyle != value)
-			{
-				mDynamicFontStyle = value;
-				MarkAsDirty();
-			}
-		}
-	}
-
-	private Texture dynamicTexture
-	{
-		get
-		{
-			if (mReplacement != null)
-			{
-				return mReplacement.dynamicTexture;
-			}
-			if (isDynamic)
-			{
-				return mDynamicFont.material.mainTexture;
-			}
-			return null;
-		}
-	}
-
-	public bool hasSymbols
-	{
-		get
-		{
-			if (!(mReplacement == null))
-			{
-				return mReplacement.hasSymbols;
-			}
-			return mSymbols.Count != 0;
-		}
-	}
-
-	public int horizontalSpacing
-	{
-		get
-		{
-			if (!(mReplacement == null))
-			{
-				return mReplacement.horizontalSpacing;
-			}
-			return mSpacingX;
-		}
-		set
-		{
-			if (mReplacement != null)
-			{
-				mReplacement.horizontalSpacing = value;
-			}
-			else if (mSpacingX != value)
-			{
-				mSpacingX = value;
-				MarkAsDirty();
-			}
-		}
-	}
-
-	public bool isDynamic
-	{
-		get
-		{
-			return mDynamicFont != null;
-		}
-	}
-
-	public bool isValid
-	{
-		get
-		{
-			if (!(mDynamicFont != null))
-			{
-				return mFont.isValid;
-			}
-			return true;
 		}
 	}
 
@@ -375,143 +249,9 @@ public class UIFont : MonoBehaviour
 			if (mPMA == -1)
 			{
 				Material material = this.material;
-				mPMA = ((!(material == null) && !(material.shader == null) && material.shader.name.Contains("Premultiplied")) ? 1 : 0);
+				mPMA = ((material != null && material.shader != null && material.shader.name.Contains("Premultiplied")) ? 1 : 0);
 			}
 			return mPMA == 1;
-		}
-	}
-
-	public UIFont replacement
-	{
-		get
-		{
-			return mReplacement;
-		}
-		set
-		{
-			UIFont uIFont = value;
-			if (uIFont == this)
-			{
-				uIFont = null;
-			}
-			if (mReplacement != uIFont)
-			{
-				if (uIFont != null && uIFont.replacement == this)
-				{
-					uIFont.replacement = null;
-				}
-				if (mReplacement != null)
-				{
-					MarkAsDirty();
-				}
-				mReplacement = uIFont;
-				MarkAsDirty();
-			}
-		}
-	}
-
-	public int size
-	{
-		get
-		{
-			if (!(mReplacement == null))
-			{
-				return mReplacement.size;
-			}
-			if (isDynamic)
-			{
-				return mDynamicFontSize;
-			}
-			return mFont.charSize;
-		}
-	}
-
-	public UIAtlas.Sprite sprite
-	{
-		get
-		{
-			if (mReplacement != null)
-			{
-				return mReplacement.sprite;
-			}
-			if (!mSpriteSet)
-			{
-				mSprite = null;
-			}
-			if (mSprite == null)
-			{
-				if (mAtlas != null && !string.IsNullOrEmpty(mFont.spriteName))
-				{
-					mSprite = mAtlas.GetSprite(mFont.spriteName);
-					if (mSprite == null)
-					{
-						mSprite = mAtlas.GetSprite(base.name);
-					}
-					mSpriteSet = true;
-					if (mSprite == null)
-					{
-						mFont.spriteName = null;
-					}
-				}
-				int i = 0;
-				for (int count = mSymbols.Count; i < count; i++)
-				{
-					symbols[i].MarkAsDirty();
-				}
-			}
-			return mSprite;
-		}
-	}
-
-	public string spriteName
-	{
-		get
-		{
-			if (!(mReplacement == null))
-			{
-				return mReplacement.spriteName;
-			}
-			return mFont.spriteName;
-		}
-		set
-		{
-			if (mReplacement != null)
-			{
-				mReplacement.spriteName = value;
-			}
-			else if (mFont.spriteName != value)
-			{
-				mFont.spriteName = value;
-				MarkAsDirty();
-			}
-		}
-	}
-
-	public List<BMSymbol> symbols
-	{
-		get
-		{
-			if (!(mReplacement == null))
-			{
-				return mReplacement.symbols;
-			}
-			return mSymbols;
-		}
-	}
-
-	public int texHeight
-	{
-		get
-		{
-			if (!(mReplacement == null))
-			{
-				return mReplacement.texHeight;
-			}
-			if (mFont != null)
-			{
-				return mFont.texHeight;
-			}
-			return 1;
 		}
 	}
 
@@ -524,27 +264,7 @@ public class UIFont : MonoBehaviour
 				return mReplacement.texture;
 			}
 			Material material = this.material;
-			if (!(material == null))
-			{
-				return material.mainTexture as Texture2D;
-			}
-			return null;
-		}
-	}
-
-	public int texWidth
-	{
-		get
-		{
-			if (!(mReplacement == null))
-			{
-				return mReplacement.texWidth;
-			}
-			if (mFont != null)
-			{
-				return mFont.texWidth;
-			}
-			return 1;
+			return (!(material != null)) ? null : (material.mainTexture as Texture2D);
 		}
 	}
 
@@ -596,15 +316,51 @@ public class UIFont : MonoBehaviour
 		}
 	}
 
+	public string spriteName
+	{
+		get
+		{
+			return (!(mReplacement != null)) ? mFont.spriteName : mReplacement.spriteName;
+		}
+		set
+		{
+			if (mReplacement != null)
+			{
+				mReplacement.spriteName = value;
+			}
+			else if (mFont.spriteName != value)
+			{
+				mFont.spriteName = value;
+				MarkAsDirty();
+			}
+		}
+	}
+
+	public int horizontalSpacing
+	{
+		get
+		{
+			return (!(mReplacement != null)) ? mSpacingX : mReplacement.horizontalSpacing;
+		}
+		set
+		{
+			if (mReplacement != null)
+			{
+				mReplacement.horizontalSpacing = value;
+			}
+			else if (mSpacingX != value)
+			{
+				mSpacingX = value;
+				MarkAsDirty();
+			}
+		}
+	}
+
 	public int verticalSpacing
 	{
 		get
 		{
-			if (!(mReplacement == null))
-			{
-				return mReplacement.verticalSpacing;
-			}
-			return mSpacingY;
+			return (!(mReplacement != null)) ? mSpacingY : mReplacement.verticalSpacing;
 		}
 		set
 		{
@@ -620,52 +376,261 @@ public class UIFont : MonoBehaviour
 		}
 	}
 
-	public void AddSymbol(string sequence, string spriteName)
+	public bool isValid
 	{
-		GetSymbol(sequence, true).spriteName = spriteName;
-		MarkAsDirty();
+		get
+		{
+			return mDynamicFont != null || mFont.isValid;
+		}
 	}
 
-	private void Align(BetterList<Vector3> verts, int indexOffset, Alignment alignment, int x, int lineWidth)
+	public int size
 	{
-		if (alignment == Alignment.Left)
+		get
 		{
-			return;
+			return (mReplacement != null) ? mReplacement.size : ((!isDynamic) ? mFont.charSize : mDynamicFontSize);
 		}
-		int num = size;
-		if (num <= 0)
+	}
+
+	public UIAtlas.Sprite sprite
+	{
+		get
 		{
-			return;
-		}
-		float num2 = 0f;
-		if (alignment == Alignment.Right)
-		{
-			num2 = Mathf.RoundToInt(lineWidth - x);
-			if (num2 < 0f)
+			if (mReplacement != null)
 			{
-				num2 = 0f;
+				return mReplacement.sprite;
 			}
-			num2 /= (float)size;
-		}
-		else
-		{
-			num2 = Mathf.RoundToInt((float)(lineWidth - x) * 0.5f);
-			if (num2 < 0f)
+			if (!mSpriteSet)
 			{
-				num2 = 0f;
+				mSprite = null;
 			}
-			num2 /= (float)size;
-			if ((lineWidth & 1) == 1)
+			if (mSprite == null)
 			{
-				num2 += 0.5f / (float)num;
+				if (mAtlas != null && !string.IsNullOrEmpty(mFont.spriteName))
+				{
+					mSprite = mAtlas.GetSprite(mFont.spriteName);
+					if (mSprite == null)
+					{
+						mSprite = mAtlas.GetSprite(base.name);
+					}
+					mSpriteSet = true;
+					if (mSprite == null)
+					{
+						mFont.spriteName = null;
+					}
+				}
+				int i = 0;
+				for (int count = mSymbols.Count; i < count; i++)
+				{
+					symbols[i].MarkAsDirty();
+				}
+			}
+			return mSprite;
+		}
+	}
+
+	public UIFont replacement
+	{
+		get
+		{
+			return mReplacement;
+		}
+		set
+		{
+			UIFont uIFont = value;
+			if (uIFont == this)
+			{
+				uIFont = null;
+			}
+			if (mReplacement != uIFont)
+			{
+				if (uIFont != null && uIFont.replacement == this)
+				{
+					uIFont.replacement = null;
+				}
+				if (mReplacement != null)
+				{
+					MarkAsDirty();
+				}
+				mReplacement = uIFont;
+				MarkAsDirty();
 			}
 		}
-		for (int i = indexOffset; i < verts.size; i++)
+	}
+
+	public bool isDynamic
+	{
+		get
 		{
-			Vector3 vector = verts.buffer[i];
-			vector.x += num2;
-			verts.buffer[i] = vector;
+			return mDynamicFont != null;
 		}
+	}
+
+	public Font dynamicFont
+	{
+		get
+		{
+			return (!(mReplacement != null)) ? mDynamicFont : mReplacement.dynamicFont;
+		}
+		set
+		{
+			if (mReplacement != null)
+			{
+				mReplacement.dynamicFont = value;
+			}
+			else if (mDynamicFont != value)
+			{
+				if (mDynamicFont != null)
+				{
+					material = null;
+				}
+				mDynamicFont = value;
+				MarkAsDirty();
+			}
+		}
+	}
+
+	public int dynamicFontSize
+	{
+		get
+		{
+			return (!(mReplacement != null)) ? mDynamicFontSize : mReplacement.dynamicFontSize;
+		}
+		set
+		{
+			if (mReplacement != null)
+			{
+				mReplacement.dynamicFontSize = value;
+				return;
+			}
+			value = Mathf.Clamp(value, 4, 128);
+			if (mDynamicFontSize != value)
+			{
+				mDynamicFontSize = value;
+				MarkAsDirty();
+			}
+		}
+	}
+
+	public FontStyle dynamicFontStyle
+	{
+		get
+		{
+			return (!(mReplacement != null)) ? mDynamicFontStyle : mReplacement.dynamicFontStyle;
+		}
+		set
+		{
+			if (mReplacement != null)
+			{
+				mReplacement.dynamicFontStyle = value;
+			}
+			else if (mDynamicFontStyle != value)
+			{
+				mDynamicFontStyle = value;
+				MarkAsDirty();
+			}
+		}
+	}
+
+	private Texture dynamicTexture
+	{
+		get
+		{
+			if ((bool)mReplacement)
+			{
+				return mReplacement.dynamicTexture;
+			}
+			if (isDynamic)
+			{
+				return mDynamicFont.material.mainTexture;
+			}
+			return null;
+		}
+	}
+
+	private void Trim()
+	{
+		Texture texture = mAtlas.texture;
+		if (texture != null && mSprite != null)
+		{
+			Rect rect = NGUIMath.ConvertToPixels(mUVRect, this.texture.width, this.texture.height, true);
+			Rect rect2 = ((mAtlas.coordinates != UIAtlas.Coordinates.TexCoords) ? mSprite.outer : NGUIMath.ConvertToPixels(mSprite.outer, texture.width, texture.height, true));
+			int xMin = Mathf.RoundToInt(rect2.xMin - rect.xMin);
+			int yMin = Mathf.RoundToInt(rect2.yMin - rect.yMin);
+			int xMax = Mathf.RoundToInt(rect2.xMax - rect.xMin);
+			int yMax = Mathf.RoundToInt(rect2.yMax - rect.yMin);
+			mFont.Trim(xMin, yMin, xMax, yMax);
+		}
+	}
+
+	private bool References(UIFont font)
+	{
+		if (font == null)
+		{
+			return false;
+		}
+		if (font == this)
+		{
+			return true;
+		}
+		return mReplacement != null && mReplacement.References(font);
+	}
+
+	public static bool CheckIfRelated(UIFont a, UIFont b)
+	{
+		if (a == null || b == null)
+		{
+			return false;
+		}
+		if (a.isDynamic && b.isDynamic && a.dynamicFont.fontNames[0] == b.dynamicFont.fontNames[0])
+		{
+			return true;
+		}
+		return a == b || a.References(b) || b.References(a);
+	}
+
+	public void MarkAsDirty()
+	{
+		if (mReplacement != null)
+		{
+			mReplacement.MarkAsDirty();
+		}
+		RecalculateDynamicOffset();
+		mSprite = null;
+		UILabel[] array = NGUITools.FindActive<UILabel>();
+		int i = 0;
+		for (int num = array.Length; i < num; i++)
+		{
+			UILabel uILabel = array[i];
+			if (uILabel.enabled && NGUITools.GetActive(uILabel.gameObject) && CheckIfRelated(this, uILabel.font))
+			{
+				UIFont font = uILabel.font;
+				uILabel.font = null;
+				uILabel.font = font;
+			}
+		}
+		int j = 0;
+		for (int count = mSymbols.Count; j < count; j++)
+		{
+			symbols[j].MarkAsDirty();
+		}
+	}
+
+	public bool RecalculateDynamicOffset()
+	{
+		if (mDynamicFont != null)
+		{
+			mDynamicFont.RequestCharactersInTexture("j", mDynamicFontSize, mDynamicFontStyle);
+			CharacterInfo info;
+			mDynamicFont.GetCharacterInfo('j', out info, mDynamicFontSize, mDynamicFontStyle);
+			float num = (float)mDynamicFontSize + info.vert.yMax;
+			if (!object.Equals(mDynamicFontOffset, num))
+			{
+				mDynamicFontOffset = num;
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public Vector2 CalculatePrintedSize(string text, bool encoding, SymbolStyle symbolStyle)
@@ -734,31 +699,14 @@ public class UIFont : MonoBehaviour
 				}
 				else if (mDynamicFont.GetCharacterInfo(c, out mChar, mDynamicFontSize, mDynamicFontStyle))
 				{
-					num2 += mSpacingX + (int)mChar.width;
+					num2 += (int)((float)mSpacingX + mChar.width);
 				}
 			}
 			float num7 = ((num5 <= 0) ? 1f : (1f / (float)num5));
-			zero.x = num7 * ((num2 <= num) ? ((float)num) : ((float)num2));
+			zero.x = num7 * (float)((num2 <= num) ? num : num2);
 			zero.y = num7 * (float)(num3 + num6);
 		}
 		return zero;
-	}
-
-	public static bool CheckIfRelated(UIFont a, UIFont b)
-	{
-		if (a == null || b == null)
-		{
-			return false;
-		}
-		if (!a.isDynamic || !b.isDynamic || !(a.dynamicFont.fontNames[0] == b.dynamicFont.fontNames[0]))
-		{
-			if (!(a == b) && !a.References(b))
-			{
-				return b.References(a);
-			}
-			return true;
-		}
-		return true;
 	}
 
 	private static void EndLine(ref StringBuilder s)
@@ -833,86 +781,208 @@ public class UIFont : MonoBehaviour
 		return text.Substring(num3, length - num3);
 	}
 
-	private BMSymbol GetSymbol(string sequence, bool createIfMissing)
-	{
-		int i = 0;
-		for (int count = mSymbols.Count; i < count; i++)
-		{
-			BMSymbol bMSymbol = mSymbols[i];
-			if (bMSymbol.sequence == sequence)
-			{
-				return bMSymbol;
-			}
-		}
-		if (createIfMissing)
-		{
-			BMSymbol bMSymbol2 = new BMSymbol
-			{
-				sequence = sequence
-			};
-			mSymbols.Add(bMSymbol2);
-			return bMSymbol2;
-		}
-		return null;
-	}
-
-	public void MarkAsDirty()
+	public string WrapText(string text, float maxWidth, int maxLineCount, bool encoding, SymbolStyle symbolStyle)
 	{
 		if (mReplacement != null)
 		{
-			mReplacement.MarkAsDirty();
+			return mReplacement.WrapText(text, maxWidth, maxLineCount, encoding, symbolStyle);
 		}
-		RecalculateDynamicOffset();
-		mSprite = null;
-		UILabel[] array = NGUITools.FindActive<UILabel>();
+		int num = Mathf.RoundToInt(maxWidth * (float)size);
+		if (num < 1)
+		{
+			return text;
+		}
+		StringBuilder s = new StringBuilder();
+		int length = text.Length;
+		int num2 = num;
+		int num3 = 0;
 		int i = 0;
-		for (int num = array.Length; i < num; i++)
-		{
-			UILabel uILabel = array[i];
-			if (uILabel.enabled && NGUITools.GetActive(uILabel.gameObject) && CheckIfRelated(this, uILabel.font))
-			{
-				UIFont font = uILabel.font;
-				uILabel.font = null;
-				uILabel.font = font;
-			}
-		}
 		int j = 0;
-		for (int count = mSymbols.Count; j < count; j++)
+		bool flag = true;
+		bool flag2 = maxLineCount != 1;
+		int num4 = 1;
+		bool flag3 = encoding && symbolStyle != 0 && hasSymbols;
+		bool flag4 = isDynamic;
+		if (flag4)
 		{
-			symbols[j].MarkAsDirty();
+			mDynamicFont.textureRebuildCallback = OnFontChanged;
+			mDynamicFont.RequestCharactersInTexture(text, mDynamicFontSize, mDynamicFontStyle);
+			mDynamicFont.textureRebuildCallback = null;
 		}
-	}
-
-	private BMSymbol MatchSymbol(string text, int offset, int textLength)
-	{
-		int count = mSymbols.Count;
-		if (count != 0)
+		for (; j < length; j++)
 		{
-			textLength -= offset;
-			for (int i = 0; i < count; i++)
+			char c = text[j];
+			if (c == '\n')
 			{
-				BMSymbol bMSymbol = mSymbols[i];
-				int length = bMSymbol.length;
-				if (length == 0 || textLength < length)
+				if (!flag2 || num4 == maxLineCount)
 				{
+					break;
+				}
+				num2 = num;
+				if (i < j)
+				{
+					s.Append(text.Substring(i, j - i + 1));
+				}
+				else
+				{
+					s.Append(c);
+				}
+				flag = true;
+				num4++;
+				i = j + 1;
+				num3 = 0;
+				continue;
+			}
+			if (c == ' ' && num3 != 32 && i < j)
+			{
+				s.Append(text.Substring(i, j - i + 1));
+				flag = false;
+				i = j + 1;
+				num3 = c;
+			}
+			if (encoding && c == '[' && j + 2 < length)
+			{
+				if (text[j + 1] == '-' && text[j + 2] == ']')
+				{
+					j += 2;
 					continue;
 				}
-				bool flag = true;
-				for (int j = 0; j < length; j++)
+				if (j + 7 < length && text[j + 7] == ']' && NGUITools.EncodeColor(NGUITools.ParseColor(text, j + 1)) == text.Substring(j + 1, 6).ToUpper())
 				{
-					if (text[offset + j] != bMSymbol.sequence[j])
-					{
-						flag = false;
-						break;
-					}
-				}
-				if (flag && bMSymbol.Validate(atlas))
-				{
-					return bMSymbol;
+					j += 7;
+					continue;
 				}
 			}
+			BMSymbol bMSymbol = ((!flag3) ? null : MatchSymbol(text, j, length));
+			int num5 = mSpacingX;
+			if (!flag4)
+			{
+				if (bMSymbol != null)
+				{
+					num5 += bMSymbol.advance;
+				}
+				else
+				{
+					BMGlyph bMGlyph = ((bMSymbol != null) ? null : mFont.GetGlyph(c));
+					if (bMGlyph == null)
+					{
+						continue;
+					}
+					num5 += ((num3 == 0) ? bMGlyph.advance : (bMGlyph.advance + bMGlyph.GetKerning(num3)));
+				}
+			}
+			else if (mDynamicFont.GetCharacterInfo(c, out mChar, mDynamicFontSize, mDynamicFontStyle))
+			{
+				num5 += Mathf.RoundToInt(mChar.width);
+			}
+			num2 -= num5;
+			if (num2 < 0)
+			{
+				if (!flag && flag2 && num4 != maxLineCount)
+				{
+					for (; i < length && text[i] == ' '; i++)
+					{
+					}
+					flag = true;
+					num2 = num;
+					j = i - 1;
+					num3 = 0;
+					if (!flag2 || num4 == maxLineCount)
+					{
+						break;
+					}
+					num4++;
+					EndLine(ref s);
+					continue;
+				}
+				s.Append(text.Substring(i, Mathf.Max(0, j - i)));
+				if (!flag2 || num4 == maxLineCount)
+				{
+					i = j;
+					break;
+				}
+				EndLine(ref s);
+				flag = true;
+				num4++;
+				if (c == ' ')
+				{
+					i = j + 1;
+					num2 = num;
+				}
+				else
+				{
+					i = j;
+					num2 = num - num5;
+				}
+				num3 = 0;
+			}
+			else
+			{
+				num3 = c;
+			}
+			if (!flag4 && bMSymbol != null)
+			{
+				j += bMSymbol.length - 1;
+				num3 = 0;
+			}
 		}
-		return null;
+		if (i < j)
+		{
+			s.Append(text.Substring(i, j - i));
+		}
+		return s.ToString();
+	}
+
+	public string WrapText(string text, float maxWidth, int maxLineCount, bool encoding)
+	{
+		return WrapText(text, maxWidth, maxLineCount, encoding, SymbolStyle.None);
+	}
+
+	public string WrapText(string text, float maxWidth, int maxLineCount)
+	{
+		return WrapText(text, maxWidth, maxLineCount, false, SymbolStyle.None);
+	}
+
+	private void Align(BetterList<Vector3> verts, int indexOffset, Alignment alignment, int x, int lineWidth)
+	{
+		if (alignment == Alignment.Left)
+		{
+			return;
+		}
+		int num = size;
+		if (num <= 0)
+		{
+			return;
+		}
+		float num2 = 0f;
+		if (alignment == Alignment.Right)
+		{
+			num2 = Mathf.RoundToInt(lineWidth - x);
+			if (num2 < 0f)
+			{
+				num2 = 0f;
+			}
+			num2 /= (float)size;
+		}
+		else
+		{
+			num2 = Mathf.RoundToInt((float)(lineWidth - x) * 0.5f);
+			if (num2 < 0f)
+			{
+				num2 = 0f;
+			}
+			num2 /= (float)size;
+			if ((lineWidth & 1) == 1)
+			{
+				num2 += 0.5f / (float)num;
+			}
+		}
+		for (int i = indexOffset; i < verts.size; i++)
+		{
+			Vector3 vector = verts.buffer[i];
+			vector.x += num2;
+			verts.buffer[i] = vector;
+		}
 	}
 
 	private void OnFontChanged()
@@ -1141,38 +1211,65 @@ public class UIFont : MonoBehaviour
 		}
 	}
 
-	public bool RecalculateDynamicOffset()
+	private BMSymbol GetSymbol(string sequence, bool createIfMissing)
 	{
-		if (mDynamicFont != null)
+		int i = 0;
+		for (int count = mSymbols.Count; i < count; i++)
 		{
-			mDynamicFont.RequestCharactersInTexture("j", mDynamicFontSize, mDynamicFontStyle);
-			CharacterInfo info;
-			mDynamicFont.GetCharacterInfo('j', out info, mDynamicFontSize, mDynamicFontStyle);
-			float num = (float)mDynamicFontSize + info.vert.yMax;
-			if (!object.Equals(mDynamicFontOffset, num))
+			BMSymbol bMSymbol = mSymbols[i];
+			if (bMSymbol.sequence == sequence)
 			{
-				mDynamicFontOffset = num;
-				return true;
+				return bMSymbol;
 			}
 		}
-		return false;
+		if (createIfMissing)
+		{
+			BMSymbol bMSymbol2 = new BMSymbol();
+			bMSymbol2.sequence = sequence;
+			mSymbols.Add(bMSymbol2);
+			return bMSymbol2;
+		}
+		return null;
 	}
 
-	private bool References(UIFont font)
+	private BMSymbol MatchSymbol(string text, int offset, int textLength)
 	{
-		if (font == null)
+		int count = mSymbols.Count;
+		if (count == 0)
 		{
-			return false;
+			return null;
 		}
-		if (!(font == this))
+		textLength -= offset;
+		for (int i = 0; i < count; i++)
 		{
-			if (mReplacement != null)
+			BMSymbol bMSymbol = mSymbols[i];
+			int length = bMSymbol.length;
+			if (length == 0 || textLength < length)
 			{
-				return mReplacement.References(font);
+				continue;
 			}
-			return false;
+			bool flag = true;
+			for (int j = 0; j < length; j++)
+			{
+				if (text[offset + j] != bMSymbol.sequence[j])
+				{
+					flag = false;
+					break;
+				}
+			}
+			if (flag && bMSymbol.Validate(atlas))
+			{
+				return bMSymbol;
+			}
 		}
-		return true;
+		return null;
+	}
+
+	public void AddSymbol(string sequence, string spriteName)
+	{
+		BMSymbol symbol = GetSymbol(sequence, true);
+		symbol.spriteName = spriteName;
+		MarkAsDirty();
 	}
 
 	public void RemoveSymbol(string sequence)
@@ -1195,21 +1292,6 @@ public class UIFont : MonoBehaviour
 		MarkAsDirty();
 	}
 
-	private void Trim()
-	{
-		Texture texture = mAtlas.texture;
-		if (texture != null && mSprite != null)
-		{
-			Rect rect = NGUIMath.ConvertToPixels(mUVRect, this.texture.width, this.texture.height, true);
-			Rect rect2 = ((mAtlas.coordinates != UIAtlas.Coordinates.TexCoords) ? mSprite.outer : NGUIMath.ConvertToPixels(mSprite.outer, texture.width, texture.height, true));
-			int xMin = Mathf.RoundToInt(rect2.xMin - rect.xMin);
-			int yMin = Mathf.RoundToInt(rect2.yMin - rect.yMin);
-			int xMax = Mathf.RoundToInt(rect2.xMax - rect.xMin);
-			int yMax = Mathf.RoundToInt(rect2.yMax - rect.yMin);
-			mFont.Trim(xMin, yMin, xMax, yMax);
-		}
-	}
-
 	public bool UsesSprite(string s)
 	{
 		if (!string.IsNullOrEmpty(s))
@@ -1229,167 +1311,5 @@ public class UIFont : MonoBehaviour
 			}
 		}
 		return false;
-	}
-
-	public string WrapText(string text, float maxWidth, int maxLineCount)
-	{
-		return WrapText(text, maxWidth, maxLineCount, false, SymbolStyle.None);
-	}
-
-	public string WrapText(string text, float maxWidth, int maxLineCount, bool encoding)
-	{
-		return WrapText(text, maxWidth, maxLineCount, encoding, SymbolStyle.None);
-	}
-
-	public string WrapText(string text, float maxWidth, int maxLineCount, bool encoding, SymbolStyle symbolStyle)
-	{
-		if (mReplacement != null)
-		{
-			return mReplacement.WrapText(text, maxWidth, maxLineCount, encoding, symbolStyle);
-		}
-		int num = Mathf.RoundToInt(maxWidth * (float)size);
-		if (num < 1)
-		{
-			return text;
-		}
-		StringBuilder s = new StringBuilder();
-		int length = text.Length;
-		int num2 = num;
-		int num3 = 0;
-		int i = 0;
-		int j = 0;
-		bool flag = true;
-		bool flag2 = maxLineCount != 1;
-		int num4 = 1;
-		bool flag3 = encoding && symbolStyle != 0 && hasSymbols;
-		bool flag4 = isDynamic;
-		if (flag4)
-		{
-			mDynamicFont.textureRebuildCallback = OnFontChanged;
-			mDynamicFont.RequestCharactersInTexture(text, mDynamicFontSize, mDynamicFontStyle);
-			mDynamicFont.textureRebuildCallback = null;
-		}
-		for (; j < length; j++)
-		{
-			char c = text[j];
-			if (c == '\n')
-			{
-				if (!flag2 || num4 == maxLineCount)
-				{
-					break;
-				}
-				num2 = num;
-				if (i < j)
-				{
-					s.Append(text.Substring(i, j - i + 1));
-				}
-				else
-				{
-					s.Append(c);
-				}
-				flag = true;
-				num4++;
-				i = j + 1;
-				num3 = 0;
-				continue;
-			}
-			if (c == ' ' && num3 != 32 && i < j)
-			{
-				s.Append(text.Substring(i, j - i + 1));
-				flag = false;
-				i = j + 1;
-				num3 = c;
-			}
-			if (encoding && c == '[' && j + 2 < length)
-			{
-				if (text[j + 1] == '-' && text[j + 2] == ']')
-				{
-					j += 2;
-					continue;
-				}
-				if (j + 7 < length && text[j + 7] == ']' && NGUITools.EncodeColor(NGUITools.ParseColor(text, j + 1)) == text.Substring(j + 1, 6).ToUpper())
-				{
-					j += 7;
-					continue;
-				}
-			}
-			BMSymbol bMSymbol = ((!flag3) ? null : MatchSymbol(text, j, length));
-			int num5 = mSpacingX;
-			if (!flag4)
-			{
-				if (bMSymbol != null)
-				{
-					num5 += bMSymbol.advance;
-				}
-				else
-				{
-					BMGlyph bMGlyph = ((bMSymbol != null) ? null : mFont.GetGlyph(c));
-					if (bMGlyph == null)
-					{
-						continue;
-					}
-					num5 += ((num3 == 0) ? bMGlyph.advance : (bMGlyph.advance + bMGlyph.GetKerning(num3)));
-				}
-			}
-			else if (mDynamicFont.GetCharacterInfo(c, out mChar, mDynamicFontSize, mDynamicFontStyle))
-			{
-				num5 += Mathf.RoundToInt(mChar.width);
-			}
-			num2 -= num5;
-			if (num2 < 0)
-			{
-				if (!flag && flag2 && num4 != maxLineCount)
-				{
-					for (; i < length && text[i] == ' '; i++)
-					{
-					}
-					flag = true;
-					num2 = num;
-					j = i - 1;
-					num3 = 0;
-					if (!flag2 || num4 == maxLineCount)
-					{
-						break;
-					}
-					num4++;
-					EndLine(ref s);
-					continue;
-				}
-				s.Append(text.Substring(i, Mathf.Max(0, j - i)));
-				if (!flag2 || num4 == maxLineCount)
-				{
-					i = j;
-					break;
-				}
-				EndLine(ref s);
-				flag = true;
-				num4++;
-				if (c == ' ')
-				{
-					i = j + 1;
-					num2 = num;
-				}
-				else
-				{
-					i = j;
-					num2 = num - num5;
-				}
-				num3 = 0;
-			}
-			else
-			{
-				num3 = c;
-			}
-			if (!flag4 && bMSymbol != null)
-			{
-				j += bMSymbol.length - 1;
-				num3 = 0;
-			}
-		}
-		if (i < j)
-		{
-			s.Append(text.Substring(i, j - i));
-		}
-		return s.ToString();
 	}
 }

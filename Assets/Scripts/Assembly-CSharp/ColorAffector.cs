@@ -4,13 +4,13 @@ public class ColorAffector : Affector
 {
 	protected Color[] ColorArr;
 
-	protected float ElapsedTime;
-
 	protected float GradualLen;
 
-	protected bool IsNodeLife;
-
 	protected COLOR_GRADUAL_TYPE Type;
+
+	protected float ElapsedTime;
+
+	protected bool IsNodeLife;
 
 	public ColorAffector(Color[] colorArr, float gradualLen, COLOR_GRADUAL_TYPE type, EffectNode node)
 		: base(node)
@@ -36,7 +36,7 @@ public class ColorAffector : Affector
 		{
 			GradualLen = Node.GetLifeTime();
 		}
-		if (!(GradualLen > 0f))
+		if (GradualLen <= 0f)
 		{
 			return;
 		}

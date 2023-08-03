@@ -1,38 +1,45 @@
-using ApplicationManagers;
 using UnityEngine;
 
 public class UIMainReferences : MonoBehaviour
 {
-	public GameObject panelCredits;
-
-	public GameObject PanelDisconnect;
-
 	public GameObject panelMain;
+
+	public GameObject panelOption;
+
+	public GameObject panelMultiROOM;
 
 	public GameObject PanelMultiJoinPrivate;
 
-	public GameObject PanelMultiPWD;
+	public GameObject PanelMultiWait;
 
-	public GameObject panelMultiROOM;
+	public GameObject PanelDisconnect;
 
 	public GameObject panelMultiSet;
 
 	public GameObject panelMultiStart;
 
-	public GameObject PanelMultiWait;
-
-	public GameObject panelOption;
+	public GameObject panelCredits;
 
 	public GameObject panelSingleSet;
 
+	public GameObject PanelMultiPWD;
+
 	public GameObject PanelSnapShot;
 
-	public static string Version = "01042015";
+	private static bool isGAMEFirstLaunch = true;
 
-	private void Awake()
+	public static string version = "01042015";
+
+	private void Start()
 	{
-		NGUITools.SetActive(panelMain, false);
-		Object.Destroy(GameObject.Find("PopupListLang"));
-		MainApplicationManager.Init();
+		NGUITools.SetActive(panelMain, true);
+		GameObject.Find("VERSION").GetComponent<UILabel>().text = version;
+		if (isGAMEFirstLaunch)
+		{
+			isGAMEFirstLaunch = false;
+			GameObject gameObject = (GameObject)Object.Instantiate(Resources.Load("InputManagerController"));
+			gameObject.name = "InputManagerController";
+			Object.DontDestroyOnLoad(gameObject);
+		}
 	}
 }

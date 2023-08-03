@@ -6,14 +6,24 @@ public class PunTeams : MonoBehaviour
 {
 	public enum Team : byte
 	{
-		blue = 2,
 		none = 0,
-		red = 1
+		red = 1,
+		blue = 2
 	}
+
+	public const string TeamPlayerProp = "team";
 
 	public static Dictionary<Team, List<PhotonPlayer>> PlayersPerTeam;
 
-	public const string TeamPlayerProp = "team";
+	public void Start()
+	{
+		PlayersPerTeam = new Dictionary<Team, List<PhotonPlayer>>();
+		Array values = Enum.GetValues(typeof(Team));
+		foreach (object item in values)
+		{
+			PlayersPerTeam[(Team)(byte)item] = new List<PhotonPlayer>();
+		}
+	}
 
 	public void OnJoinedRoom()
 	{
@@ -25,20 +35,12 @@ public class PunTeams : MonoBehaviour
 		UpdateTeams();
 	}
 
-	public void Start()
-	{
-		PlayersPerTeam = new Dictionary<Team, List<PhotonPlayer>>();
-		foreach (object value in Enum.GetValues(typeof(Team)))
-		{
-			PlayersPerTeam[(Team)(byte)value] = new List<PhotonPlayer>();
-		}
-	}
-
 	public void UpdateTeams()
 	{
-		foreach (object value in Enum.GetValues(typeof(Team)))
+		Array values = Enum.GetValues(typeof(Team));
+		foreach (object item in values)
 		{
-			PlayersPerTeam[(Team)(byte)value].Clear();
+			PlayersPerTeam[(Team)(byte)item].Clear();
 		}
 		for (int i = 0; i < PhotonNetwork.playerList.Length; i++)
 		{

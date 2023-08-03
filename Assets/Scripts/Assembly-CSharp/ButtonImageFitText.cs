@@ -3,9 +3,9 @@ using UnityEngine.UI;
 
 public class ButtonImageFitText : MonoBehaviour
 {
-	public Image image;
-
 	public Text text;
+
+	public Image image;
 
 	private void Start()
 	{

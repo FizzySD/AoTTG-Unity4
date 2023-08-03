@@ -8,20 +8,20 @@ TerrainData:
   m_Name: New Terrain
   m_SplatDatabase:
     m_Splats:
-    - texture: {fileID: 2800000, guid: eeed54ffda7d90547909aa07fc3c283e, type: 3}
+    - texture: {fileID: 2800000, guid: 192768d0a80ca0a478147eb3d2a28c74, type: 3}
       normalMap: {fileID: 0}
       tileSize: {x: 15, y: 15}
       tileOffset: {x: 0, y: 0}
-    - texture: {fileID: 2800000, guid: 1cc68ec9959df03459dd4415cc8fcaff, type: 3}
+    - texture: {fileID: 2800000, guid: 3cd9fa501a3a5684186eaaaf0f54b158, type: 3}
       normalMap: {fileID: 0}
       tileSize: {x: 15, y: 15}
       tileOffset: {x: 0, y: 0}
-    - texture: {fileID: 2800000, guid: 65f8dd29c2cb29d4b9e118daec99d27b, type: 3}
+    - texture: {fileID: 2800000, guid: 67713fc85bf0f544baaeab022b3c8540, type: 3}
       normalMap: {fileID: 0}
       tileSize: {x: 15, y: 15}
       tileOffset: {x: 0, y: 0}
     m_AlphaTextures:
-    - {fileID: 28439195373226307}
+    - {fileID: 28836597380698868}
     m_AlphamapResolution: 128
     m_BaseMapResolution: 256
   m_DetailDatabase:
@@ -272430,7 +272430,7 @@ TerrainData:
     m_Height: 513
     m_Levels: 5
     m_Scale: {x: 5.859375, y: 1000, z: 5.859375}
---- !u!28 &28439195373226307
+--- !u!28 &28836597380698868
 Texture2D:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}

@@ -2,17 +2,17 @@ using UnityEngine;
 
 public class OnClickInstantiate : MonoBehaviour
 {
+	public GameObject Prefab;
+
 	public int InstantiateType;
 
 	private string[] InstantiateTypeNames = new string[2] { "Mine", "Scene" };
-
-	public GameObject Prefab;
 
 	public bool showGui;
 
 	private void OnClick()
 	{
-		if (PhotonNetwork.connectionStateDetailed == PeerStates.Joined)
+		if (PhotonNetwork.connectionStateDetailed == PeerState.Joined)
 		{
 			switch (InstantiateType)
 			{

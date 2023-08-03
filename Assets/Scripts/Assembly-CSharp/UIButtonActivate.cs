@@ -3,9 +3,9 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Button Activate")]
 public class UIButtonActivate : MonoBehaviour
 {
-	public bool state = true;
-
 	public GameObject target;
+
+	public bool state = true;
 
 	private void OnClick()
 	{

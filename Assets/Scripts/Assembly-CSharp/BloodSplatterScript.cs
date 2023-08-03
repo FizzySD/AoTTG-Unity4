@@ -2,17 +2,17 @@ using UnityEngine;
 
 public class BloodSplatterScript : MonoBehaviour
 {
-	private GameObject[] bloodInstances;
+	public Transform bloodPrefab;
 
-	public int bloodLocalRotationYOffset;
+	public int maxAmountBloodPrefabs = 20;
+
+	private GameObject[] bloodInstances;
 
 	public Transform bloodPosition;
 
-	public Transform bloodPrefab;
-
 	public Transform bloodRotation;
 
-	public int maxAmountBloodPrefabs = 20;
+	public int bloodLocalRotationYOffset;
 
 	public void Main()
 	{

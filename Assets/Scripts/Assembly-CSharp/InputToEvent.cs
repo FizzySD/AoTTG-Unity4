@@ -2,46 +2,13 @@ using UnityEngine;
 
 public class InputToEvent : MonoBehaviour
 {
-	public bool DetectPointedAtGameObject;
+	private GameObject lastGo;
 
 	public static Vector3 inputHitPos;
 
-	private GameObject lastGo;
+	public bool DetectPointedAtGameObject;
 
 	public static GameObject goPointedAt { get; private set; }
-
-	private void Press(Vector2 screenPos)
-	{
-		lastGo = RaycastObject(screenPos);
-		if (lastGo != null)
-		{
-			lastGo.SendMessage("OnPress", SendMessageOptions.DontRequireReceiver);
-		}
-	}
-
-	private GameObject RaycastObject(Vector2 screenPos)
-	{
-		RaycastHit hitInfo;
-		if (Physics.Raycast(base.camera.ScreenPointToRay(screenPos), out hitInfo, 200f))
-		{
-			inputHitPos = hitInfo.point;
-			return hitInfo.collider.gameObject;
-		}
-		return null;
-	}
-
-	private void Release(Vector2 screenPos)
-	{
-		if (lastGo != null)
-		{
-			if (RaycastObject(screenPos) == lastGo)
-			{
-				lastGo.SendMessage("OnClick", SendMessageOptions.DontRequireReceiver);
-			}
-			lastGo.SendMessage("OnRelease", SendMessageOptions.DontRequireReceiver);
-			lastGo = null;
-		}
-	}
 
 	private void Update()
 	{
@@ -72,5 +39,39 @@ public class InputToEvent : MonoBehaviour
 				Release(Input.mousePosition);
 			}
 		}
+	}
+
+	private void Press(Vector2 screenPos)
+	{
+		lastGo = RaycastObject(screenPos);
+		if (lastGo != null)
+		{
+			lastGo.SendMessage("OnPress", SendMessageOptions.DontRequireReceiver);
+		}
+	}
+
+	private void Release(Vector2 screenPos)
+	{
+		if (lastGo != null)
+		{
+			GameObject gameObject = RaycastObject(screenPos);
+			if (gameObject == lastGo)
+			{
+				lastGo.SendMessage("OnClick", SendMessageOptions.DontRequireReceiver);
+			}
+			lastGo.SendMessage("OnRelease", SendMessageOptions.DontRequireReceiver);
+			lastGo = null;
+		}
+	}
+
+	private GameObject RaycastObject(Vector2 screenPos)
+	{
+		RaycastHit hitInfo;
+		if (Physics.Raycast(base.camera.ScreenPointToRay(screenPos), out hitInfo, 200f))
+		{
+			inputHitPos = hitInfo.point;
+			return hitInfo.collider.gameObject;
+		}
+		return null;
 	}
 }

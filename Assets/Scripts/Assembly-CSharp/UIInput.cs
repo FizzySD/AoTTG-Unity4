@@ -15,65 +15,80 @@ public class UIInput : MonoBehaviour
 		EmailAddress = 7
 	}
 
-	public delegate void OnSubmit(string inputString);
-
 	public delegate char Validator(string currentText, char nextChar);
 
-	public Color activeColor = Color.white;
-
-	public bool autoCorrect;
-
-	public string caratChar = "|";
+	public delegate void OnSubmit(string inputString);
 
 	public static UIInput current;
-
-	public GameObject eventReceiver;
-
-	public string functionName = "OnSubmit";
-
-	public bool isPassword;
 
 	public UILabel label;
 
 	public int maxChars;
 
-	private Color mDefaultColor = Color.white;
+	public string caratChar = "|";
+
+	public Validator validator;
+
+	public KeyboardType type;
+
+	public bool isPassword;
+
+	public bool autoCorrect;
+
+	public bool useLabelTextAtStart;
+
+	public Color activeColor = Color.white;
+
+	public GameObject selectOnTab;
+
+	public GameObject eventReceiver;
+
+	public string functionName = "OnSubmit";
+
+	public OnSubmit onSubmit;
+
+	private string mText = string.Empty;
 
 	private string mDefaultText = string.Empty;
 
-	private bool mDoInit = true;
-
-	private string mLastIME = string.Empty;
+	private Color mDefaultColor = Color.white;
 
 	private UIWidget.Pivot mPivot = UIWidget.Pivot.Left;
 
 	private float mPosition;
 
-	private string mText = string.Empty;
+	private string mLastIME = string.Empty;
 
-	public OnSubmit onSubmit;
+	private bool mDoInit = true;
 
-	public GameObject selectOnTab;
-
-	public KeyboardType type;
-
-	public bool useLabelTextAtStart;
-
-	public Validator validator;
-
-	public string defaultText
+	public virtual string text
 	{
 		get
 		{
-			return mDefaultText;
+			if (mDoInit)
+			{
+				Init();
+			}
+			return mText;
 		}
 		set
 		{
-			if (label.text == mDefaultText)
+			if (mDoInit)
 			{
-				label.text = value;
+				Init();
 			}
-			mDefaultText = value;
+			mText = value;
+			if (label != null)
+			{
+				if (string.IsNullOrEmpty(value))
+				{
+					value = mDefaultText;
+				}
+				label.supportEncoding = false;
+				label.text = ((!selected) ? value : (value + caratChar));
+				label.showLastPasswordChar = selected;
+				label.color = ((!selected && !(value != mDefaultText)) ? mDefaultColor : activeColor);
+			}
 		}
 	}
 
@@ -96,115 +111,24 @@ public class UIInput : MonoBehaviour
 		}
 	}
 
-	public virtual string text
+	public string defaultText
 	{
 		get
 		{
-			if (mDoInit)
-			{
-				initMain();
-			}
-			return mText;
+			return mDefaultText;
 		}
 		set
 		{
-			if (mDoInit)
+			if (label.text == mDefaultText)
 			{
-				initMain();
+				label.text = value;
 			}
-			mText = value;
-			if (label != null)
-			{
-				if (string.IsNullOrEmpty(value))
-				{
-					value = mDefaultText;
-				}
-				label.supportEncoding = false;
-				label.text = ((!selected) ? value : (value + caratChar));
-				label.showLastPasswordChar = selected;
-				label.color = ((!selected && !(value != mDefaultText)) ? mDefaultColor : activeColor);
-			}
+			mDefaultText = value;
 		}
-	}
-
-	private void Append(string input)
-	{
-		int i = 0;
-		for (int length = input.Length; i < length; i++)
-		{
-			char c = input[i];
-			if (c != '\b')
-			{
-				if (c == '\n' || c == '\r')
-				{
-					if ((UICamera.current.submitKey0 == KeyCode.Return || UICamera.current.submitKey1 == KeyCode.Return) && (!label.multiLine || (!Input.GetKey(KeyCode.LeftControl) && !Input.GetKey(KeyCode.RightControl))))
-					{
-						current = this;
-						if (onSubmit != null)
-						{
-							onSubmit(mText);
-						}
-						if (eventReceiver == null)
-						{
-							eventReceiver = base.gameObject;
-						}
-						eventReceiver.SendMessage(functionName, mText, SendMessageOptions.DontRequireReceiver);
-						current = null;
-						selected = false;
-						return;
-					}
-					if (validator != null)
-					{
-						c = validator(mText, c);
-					}
-					if (c == '\0')
-					{
-						continue;
-					}
-					if (c == '\n' || c == '\r')
-					{
-						if (label.multiLine)
-						{
-							mText += "\n";
-						}
-					}
-					else
-					{
-						mText += c;
-					}
-					SendMessage("OnInputChanged", this, SendMessageOptions.DontRequireReceiver);
-				}
-				else if (c >= ' ')
-				{
-					if (validator != null)
-					{
-						c = validator(mText, c);
-					}
-					if (c != 0)
-					{
-						mText += c;
-						SendMessage("OnInputChanged", this, SendMessageOptions.DontRequireReceiver);
-					}
-				}
-			}
-			else if (mText.Length > 0)
-			{
-				mText = mText.Substring(0, mText.Length - 1);
-				SendMessage("OnInputChanged", this, SendMessageOptions.DontRequireReceiver);
-			}
-		}
-		UpdateLabel();
 	}
 
 	protected void Init()
 	{
-		maxChars = 100;
-		initMain();
-	}
-
-	protected void initMain()
-	{
-		maxChars = 100;
 		if (!mDoInit)
 		{
 			return;
@@ -233,14 +157,6 @@ public class UIInput : MonoBehaviour
 		}
 	}
 
-	private void OnDisable()
-	{
-		if (UICamera.IsHighlighted(base.gameObject))
-		{
-			OnSelect(false);
-		}
-	}
-
 	private void OnEnable()
 	{
 		if (UICamera.IsHighlighted(base.gameObject))
@@ -249,15 +165,11 @@ public class UIInput : MonoBehaviour
 		}
 	}
 
-	private void OnInput(string input)
+	private void OnDisable()
 	{
-		if (mDoInit)
+		if (UICamera.IsHighlighted(base.gameObject))
 		{
-			initMain();
-		}
-		if (selected && base.enabled && NGUITools.GetActive(base.gameObject) && Application.platform != RuntimePlatform.Android && Application.platform != RuntimePlatform.IPhonePlayer)
-		{
-			Append(input);
+			OnSelect(false);
 		}
 	}
 
@@ -265,7 +177,7 @@ public class UIInput : MonoBehaviour
 	{
 		if (mDoInit)
 		{
-			initMain();
+			Init();
 		}
 		if (!(label != null) || !base.enabled || !NGUITools.GetActive(base.gameObject))
 		{
@@ -306,17 +218,6 @@ public class UIInput : MonoBehaviour
 		RestoreLabel();
 	}
 
-	private void RestoreLabel()
-	{
-		if (label != null)
-		{
-			label.pivot = mPivot;
-			Vector3 localPosition = label.cachedTransform.localPosition;
-			localPosition.x = mPosition;
-			label.cachedTransform.localPosition = localPosition;
-		}
-	}
-
 	private void Update()
 	{
 		if (selected)
@@ -337,11 +238,92 @@ public class UIInput : MonoBehaviour
 		}
 	}
 
+	private void OnInput(string input)
+	{
+		if (mDoInit)
+		{
+			Init();
+		}
+		if (selected && base.enabled && NGUITools.GetActive(base.gameObject) && Application.platform != RuntimePlatform.Android && Application.platform != RuntimePlatform.IPhonePlayer)
+		{
+			Append(input);
+		}
+	}
+
+	private void Append(string input)
+	{
+		int i = 0;
+		for (int length = input.Length; i < length; i++)
+		{
+			char c = input[i];
+			if (c == '\b')
+			{
+				if (mText.Length > 0)
+				{
+					mText = mText.Substring(0, mText.Length - 1);
+					SendMessage("OnInputChanged", this, SendMessageOptions.DontRequireReceiver);
+				}
+			}
+			else if (c == '\r' || c == '\n')
+			{
+				if ((UICamera.current.submitKey0 == KeyCode.Return || UICamera.current.submitKey1 == KeyCode.Return) && (!label.multiLine || (!Input.GetKey(KeyCode.LeftControl) && !Input.GetKey(KeyCode.RightControl))))
+				{
+					current = this;
+					if (onSubmit != null)
+					{
+						onSubmit(mText);
+					}
+					if (eventReceiver == null)
+					{
+						eventReceiver = base.gameObject;
+					}
+					eventReceiver.SendMessage(functionName, mText, SendMessageOptions.DontRequireReceiver);
+					current = null;
+					selected = false;
+					return;
+				}
+				if (validator != null)
+				{
+					c = validator(mText, c);
+				}
+				if (c == '\0')
+				{
+					continue;
+				}
+				if (c == '\n' || c == '\r')
+				{
+					if (label.multiLine)
+					{
+						mText += "\n";
+					}
+				}
+				else
+				{
+					mText += c;
+				}
+				SendMessage("OnInputChanged", this, SendMessageOptions.DontRequireReceiver);
+			}
+			else if (c >= ' ')
+			{
+				if (validator != null)
+				{
+					c = validator(mText, c);
+				}
+				if (c != 0)
+				{
+					mText += c;
+					SendMessage("OnInputChanged", this, SendMessageOptions.DontRequireReceiver);
+				}
+			}
+		}
+		UpdateLabel();
+	}
+
 	private void UpdateLabel()
 	{
 		if (mDoInit)
 		{
-			initMain();
+			Init();
 		}
 		if (maxChars > 0 && mText.Length > maxChars)
 		{
@@ -403,5 +385,16 @@ public class UIInput : MonoBehaviour
 		}
 		label.text = text;
 		label.showLastPasswordChar = selected;
+	}
+
+	private void RestoreLabel()
+	{
+		if (label != null)
+		{
+			label.pivot = mPivot;
+			Vector3 localPosition = label.cachedTransform.localPosition;
+			localPosition.x = mPosition;
+			label.cachedTransform.localPosition = localPosition;
+		}
 	}
 }

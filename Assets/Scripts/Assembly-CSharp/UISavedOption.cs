@@ -6,19 +6,15 @@ public class UISavedOption : MonoBehaviour
 {
 	public string keyName;
 
-	private UICheckbox mCheck;
-
 	private UIPopupList mList;
+
+	private UICheckbox mCheck;
 
 	private string key
 	{
 		get
 		{
-			if (string.IsNullOrEmpty(keyName))
-			{
-				return "NGUI State: " + base.name;
-			}
-			return keyName;
+			return (!string.IsNullOrEmpty(keyName)) ? keyName : ("NGUI State: " + base.name);
 		}
 	}
 
@@ -28,11 +24,13 @@ public class UISavedOption : MonoBehaviour
 		mCheck = GetComponent<UICheckbox>();
 		if (mList != null)
 		{
-			mList.onSelectionChange = (UIPopupList.OnSelectionChange)Delegate.Combine(mList.onSelectionChange, new UIPopupList.OnSelectionChange(SaveSelection));
+			UIPopupList uIPopupList = mList;
+			uIPopupList.onSelectionChange = (UIPopupList.OnSelectionChange)Delegate.Combine(uIPopupList.onSelectionChange, new UIPopupList.OnSelectionChange(SaveSelection));
 		}
 		if (mCheck != null)
 		{
-			mCheck.onStateChange = (UICheckbox.OnStateChange)Delegate.Combine(mCheck.onStateChange, new UICheckbox.OnStateChange(SaveState));
+			UICheckbox uICheckbox = mCheck;
+			uICheckbox.onStateChange = (UICheckbox.OnStateChange)Delegate.Combine(uICheckbox.onStateChange, new UICheckbox.OnStateChange(SaveState));
 		}
 	}
 
@@ -40,30 +38,13 @@ public class UISavedOption : MonoBehaviour
 	{
 		if (mCheck != null)
 		{
-			mCheck.onStateChange = (UICheckbox.OnStateChange)Delegate.Remove(mCheck.onStateChange, new UICheckbox.OnStateChange(SaveState));
+			UICheckbox uICheckbox = mCheck;
+			uICheckbox.onStateChange = (UICheckbox.OnStateChange)Delegate.Remove(uICheckbox.onStateChange, new UICheckbox.OnStateChange(SaveState));
 		}
 		if (mList != null)
 		{
-			mList.onSelectionChange = (UIPopupList.OnSelectionChange)Delegate.Remove(mList.onSelectionChange, new UIPopupList.OnSelectionChange(SaveSelection));
-		}
-	}
-
-	private void OnDisable()
-	{
-		if (!(mCheck == null) || !(mList == null))
-		{
-			return;
-		}
-		UICheckbox[] componentsInChildren = GetComponentsInChildren<UICheckbox>(true);
-		int i = 0;
-		for (int num = componentsInChildren.Length; i < num; i++)
-		{
-			UICheckbox uICheckbox = componentsInChildren[i];
-			if (uICheckbox.isChecked)
-			{
-				SaveSelection(uICheckbox.name);
-				break;
-			}
+			UIPopupList uIPopupList = mList;
+			uIPopupList.onSelectionChange = (UIPopupList.OnSelectionChange)Delegate.Remove(uIPopupList.onSelectionChange, new UIPopupList.OnSelectionChange(SaveSelection));
 		}
 	}
 
@@ -90,6 +71,25 @@ public class UISavedOption : MonoBehaviour
 		{
 			UICheckbox uICheckbox = componentsInChildren[i];
 			uICheckbox.isChecked = uICheckbox.name == string2;
+		}
+	}
+
+	private void OnDisable()
+	{
+		if (!(mCheck == null) || !(mList == null))
+		{
+			return;
+		}
+		UICheckbox[] componentsInChildren = GetComponentsInChildren<UICheckbox>(true);
+		int i = 0;
+		for (int num = componentsInChildren.Length; i < num; i++)
+		{
+			UICheckbox uICheckbox = componentsInChildren[i];
+			if (uICheckbox.isChecked)
+			{
+				SaveSelection(uICheckbox.name);
+				break;
+			}
 		}
 	}
 

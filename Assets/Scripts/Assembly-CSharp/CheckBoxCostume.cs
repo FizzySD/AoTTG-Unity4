@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class CheckBoxCostume : MonoBehaviour
 {
-	public static int costumeSet;
-
 	public int set = 1;
+
+	public static int costumeSet;
 
 	private void OnActivate(bool yes)
 	{

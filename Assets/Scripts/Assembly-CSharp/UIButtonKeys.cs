@@ -4,7 +4,11 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class UIButtonKeys : MonoBehaviour
 {
+	public bool startsSelected;
+
 	public UIButtonKeys selectOnClick;
+
+	public UIButtonKeys selectOnUp;
 
 	public UIButtonKeys selectOnDown;
 
@@ -12,15 +16,11 @@ public class UIButtonKeys : MonoBehaviour
 
 	public UIButtonKeys selectOnRight;
 
-	public UIButtonKeys selectOnUp;
-
-	public bool startsSelected;
-
-	private void OnClick()
+	private void Start()
 	{
-		if (base.enabled && selectOnClick != null)
+		if (startsSelected && (UICamera.selectedObject == null || !NGUITools.GetActive(UICamera.selectedObject)))
 		{
-			UICamera.selectedObject = selectOnClick.gameObject;
+			UICamera.selectedObject = base.gameObject;
 		}
 	}
 
@@ -32,6 +32,18 @@ public class UIButtonKeys : MonoBehaviour
 		}
 		switch (key)
 		{
+		case KeyCode.LeftArrow:
+			if (selectOnLeft != null)
+			{
+				UICamera.selectedObject = selectOnLeft.gameObject;
+			}
+			break;
+		case KeyCode.RightArrow:
+			if (selectOnRight != null)
+			{
+				UICamera.selectedObject = selectOnRight.gameObject;
+			}
+			break;
 		case KeyCode.UpArrow:
 			if (selectOnUp != null)
 			{
@@ -42,18 +54,6 @@ public class UIButtonKeys : MonoBehaviour
 			if (selectOnDown != null)
 			{
 				UICamera.selectedObject = selectOnDown.gameObject;
-			}
-			break;
-		case KeyCode.RightArrow:
-			if (selectOnRight != null)
-			{
-				UICamera.selectedObject = selectOnRight.gameObject;
-			}
-			break;
-		case KeyCode.LeftArrow:
-			if (selectOnLeft != null)
-			{
-				UICamera.selectedObject = selectOnLeft.gameObject;
 			}
 			break;
 		case KeyCode.Tab:
@@ -96,11 +96,11 @@ public class UIButtonKeys : MonoBehaviour
 		}
 	}
 
-	private void Start()
+	private void OnClick()
 	{
-		if (startsSelected && (UICamera.selectedObject == null || !NGUITools.GetActive(UICamera.selectedObject)))
+		if (base.enabled && selectOnClick != null)
 		{
-			UICamera.selectedObject = base.gameObject;
+			UICamera.selectedObject = selectOnClick.gameObject;
 		}
 	}
 }

@@ -3,48 +3,17 @@ using UnityEngine;
 
 public class PhotonLagSimulationGui : MonoBehaviour
 {
-	public bool Visible = true;
+	public Rect WindowRect = new Rect(0f, 100f, 120f, 100f);
 
 	public int WindowId = 101;
 
-	public Rect WindowRect = new Rect(0f, 100f, 120f, 100f);
+	public bool Visible = true;
 
 	public PhotonPeer Peer { get; set; }
 
-	private void NetSimHasNoPeerWindow(int windowId)
+	public void Start()
 	{
-		GUILayout.Label("No peer to communicate with. ");
-	}
-
-	private void NetSimWindow(int windowId)
-	{
-		GUILayout.Label(string.Format("Rtt:{0,4} +/-{1,3}", Peer.RoundTripTime, Peer.RoundTripTimeVariance));
-		bool isSimulationEnabled = Peer.IsSimulationEnabled;
-		bool flag = GUILayout.Toggle(isSimulationEnabled, "Simulate");
-		if (flag != isSimulationEnabled)
-		{
-			Peer.IsSimulationEnabled = flag;
-		}
-		float value = Peer.NetworkSimulationSettings.IncomingLag;
-		GUILayout.Label("Lag " + value);
-		value = GUILayout.HorizontalSlider(value, 0f, 500f);
-		Peer.NetworkSimulationSettings.IncomingLag = (int)value;
-		Peer.NetworkSimulationSettings.OutgoingLag = (int)value;
-		float value2 = Peer.NetworkSimulationSettings.IncomingJitter;
-		GUILayout.Label("Jit " + value2);
-		value2 = GUILayout.HorizontalSlider(value2, 0f, 100f);
-		Peer.NetworkSimulationSettings.IncomingJitter = (int)value2;
-		Peer.NetworkSimulationSettings.OutgoingJitter = (int)value2;
-		float value3 = Peer.NetworkSimulationSettings.IncomingLossPercentage;
-		GUILayout.Label("Loss " + value3);
-		value3 = GUILayout.HorizontalSlider(value3, 0f, 10f);
-		Peer.NetworkSimulationSettings.IncomingLossPercentage = (int)value3;
-		Peer.NetworkSimulationSettings.OutgoingLossPercentage = (int)value3;
-		if (GUI.changed)
-		{
-			WindowRect.height = 100f;
-		}
-		GUI.DragWindow();
+		Peer = PhotonNetwork.networkingPeer;
 	}
 
 	public void OnGUI()
@@ -62,8 +31,39 @@ public class PhotonLagSimulationGui : MonoBehaviour
 		}
 	}
 
-	public void Start()
+	private void NetSimHasNoPeerWindow(int windowId)
 	{
-		Peer = PhotonNetwork.networkingPeer;
+		GUILayout.Label("No peer to communicate with. ");
+	}
+
+	private void NetSimWindow(int windowId)
+	{
+		GUILayout.Label(string.Format("Rtt:{0,4} +/-{1,3}", Peer.RoundTripTime, Peer.RoundTripTimeVariance));
+		bool isSimulationEnabled = Peer.IsSimulationEnabled;
+		bool flag = GUILayout.Toggle(isSimulationEnabled, "Simulate");
+		if (flag != isSimulationEnabled)
+		{
+			Peer.IsSimulationEnabled = flag;
+		}
+		float num = Peer.NetworkSimulationSettings.IncomingLag;
+		GUILayout.Label("Lag " + num);
+		num = GUILayout.HorizontalSlider(num, 0f, 500f);
+		Peer.NetworkSimulationSettings.IncomingLag = (int)num;
+		Peer.NetworkSimulationSettings.OutgoingLag = (int)num;
+		float num2 = Peer.NetworkSimulationSettings.IncomingJitter;
+		GUILayout.Label("Jit " + num2);
+		num2 = GUILayout.HorizontalSlider(num2, 0f, 100f);
+		Peer.NetworkSimulationSettings.IncomingJitter = (int)num2;
+		Peer.NetworkSimulationSettings.OutgoingJitter = (int)num2;
+		float num3 = Peer.NetworkSimulationSettings.IncomingLossPercentage;
+		GUILayout.Label("Loss " + num3);
+		num3 = GUILayout.HorizontalSlider(num3, 0f, 10f);
+		Peer.NetworkSimulationSettings.IncomingLossPercentage = (int)num3;
+		Peer.NetworkSimulationSettings.OutgoingLossPercentage = (int)num3;
+		if (GUI.changed)
+		{
+			WindowRect.height = 100f;
+		}
+		GUI.DragWindow();
 	}
 }

@@ -6,23 +6,23 @@ public class UICheckbox : MonoBehaviour
 {
 	public delegate void OnStateChange(bool state);
 
-	public Animation checkAnimation;
+	public static UICheckbox current;
 
 	public UISprite checkSprite;
 
-	public static UICheckbox current;
+	public Animation checkAnimation;
+
+	public bool instantTween;
+
+	public bool startsChecked = true;
+
+	public Transform radioButtonRoot;
+
+	public bool optionCanBeNone;
 
 	public GameObject eventReceiver;
 
 	public string functionName = "OnActivate";
-
-	public bool instantTween;
-
-	private bool mChecked = true;
-
-	private bool mStarted;
-
-	private Transform mTrans;
 
 	public OnStateChange onStateChange;
 
@@ -30,11 +30,11 @@ public class UICheckbox : MonoBehaviour
 	[HideInInspector]
 	private bool option;
 
-	public bool optionCanBeNone;
+	private bool mChecked = true;
 
-	public Transform radioButtonRoot;
+	private bool mStarted;
 
-	public bool startsChecked = true;
+	private Transform mTrans;
 
 	public bool isChecked
 	{
@@ -66,6 +66,17 @@ public class UICheckbox : MonoBehaviour
 				radioButtonRoot = mTrans.parent;
 			}
 		}
+	}
+
+	private void Start()
+	{
+		if (eventReceiver == null)
+		{
+			eventReceiver = base.gameObject;
+		}
+		mChecked = !startsChecked;
+		mStarted = true;
+		Set(startsChecked);
 	}
 
 	private void OnClick()
@@ -133,16 +144,5 @@ public class UICheckbox : MonoBehaviour
 				ActiveAnimation.Play(checkAnimation, state ? Direction.Forward : Direction.Reverse);
 			}
 		}
-	}
-
-	private void Start()
-	{
-		if (eventReceiver == null)
-		{
-			eventReceiver = base.gameObject;
-		}
-		mChecked = !startsChecked;
-		mStarted = true;
-		Set(startsChecked);
 	}
 }

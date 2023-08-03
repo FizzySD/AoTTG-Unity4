@@ -3,35 +3,25 @@ using UnityEngine;
 
 public class SmoothSyncMovement : Photon.MonoBehaviour
 {
-	private Vector3 correctCameraPos;
-
-	public Quaternion correctCameraRot;
-
-	private Vector3 correctPlayerPos = Vector3.zero;
-
-	private Quaternion correctPlayerRot = Quaternion.identity;
-
-	private Vector3 correctPlayerVelocity = Vector3.zero;
+	public float SmoothingDelay = 5f;
 
 	public bool disabled;
 
-	public bool noVelocity;
+	private Vector3 correctPlayerPos = Vector3.zero;
 
-	public bool PhotonCamera;
+	private Vector3 correctPlayerVelocity = Vector3.zero;
 
-	public float SmoothingDelay = 5f;
+	private Quaternion correctPlayerRot = Quaternion.identity;
 
 	public void Awake()
 	{
+		if (base.photonView == null || base.photonView.observed != this)
+		{
+			Debug.LogWarning(string.Concat(this, " is not observed by this object's photonView! OnPhotonSerializeView() in this class won't be used."));
+		}
 		if (IN_GAME_MAIN_CAMERA.gametype == GAMETYPE.SINGLE)
 		{
 			base.enabled = false;
-		}
-		correctPlayerPos = base.transform.position;
-		correctPlayerRot = base.transform.rotation;
-		if (base.rigidbody == null)
-		{
-			noVelocity = true;
 		}
 	}
 
@@ -41,27 +31,13 @@ public class SmoothSyncMovement : Photon.MonoBehaviour
 		{
 			stream.SendNext(base.transform.position);
 			stream.SendNext(base.transform.rotation);
-			if (!noVelocity)
-			{
-				stream.SendNext(base.rigidbody.velocity);
-			}
-			if (PhotonCamera)
-			{
-				stream.SendNext(Camera.main.transform.rotation);
-			}
+			stream.SendNext(base.rigidbody.velocity);
 		}
 		else
 		{
 			correctPlayerPos = (Vector3)stream.ReceiveNext();
 			correctPlayerRot = (Quaternion)stream.ReceiveNext();
-			if (!noVelocity)
-			{
-				correctPlayerVelocity = (Vector3)stream.ReceiveNext();
-			}
-			if (PhotonCamera)
-			{
-				correctCameraRot = (Quaternion)stream.ReceiveNext();
-			}
+			correctPlayerVelocity = (Vector3)stream.ReceiveNext();
 		}
 	}
 
@@ -71,10 +47,7 @@ public class SmoothSyncMovement : Photon.MonoBehaviour
 		{
 			base.transform.position = Vector3.Lerp(base.transform.position, correctPlayerPos, Time.deltaTime * SmoothingDelay);
 			base.transform.rotation = Quaternion.Lerp(base.transform.rotation, correctPlayerRot, Time.deltaTime * SmoothingDelay);
-			if (!noVelocity)
-			{
-				base.rigidbody.velocity = correctPlayerVelocity;
-			}
+			base.rigidbody.velocity = correctPlayerVelocity;
 		}
 	}
 }

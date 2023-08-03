@@ -8,33 +8,29 @@ namespace ExitGames.Client.Photon
 
 		private int timeOfLastSendCall;
 
-		public int OperationByteCount { get; set; }
+		public int OperationByteCount { get; internal set; }
 
-		public int OperationCount { get; set; }
+		public int OperationCount { get; internal set; }
 
-		public int ResultByteCount { get; set; }
+		public int ResultByteCount { get; internal set; }
 
-		public int ResultCount { get; set; }
+		public int ResultCount { get; internal set; }
 
-		public int EventByteCount { get; set; }
+		public int EventByteCount { get; internal set; }
 
-		public int EventCount { get; set; }
+		public int EventCount { get; internal set; }
 
-		public int LongestOpResponseCallback { get; set; }
+		public int LongestOpResponseCallback { get; internal set; }
 
-		public byte LongestOpResponseCallbackOpCode { get; set; }
+		public byte LongestOpResponseCallbackOpCode { get; internal set; }
 
-		public int LongestEventCallback { get; set; }
+		public int LongestEventCallback { get; internal set; }
 
-		public int LongestMessageCallback { get; set; }
+		public byte LongestEventCallbackCode { get; internal set; }
 
-		public int LongestRawMessageCallback { get; set; }
+		public int LongestDeltaBetweenDispatching { get; internal set; }
 
-		public byte LongestEventCallbackCode { get; set; }
-
-		public int LongestDeltaBetweenDispatching { get; set; }
-
-		public int LongestDeltaBetweenSending { get; set; }
+		public int LongestDeltaBetweenSending { get; internal set; }
 
 		[Obsolete("Use DispatchIncomingCommandsCalls, which has proper naming.")]
 		public int DispatchCalls
@@ -45,9 +41,9 @@ namespace ExitGames.Client.Photon
 			}
 		}
 
-		public int DispatchIncomingCommandsCalls { get; set; }
+		public int DispatchIncomingCommandsCalls { get; internal set; }
 
-		public int SendOutgoingCommandsCalls { get; set; }
+		public int SendOutgoingCommandsCalls { get; internal set; }
 
 		public int TotalByteCount
 		{
@@ -130,22 +126,6 @@ namespace ExitGames.Client.Photon
 			{
 				LongestEventCallback = time;
 				LongestEventCallbackCode = code;
-			}
-		}
-
-		internal void TimeForMessageCallback(int time)
-		{
-			if (time > LongestMessageCallback)
-			{
-				LongestMessageCallback = time;
-			}
-		}
-
-		internal void TimeForRawMessageCallback(int time)
-		{
-			if (time > LongestRawMessageCallback)
-			{
-				LongestRawMessageCallback = time;
 			}
 		}
 

@@ -1,12 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("NGUI/Interaction/Popup List")]
+[ExecuteInEditMode]
 public class UIPopupList : MonoBehaviour
 {
-	public delegate void OnSelectionChange(string item);
-
 	public enum Position
 	{
 		Auto = 0,
@@ -14,37 +12,55 @@ public class UIPopupList : MonoBehaviour
 		Below = 2
 	}
 
+	public delegate void OnSelectionChange(string item);
+
 	private const float animSpeed = 0.15f;
-
-	public UIAtlas atlas;
-
-	public Color backgroundColor = Color.white;
-
-	public string backgroundSprite;
 
 	public static UIPopupList current;
 
-	public GameObject eventReceiver;
+	public UIAtlas atlas;
 
 	public UIFont font;
 
-	public string functionName = "OnSelectionChange";
+	public UILabel textLabel;
 
-	public Color highlightColor = new Color(0.5960785f, 1f, 0.2f, 1f);
+	public string backgroundSprite;
 
 	public string highlightSprite;
+
+	public Position position;
+
+	public List<string> items = new List<string>();
+
+	public Vector2 padding = new Vector3(4f, 4f);
+
+	public float textScale = 1f;
+
+	public Color textColor = Color.white;
+
+	public Color backgroundColor = Color.white;
+
+	public Color highlightColor = new Color(0.59607846f, 1f, 0.2f, 1f);
 
 	public bool isAnimated = true;
 
 	public bool isLocalized;
 
-	public List<string> items = new List<string>();
+	public GameObject eventReceiver;
 
-	private UISprite mBackground;
+	public string functionName = "OnSelectionChange";
 
-	private float mBgBorder;
+	public OnSelectionChange onSelectionChange;
+
+	[SerializeField]
+	[HideInInspector]
+	private string mSelectedItem;
+
+	private UIPanel mPanel;
 
 	private GameObject mChild;
+
+	private UISprite mBackground;
 
 	private UISprite mHighlight;
 
@@ -52,44 +68,7 @@ public class UIPopupList : MonoBehaviour
 
 	private List<UILabel> mLabelList = new List<UILabel>();
 
-	private UIPanel mPanel;
-
-	[HideInInspector]
-	[SerializeField]
-	private string mSelectedItem;
-
-	public OnSelectionChange onSelectionChange;
-
-	public Vector2 padding = new Vector3(4f, 4f);
-
-	public Position position;
-
-	public Color textColor = Color.white;
-
-	public UILabel textLabel;
-
-	public float textScale = 1f;
-
-	private bool handleEvents
-	{
-		get
-		{
-			UIButtonKeys component = GetComponent<UIButtonKeys>();
-			if (!(component == null))
-			{
-				return !component.enabled;
-			}
-			return true;
-		}
-		set
-		{
-			UIButtonKeys component = GetComponent<UIButtonKeys>();
-			if (component != null)
-			{
-				component.enabled = !value;
-			}
-		}
-	}
+	private float mBgBorder;
 
 	public bool isOpen
 	{
@@ -132,40 +111,49 @@ public class UIPopupList : MonoBehaviour
 		}
 	}
 
-	private void Animate(UIWidget widget, bool placeAbove, float bottom)
+	private bool handleEvents
 	{
-		AnimateColor(widget);
-		AnimatePosition(widget, placeAbove, bottom);
-	}
-
-	private void AnimateColor(UIWidget widget)
-	{
-		Color color = widget.color;
-		widget.color = new Color(color.r, color.g, color.b, 0f);
-		TweenColor.Begin(widget.gameObject, 0.15f, color).method = UITweener.Method.EaseOut;
-	}
-
-	private void AnimatePosition(UIWidget widget, bool placeAbove, float bottom)
-	{
-		Vector3 localPosition = widget.cachedTransform.localPosition;
-		Vector3 localPosition2 = ((!placeAbove) ? new Vector3(localPosition.x, 0f, localPosition.z) : new Vector3(localPosition.x, bottom, localPosition.z));
-		widget.cachedTransform.localPosition = localPosition2;
-		TweenPosition.Begin(widget.gameObject, 0.15f, localPosition).method = UITweener.Method.EaseOut;
-	}
-
-	private void AnimateScale(UIWidget widget, bool placeAbove, float bottom)
-	{
-		GameObject go = widget.gameObject;
-		Transform cachedTransform = widget.cachedTransform;
-		float num = (float)font.size * textScale + mBgBorder * 2f;
-		Vector3 localScale = cachedTransform.localScale;
-		cachedTransform.localScale = new Vector3(localScale.x, num, localScale.z);
-		TweenScale.Begin(go, 0.15f, localScale).method = UITweener.Method.EaseOut;
-		if (placeAbove)
+		get
 		{
-			Vector3 localPosition = cachedTransform.localPosition;
-			cachedTransform.localPosition = new Vector3(localPosition.x, localPosition.y - localScale.y + num, localPosition.z);
-			TweenPosition.Begin(go, 0.15f, localPosition).method = UITweener.Method.EaseOut;
+			UIButtonKeys component = GetComponent<UIButtonKeys>();
+			return component == null || !component.enabled;
+		}
+		set
+		{
+			UIButtonKeys component = GetComponent<UIButtonKeys>();
+			if (component != null)
+			{
+				component.enabled = !value;
+			}
+		}
+	}
+
+	private void Start()
+	{
+		if (!(textLabel != null))
+		{
+			return;
+		}
+		if (string.IsNullOrEmpty(mSelectedItem))
+		{
+			if (items.Count > 0)
+			{
+				selection = items[0];
+			}
+		}
+		else
+		{
+			string text = mSelectedItem;
+			mSelectedItem = null;
+			selection = text;
+		}
+	}
+
+	private void OnLocalize(Localization loc)
+	{
+		if (isLocalized && textLabel != null)
+		{
+			textLabel.text = loc.Get(mSelectedItem);
 		}
 	}
 
@@ -176,7 +164,7 @@ public class UIPopupList : MonoBehaviour
 			return;
 		}
 		TweenPosition component = lbl.GetComponent<TweenPosition>();
-		if (!(component == null) && component.enabled)
+		if (component != null && component.enabled)
 		{
 			return;
 		}
@@ -196,6 +184,141 @@ public class UIPopupList : MonoBehaviour
 				TweenPosition.Begin(mHighlight.gameObject, 0.1f, vector).method = UITweener.Method.EaseOut;
 			}
 		}
+	}
+
+	private void OnItemHover(GameObject go, bool isOver)
+	{
+		if (isOver)
+		{
+			UILabel component = go.GetComponent<UILabel>();
+			Highlight(component, false);
+		}
+	}
+
+	private void Select(UILabel lbl, bool instant)
+	{
+		Highlight(lbl, instant);
+		UIEventListener component = lbl.gameObject.GetComponent<UIEventListener>();
+		selection = component.parameter as string;
+		UIButtonSound[] components = GetComponents<UIButtonSound>();
+		int i = 0;
+		for (int num = components.Length; i < num; i++)
+		{
+			UIButtonSound uIButtonSound = components[i];
+			if (uIButtonSound.trigger == UIButtonSound.Trigger.OnClick)
+			{
+				NGUITools.PlaySound(uIButtonSound.audioClip, uIButtonSound.volume, 1f);
+			}
+		}
+	}
+
+	private void OnItemPress(GameObject go, bool isPressed)
+	{
+		if (isPressed)
+		{
+			Select(go.GetComponent<UILabel>(), true);
+		}
+	}
+
+	private void OnKey(KeyCode key)
+	{
+		if (!base.enabled || !NGUITools.GetActive(base.gameObject) || !handleEvents)
+		{
+			return;
+		}
+		int num = mLabelList.IndexOf(mHighlightedLabel);
+		switch (key)
+		{
+		case KeyCode.UpArrow:
+			if (num > 0)
+			{
+				Select(mLabelList[--num], false);
+			}
+			break;
+		case KeyCode.DownArrow:
+			if (num + 1 < mLabelList.Count)
+			{
+				Select(mLabelList[++num], false);
+			}
+			break;
+		case KeyCode.Escape:
+			OnSelect(false);
+			break;
+		}
+	}
+
+	private void OnSelect(bool isSelected)
+	{
+		if (isSelected || !(mChild != null))
+		{
+			return;
+		}
+		mLabelList.Clear();
+		handleEvents = false;
+		if (isAnimated)
+		{
+			UIWidget[] componentsInChildren = mChild.GetComponentsInChildren<UIWidget>();
+			int i = 0;
+			for (int num = componentsInChildren.Length; i < num; i++)
+			{
+				UIWidget uIWidget = componentsInChildren[i];
+				Color color = uIWidget.color;
+				color.a = 0f;
+				TweenColor.Begin(uIWidget.gameObject, 0.15f, color).method = UITweener.Method.EaseOut;
+			}
+			Collider[] componentsInChildren2 = mChild.GetComponentsInChildren<Collider>();
+			int j = 0;
+			for (int num2 = componentsInChildren2.Length; j < num2; j++)
+			{
+				componentsInChildren2[j].enabled = false;
+			}
+			Object.Destroy(mChild, 0.15f);
+		}
+		else
+		{
+			Object.Destroy(mChild);
+		}
+		mBackground = null;
+		mHighlight = null;
+		mChild = null;
+	}
+
+	private void AnimateColor(UIWidget widget)
+	{
+		Color color = widget.color;
+		widget.color = new Color(color.r, color.g, color.b, 0f);
+		TweenColor.Begin(widget.gameObject, 0.15f, color).method = UITweener.Method.EaseOut;
+	}
+
+	private void AnimatePosition(UIWidget widget, bool placeAbove, float bottom)
+	{
+		Vector3 localPosition = widget.cachedTransform.localPosition;
+		Vector3 localPosition2 = ((!placeAbove) ? new Vector3(localPosition.x, 0f, localPosition.z) : new Vector3(localPosition.x, bottom, localPosition.z));
+		widget.cachedTransform.localPosition = localPosition2;
+		GameObject go = widget.gameObject;
+		TweenPosition.Begin(go, 0.15f, localPosition).method = UITweener.Method.EaseOut;
+	}
+
+	private void AnimateScale(UIWidget widget, bool placeAbove, float bottom)
+	{
+		GameObject go = widget.gameObject;
+		Transform cachedTransform = widget.cachedTransform;
+		float num = (float)font.size * textScale + mBgBorder * 2f;
+		Vector3 localScale = cachedTransform.localScale;
+		cachedTransform.localScale = new Vector3(localScale.x, num, localScale.z);
+		TweenScale.Begin(go, 0.15f, localScale).method = UITweener.Method.EaseOut;
+		if (placeAbove)
+		{
+			Vector3 localPosition = cachedTransform.localPosition;
+			cachedTransform.localPosition = new Vector3(localPosition.x, localPosition.y - localScale.y + num, localPosition.z);
+			TweenPosition.Begin(go, 0.15f, localPosition).method = UITweener.Method.EaseOut;
+		}
+	}
+
+	private void Animate(UIWidget widget, bool placeAbove, float bottom)
+	{
+		AnimateColor(widget);
+		AnimatePosition(widget, placeAbove, bottom);
 	}
 
 	private void OnClick()
@@ -244,7 +367,7 @@ public class UIPopupList : MonoBehaviour
 				UILabel uILabel = NGUITools.AddWidget<UILabel>(mChild);
 				uILabel.pivot = UIWidget.Pivot.TopLeft;
 				uILabel.font = font;
-				uILabel.text = ((!isLocalized || Localization.instance == null) ? text : Localization.instance.Get(text));
+				uILabel.text = ((!isLocalized || !(Localization.instance != null)) ? text : Localization.instance.Get(text));
 				uILabel.color = textColor;
 				uILabel.cachedTransform.localPosition = new Vector3(border.x + padding.x, num3, -1f);
 				uILabel.MakePixelPerfect();
@@ -312,132 +435,6 @@ public class UIPopupList : MonoBehaviour
 		else
 		{
 			OnSelect(false);
-		}
-	}
-
-	private void OnItemHover(GameObject go, bool isOver)
-	{
-		if (isOver)
-		{
-			UILabel component = go.GetComponent<UILabel>();
-			Highlight(component, false);
-		}
-	}
-
-	private void OnItemPress(GameObject go, bool isPressed)
-	{
-		if (isPressed)
-		{
-			Select(go.GetComponent<UILabel>(), true);
-		}
-	}
-
-	private void OnKey(KeyCode key)
-	{
-		if (!base.enabled || !NGUITools.GetActive(base.gameObject) || !handleEvents)
-		{
-			return;
-		}
-		int num = mLabelList.IndexOf(mHighlightedLabel);
-		switch (key)
-		{
-		case KeyCode.UpArrow:
-			if (num > 0)
-			{
-				Select(mLabelList[--num], false);
-			}
-			break;
-		case KeyCode.DownArrow:
-			if (num + 1 < mLabelList.Count)
-			{
-				Select(mLabelList[++num], false);
-			}
-			break;
-		case KeyCode.Escape:
-			OnSelect(false);
-			break;
-		}
-	}
-
-	private void OnLocalize(Localization loc)
-	{
-		if (isLocalized && textLabel != null)
-		{
-			textLabel.text = loc.Get(mSelectedItem);
-		}
-	}
-
-	private void OnSelect(bool isSelected)
-	{
-		if (isSelected || !(mChild != null))
-		{
-			return;
-		}
-		mLabelList.Clear();
-		handleEvents = false;
-		if (isAnimated)
-		{
-			UIWidget[] componentsInChildren = mChild.GetComponentsInChildren<UIWidget>();
-			int i = 0;
-			for (int num = componentsInChildren.Length; i < num; i++)
-			{
-				UIWidget uIWidget = componentsInChildren[i];
-				Color color = uIWidget.color;
-				color.a = 0f;
-				TweenColor.Begin(uIWidget.gameObject, 0.15f, color).method = UITweener.Method.EaseOut;
-			}
-			Collider[] componentsInChildren2 = mChild.GetComponentsInChildren<Collider>();
-			int j = 0;
-			for (int num2 = componentsInChildren2.Length; j < num2; j++)
-			{
-				componentsInChildren2[j].enabled = false;
-			}
-			Object.Destroy(mChild, 0.15f);
-		}
-		else
-		{
-			Object.Destroy(mChild);
-		}
-		mBackground = null;
-		mHighlight = null;
-		mChild = null;
-	}
-
-	private void Select(UILabel lbl, bool instant)
-	{
-		Highlight(lbl, instant);
-		UIEventListener component = lbl.gameObject.GetComponent<UIEventListener>();
-		selection = component.parameter as string;
-		UIButtonSound[] components = GetComponents<UIButtonSound>();
-		int i = 0;
-		for (int num = components.Length; i < num; i++)
-		{
-			UIButtonSound uIButtonSound = components[i];
-			if (uIButtonSound.trigger == UIButtonSound.Trigger.OnClick)
-			{
-				NGUITools.PlaySound(uIButtonSound.audioClip, uIButtonSound.volume, 1f);
-			}
-		}
-	}
-
-	private void Start()
-	{
-		if (!(textLabel != null))
-		{
-			return;
-		}
-		if (string.IsNullOrEmpty(mSelectedItem))
-		{
-			if (items.Count > 0)
-			{
-				selection = items[0];
-			}
-		}
-		else
-		{
-			string text = mSelectedItem;
-			mSelectedItem = null;
-			selection = text;
 		}
 	}
 }

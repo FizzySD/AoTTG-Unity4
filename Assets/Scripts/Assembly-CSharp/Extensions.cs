@@ -4,39 +4,9 @@ using UnityEngine;
 
 public static class Extensions
 {
-	public static bool AlmostEquals(this float target, float second, float floatDiff)
+	public static PhotonView[] GetPhotonViewsInChildren(this GameObject go)
 	{
-		return Mathf.Abs(target - second) < floatDiff;
-	}
-
-	public static bool AlmostEquals(this Quaternion target, Quaternion second, float maxAngle)
-	{
-		return Quaternion.Angle(target, second) < maxAngle;
-	}
-
-	public static bool AlmostEquals(this Vector2 target, Vector2 second, float sqrMagnitudePrecision)
-	{
-		return (target - second).sqrMagnitude < sqrMagnitudePrecision;
-	}
-
-	public static bool AlmostEquals(this Vector3 target, Vector3 second, float sqrMagnitudePrecision)
-	{
-		return (target - second).sqrMagnitude < sqrMagnitudePrecision;
-	}
-
-	public static bool Contains(this int[] target, int nr)
-	{
-		if (target != null)
-		{
-			for (int i = 0; i < target.Length; i++)
-			{
-				if (target[i] == nr)
-				{
-					return true;
-				}
-			}
-		}
-		return false;
+		return go.GetComponentsInChildren<PhotonView>(true);
 	}
 
 	public static PhotonView GetPhotonView(this GameObject go)
@@ -44,9 +14,24 @@ public static class Extensions
 		return go.GetComponent<PhotonView>();
 	}
 
-	public static PhotonView[] GetPhotonViewsInChildren(this GameObject go)
+	public static bool AlmostEquals(this Vector3 target, Vector3 second, float sqrMagnitudePrecision)
 	{
-		return go.GetComponentsInChildren<PhotonView>(true);
+		return (target - second).sqrMagnitude < sqrMagnitudePrecision;
+	}
+
+	public static bool AlmostEquals(this Vector2 target, Vector2 second, float sqrMagnitudePrecision)
+	{
+		return (target - second).sqrMagnitude < sqrMagnitudePrecision;
+	}
+
+	public static bool AlmostEquals(this Quaternion target, Quaternion second, float maxAngle)
+	{
+		return Quaternion.Angle(target, second) < maxAngle;
+	}
+
+	public static bool AlmostEquals(this float target, float second, float floatDiff)
+	{
+		return Mathf.Abs(target - second) < floatDiff;
 	}
 
 	public static void Merge(this IDictionary target, IDictionary addHash)
@@ -76,6 +61,24 @@ public static class Extensions
 		}
 	}
 
+	public static string ToStringFull(this IDictionary origin)
+	{
+		return SupportClass.DictionaryToString(origin, false);
+	}
+
+	public static ExitGames.Client.Photon.Hashtable StripToStringKeys(this IDictionary original)
+	{
+		ExitGames.Client.Photon.Hashtable hashtable = new ExitGames.Client.Photon.Hashtable();
+		foreach (DictionaryEntry item in original)
+		{
+			if (item.Key is string)
+			{
+				hashtable[item.Key] = item.Value;
+			}
+		}
+		return hashtable;
+	}
+
 	public static void StripKeysWithNullValues(this IDictionary original)
 	{
 		object[] array = new object[original.Count];
@@ -93,21 +96,19 @@ public static class Extensions
 		}
 	}
 
-	public static ExitGames.Client.Photon.Hashtable StripToStringKeys(this IDictionary original)
+	public static bool Contains(this int[] target, int nr)
 	{
-		ExitGames.Client.Photon.Hashtable hashtable = new ExitGames.Client.Photon.Hashtable();
-		foreach (DictionaryEntry item in original)
+		if (target == null)
 		{
-			if (item.Key is string)
+			return false;
+		}
+		for (int i = 0; i < target.Length; i++)
+		{
+			if (target[i] == nr)
 			{
-				hashtable[item.Key] = item.Value;
+				return true;
 			}
 		}
-		return hashtable;
-	}
-
-	public static string ToStringFull(this IDictionary origin)
-	{
-		return SupportClass.DictionaryToString(origin, false);
+		return false;
 	}
 }

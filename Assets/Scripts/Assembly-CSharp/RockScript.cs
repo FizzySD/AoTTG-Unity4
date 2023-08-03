@@ -4,15 +4,15 @@ public class RockScript : MonoBehaviour
 {
 	private Vector3 desPt = new Vector3(-200f, 0f, -280f);
 
+	private Vector3 vh;
+
+	private Vector3 vv;
+
 	private bool disable;
 
 	private float g = 500f;
 
 	private float speed = 800f;
-
-	private Vector3 vh;
-
-	private Vector3 vv;
 
 	private void Start()
 	{

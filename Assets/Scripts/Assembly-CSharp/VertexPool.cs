@@ -4,15 +4,15 @@ public class VertexPool
 {
 	public class VertexSegment
 	{
-		public int IndexCount;
+		public int VertStart;
 
 		public int IndexStart;
 
-		public VertexPool Pool;
-
 		public int VertCount;
 
-		public int VertStart;
+		public int IndexCount;
+
+		public VertexPool Pool;
 
 		public VertexSegment(int start, int count, int istart, int icount, VertexPool pool)
 		{
@@ -26,41 +26,41 @@ public class VertexPool
 
 	public const int BlockSize = 36;
 
-	public float BoundsScheduleTime = 1f;
-
-	public bool ColorChanged;
-
-	public Color[] Colors;
-
-	public float ElapsedTime;
-
-	protected bool FirstUpdate = true;
-
-	protected int IndexTotal;
-
-	protected int IndexUsed;
-
-	public bool IndiceChanged;
+	public Vector3[] Vertices;
 
 	public int[] Indices;
 
-	public Material Material;
+	public Vector2[] UVs;
 
-	public Mesh Mesh;
+	public Color[] Colors;
+
+	public bool IndiceChanged;
+
+	public bool ColorChanged;
 
 	public bool UVChanged;
 
-	public Vector2[] UVs;
-
 	public bool VertChanged;
 
-	protected bool VertCountChanged;
+	public Mesh Mesh;
+
+	public Material Material;
 
 	protected int VertexTotal;
 
 	protected int VertexUsed;
 
-	public Vector3[] Vertices;
+	protected int IndexTotal;
+
+	protected int IndexUsed;
+
+	protected bool FirstUpdate = true;
+
+	protected bool VertCountChanged;
+
+	public float BoundsScheduleTime = 1f;
+
+	public float ElapsedTime;
 
 	public VertexPool(Mesh mesh, Material material)
 	{
@@ -76,35 +76,21 @@ public class VertexPool
 		IndiceChanged = (ColorChanged = (UVChanged = (VertChanged = true)));
 	}
 
-	public RibbonTrail AddRibbonTrail(float width, int maxelemnt, float len, Vector3 pos, int stretchType, float maxFps)
+	public void RecalculateBounds()
 	{
-		return new RibbonTrail(GetVertices(maxelemnt * 2, (maxelemnt - 1) * 6), width, maxelemnt, len, pos, stretchType, maxFps);
+		Mesh.RecalculateBounds();
 	}
 
 	public Sprite AddSprite(float width, float height, STYPE type, ORIPOINT ori, Camera cam, int uvStretch, float maxFps)
 	{
-		return new Sprite(GetVertices(4, 6), width, height, type, ori, cam, uvStretch, maxFps);
+		VertexSegment vertices = GetVertices(4, 6);
+		return new Sprite(vertices, width, height, type, ori, cam, uvStretch, maxFps);
 	}
 
-	public void EnlargeArrays(int count, int icount)
+	public RibbonTrail AddRibbonTrail(float width, int maxelemnt, float len, Vector3 pos, int stretchType, float maxFps)
 	{
-		Vector3[] vertices = Vertices;
-		Vertices = new Vector3[Vertices.Length + count];
-		vertices.CopyTo(Vertices, 0);
-		Vector2[] uVs = UVs;
-		UVs = new Vector2[UVs.Length + count];
-		uVs.CopyTo(UVs, 0);
-		Color[] colors = Colors;
-		Colors = new Color[Colors.Length + count];
-		colors.CopyTo(Colors, 0);
-		int[] indices = Indices;
-		Indices = new int[Indices.Length + icount];
-		indices.CopyTo(Indices, 0);
-		VertCountChanged = true;
-		IndiceChanged = true;
-		ColorChanged = true;
-		UVChanged = true;
-		VertChanged = true;
+		VertexSegment vertices = GetVertices(maxelemnt * 2, (maxelemnt - 1) * 6);
+		return new RibbonTrail(vertices, width, maxelemnt, len, pos, stretchType, maxFps);
 	}
 
 	public Material GetMaterial()
@@ -145,6 +131,27 @@ public class VertexPool
 		IndexTotal = 6;
 	}
 
+	public void EnlargeArrays(int count, int icount)
+	{
+		Vector3[] vertices = Vertices;
+		Vertices = new Vector3[Vertices.Length + count];
+		vertices.CopyTo(Vertices, 0);
+		Vector2[] uVs = UVs;
+		UVs = new Vector2[UVs.Length + count];
+		uVs.CopyTo(UVs, 0);
+		Color[] colors = Colors;
+		Colors = new Color[Colors.Length + count];
+		colors.CopyTo(Colors, 0);
+		int[] indices = Indices;
+		Indices = new int[Indices.Length + icount];
+		indices.CopyTo(Indices, 0);
+		VertCountChanged = true;
+		IndiceChanged = true;
+		ColorChanged = true;
+		UVChanged = true;
+		VertChanged = true;
+	}
+
 	public void LateUpdate()
 	{
 		if (VertCountChanged)
@@ -179,10 +186,5 @@ public class VertexPool
 		ColorChanged = false;
 		UVChanged = false;
 		VertChanged = false;
-	}
-
-	public void RecalculateBounds()
-	{
-		Mesh.RecalculateBounds();
 	}
 }

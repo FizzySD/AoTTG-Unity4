@@ -3,15 +3,23 @@ using Xft;
 
 public class XWeaponTrailDemo : MonoBehaviour
 {
-	public XWeaponTrail ProTrailDistort;
+	public Animation SwordAnimation;
 
-	public XWeaponTrail ProTraillong;
+	public XWeaponTrail ProTrailDistort;
 
 	public XWeaponTrail ProTrailShort;
 
+	public XWeaponTrail ProTraillong;
+
 	public XWeaponTrail SimpleTrail;
 
-	public Animation SwordAnimation;
+	public void Start()
+	{
+		ProTrailDistort.Init();
+		ProTrailShort.Init();
+		ProTraillong.Init();
+		SimpleTrail.Init();
+	}
 
 	private void OnGUI()
 	{
@@ -51,13 +59,5 @@ public class XWeaponTrailDemo : MonoBehaviour
 			ProTrailShort.StopSmoothly(0.3f);
 			ProTraillong.StopSmoothly(0.3f);
 		}
-	}
-
-	public void Start()
-	{
-		ProTrailDistort.Init();
-		ProTrailShort.Init();
-		ProTraillong.Init();
-		SimpleTrail.Init();
 	}
 }

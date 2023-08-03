@@ -2,8 +2,8 @@ namespace AnimationOrTween
 {
 	public enum Direction
 	{
-		Forward = 1,
 		Reverse = -1,
-		Toggle = 0
+		Toggle = 0,
+		Forward = 1
 	}
 }

@@ -14,55 +14,39 @@ public class UISlider : IgnoreTimeScale
 
 	public static UISlider current;
 
+	public Transform foreground;
+
+	public Transform thumb;
+
 	public Direction direction;
 
 	public GameObject eventReceiver;
 
-	public Transform foreground;
-
 	public string functionName = "OnSliderChange";
 
-	private Vector2 mCenter = Vector3.zero;
-
-	private BoxCollider mCol;
-
-	private UISprite mFGFilled;
-
-	private Transform mFGTrans;
-
-	private UIWidget mFGWidget;
-
-	private bool mInitDone;
-
-	private Vector2 mSize = Vector2.zero;
-
-	private Transform mTrans;
+	public OnValueChange onValueChange;
 
 	public int numberOfSteps;
-
-	public OnValueChange onValueChange;
 
 	[HideInInspector]
 	[SerializeField]
 	private float rawValue = 1f;
 
-	public Transform thumb;
+	private BoxCollider mCol;
 
-	public Vector2 fullSize
-	{
-		get
-		{
-			return mSize;
-		}
-		set
-		{
-			if (mSize != value)
-			{
-				mSize = value;
-				ForceUpdate();
-			}
-		}
-	}
+	private Transform mTrans;
+
+	private Transform mFGTrans;
+
+	private UIWidget mFGWidget;
+
+	private UISprite mFGFilled;
+
+	private bool mInitDone;
+
+	private Vector2 mSize = Vector2.zero;
+
+	private Vector2 mCenter = Vector3.zero;
 
 	public float sliderValue
 	{
@@ -81,15 +65,20 @@ public class UISlider : IgnoreTimeScale
 		}
 	}
 
-	private void Awake()
+	public Vector2 fullSize
 	{
-		mTrans = base.transform;
-		mCol = base.collider as BoxCollider;
-	}
-
-	public void ForceUpdate()
-	{
-		Set(rawValue, true);
+		get
+		{
+			return mSize;
+		}
+		set
+		{
+			if (mSize != value)
+			{
+				mSize = value;
+				ForceUpdate();
+			}
+		}
 	}
 
 	private void Init()
@@ -98,7 +87,7 @@ public class UISlider : IgnoreTimeScale
 		if (foreground != null)
 		{
 			mFGWidget = foreground.GetComponent<UIWidget>();
-			mFGFilled = ((mFGWidget == null) ? null : (mFGWidget as UISprite));
+			mFGFilled = ((!(mFGWidget != null)) ? null : (mFGWidget as UISprite));
 			mFGTrans = foreground.transform;
 			if (mSize == Vector2.zero)
 			{
@@ -126,9 +115,43 @@ public class UISlider : IgnoreTimeScale
 		}
 	}
 
+	private void Awake()
+	{
+		mTrans = base.transform;
+		mCol = base.collider as BoxCollider;
+	}
+
+	private void Start()
+	{
+		Init();
+		if (Application.isPlaying && thumb != null && thumb.collider != null)
+		{
+			UIEventListener uIEventListener = UIEventListener.Get(thumb.gameObject);
+			uIEventListener.onPress = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener.onPress, new UIEventListener.BoolDelegate(OnPressThumb));
+			uIEventListener.onDrag = (UIEventListener.VectorDelegate)Delegate.Combine(uIEventListener.onDrag, new UIEventListener.VectorDelegate(OnDragThumb));
+		}
+		Set(rawValue, true);
+	}
+
+	private void OnPress(bool pressed)
+	{
+		if (pressed && UICamera.currentTouchID != -100)
+		{
+			UpdateDrag();
+		}
+	}
+
 	private void OnDrag(Vector2 delta)
 	{
 		UpdateDrag();
+	}
+
+	private void OnPressThumb(GameObject go, bool pressed)
+	{
+		if (pressed)
+		{
+			UpdateDrag();
+		}
 	}
 
 	private void OnDragThumb(GameObject go, Vector2 delta)
@@ -138,7 +161,7 @@ public class UISlider : IgnoreTimeScale
 
 	private void OnKey(KeyCode key)
 	{
-		float num = (((float)numberOfSteps <= 1f) ? 0.125f : (1f / (float)(numberOfSteps - 1)));
+		float num = ((!((float)numberOfSteps > 1f)) ? 0.125f : (1f / (float)(numberOfSteps - 1)));
 		if (direction == Direction.Horizontal)
 		{
 			switch (key)
@@ -165,19 +188,21 @@ public class UISlider : IgnoreTimeScale
 		}
 	}
 
-	private void OnPress(bool pressed)
+	private void UpdateDrag()
 	{
-		if (pressed && UICamera.currentTouchID != -100)
+		if (!(mCol == null) && !(UICamera.currentCamera == null) && UICamera.currentTouch != null)
 		{
-			UpdateDrag();
-		}
-	}
-
-	private void OnPressThumb(GameObject go, bool pressed)
-	{
-		if (pressed)
-		{
-			UpdateDrag();
+			UICamera.currentTouch.clickNotification = UICamera.ClickNotification.None;
+			Ray ray = UICamera.currentCamera.ScreenPointToRay(UICamera.currentTouch.pos);
+			float enter;
+			if (new Plane(mTrans.rotation * Vector3.back, mTrans.position).Raycast(ray, out enter))
+			{
+				Vector3 vector = mTrans.localPosition + (Vector3)(mCenter - mSize * 0.5f);
+				Vector3 vector2 = mTrans.localPosition - vector;
+				Vector3 vector3 = mTrans.InverseTransformPoint(ray.GetPoint(enter));
+				Vector3 vector4 = vector3 + vector2;
+				Set((direction != 0) ? (vector4.y / mSize.y) : (vector4.x / mSize.x), false);
+			}
 		}
 	}
 
@@ -268,32 +293,8 @@ public class UISlider : IgnoreTimeScale
 		current = null;
 	}
 
-	private void Start()
+	public void ForceUpdate()
 	{
-		Init();
-		if (Application.isPlaying && thumb != null && thumb.collider != null)
-		{
-			UIEventListener uIEventListener = UIEventListener.Get(thumb.gameObject);
-			uIEventListener.onPress = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener.onPress, new UIEventListener.BoolDelegate(OnPressThumb));
-			uIEventListener.onDrag = (UIEventListener.VectorDelegate)Delegate.Combine(uIEventListener.onDrag, new UIEventListener.VectorDelegate(OnDragThumb));
-		}
 		Set(rawValue, true);
-	}
-
-	private void UpdateDrag()
-	{
-		if (mCol != null && UICamera.currentCamera != null && UICamera.currentTouch != null)
-		{
-			UICamera.currentTouch.clickNotification = UICamera.ClickNotification.None;
-			Ray ray = UICamera.currentCamera.ScreenPointToRay(UICamera.currentTouch.pos);
-			float enter;
-			if (new Plane(mTrans.rotation * Vector3.back, mTrans.position).Raycast(ray, out enter))
-			{
-				Vector3 vector = mTrans.localPosition + (Vector3)(mCenter - mSize * 0.5f);
-				Vector3 vector2 = mTrans.localPosition - vector;
-				Vector3 vector3 = mTrans.InverseTransformPoint(ray.GetPoint(enter)) + vector2;
-				Set((direction != 0) ? (vector3.y / mSize.y) : (vector3.x / mSize.x), false);
-			}
-		}
 	}
 }

@@ -4,9 +4,9 @@ public class AnimatedAlpha : MonoBehaviour
 {
 	public float alpha = 1f;
 
-	private UIPanel mPanel;
-
 	private UIWidget mWidget;
+
+	private UIPanel mPanel;
 
 	private void Awake()
 	{

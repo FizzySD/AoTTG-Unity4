@@ -1,19 +1,28 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Camera))]
-[AddComponentMenu("NGUI/UI/Viewport Camera")]
 [ExecuteInEditMode]
+[AddComponentMenu("NGUI/UI/Viewport Camera")]
+[RequireComponent(typeof(Camera))]
 public class UIViewport : MonoBehaviour
 {
+	public Camera sourceCamera;
+
+	public Transform topLeft;
+
 	public Transform bottomRight;
 
 	public float fullSize = 1f;
 
 	private Camera mCam;
 
-	public Camera sourceCamera;
-
-	public Transform topLeft;
+	private void Start()
+	{
+		mCam = base.camera;
+		if (sourceCamera == null)
+		{
+			sourceCamera = Camera.main;
+		}
+	}
 
 	private void LateUpdate()
 	{
@@ -31,15 +40,6 @@ public class UIViewport : MonoBehaviour
 			{
 				mCam.orthographicSize = num;
 			}
-		}
-	}
-
-	private void Start()
-	{
-		mCam = base.camera;
-		if (sourceCamera == null)
-		{
-			sourceCamera = Camera.main;
 		}
 	}
 }

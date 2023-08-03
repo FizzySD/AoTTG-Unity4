@@ -3,30 +3,30 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Button Offset")]
 public class UIButtonOffset : MonoBehaviour
 {
-	public float duration = 0.2f;
+	public Transform tweenTarget;
 
 	public Vector3 hover = Vector3.zero;
 
-	private bool mHighlighted;
+	public Vector3 pressed = new Vector3(2f, -2f);
+
+	public float duration = 0.2f;
 
 	private Vector3 mPos;
 
 	private bool mStarted;
 
-	public Vector3 pressed = new Vector3(2f, -2f);
+	private bool mHighlighted;
 
-	public Transform tweenTarget;
-
-	private void OnDisable()
+	private void Start()
 	{
-		if (mStarted && tweenTarget != null)
+		if (!mStarted)
 		{
-			TweenPosition component = tweenTarget.GetComponent<TweenPosition>();
-			if (component != null)
+			mStarted = true;
+			if (tweenTarget == null)
 			{
-				component.position = mPos;
-				component.enabled = false;
+				tweenTarget = base.transform;
 			}
+			mPos = tweenTarget.localPosition;
 		}
 	}
 
@@ -38,16 +38,16 @@ public class UIButtonOffset : MonoBehaviour
 		}
 	}
 
-	private void OnHover(bool isOver)
+	private void OnDisable()
 	{
-		if (base.enabled)
+		if (mStarted && tweenTarget != null)
 		{
-			if (!mStarted)
+			TweenPosition component = tweenTarget.GetComponent<TweenPosition>();
+			if (component != null)
 			{
-				Start();
+				component.position = mPos;
+				component.enabled = false;
 			}
-			TweenPosition.Begin(tweenTarget.gameObject, duration, (!isOver) ? mPos : (mPos + hover)).method = UITweener.Method.EaseInOut;
-			mHighlighted = isOver;
 		}
 	}
 
@@ -63,16 +63,16 @@ public class UIButtonOffset : MonoBehaviour
 		}
 	}
 
-	private void Start()
+	private void OnHover(bool isOver)
 	{
-		if (!mStarted)
+		if (base.enabled)
 		{
-			mStarted = true;
-			if (tweenTarget == null)
+			if (!mStarted)
 			{
-				tweenTarget = base.transform;
+				Start();
 			}
-			mPos = tweenTarget.localPosition;
+			TweenPosition.Begin(tweenTarget.gameObject, duration, (!isOver) ? mPos : (mPos + hover)).method = UITweener.Method.EaseInOut;
+			mHighlighted = isOver;
 		}
 	}
 }

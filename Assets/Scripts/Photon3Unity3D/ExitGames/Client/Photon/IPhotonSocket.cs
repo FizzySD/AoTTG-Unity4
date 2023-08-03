@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 
@@ -7,9 +6,7 @@ namespace ExitGames.Client.Photon
 {
 	public abstract class IPhotonSocket
 	{
-		protected internal PeerBase peerBase;
-
-		protected readonly ConnectionProtocol Protocol;
+		internal PeerBase peerBase;
 
 		public bool PollReceive;
 
@@ -21,15 +18,13 @@ namespace ExitGames.Client.Photon
 			}
 		}
 
-		protected internal int MTU
-		{
-			get
-			{
-				return peerBase.mtu;
-			}
-		}
+		public ConnectionProtocol Protocol { get; protected set; }
 
 		public PhotonSocketState State { get; protected set; }
+
+		public string ServerAddress { get; protected set; }
+
+		public int ServerPort { get; protected set; }
 
 		public bool Connected
 		{
@@ -39,37 +34,11 @@ namespace ExitGames.Client.Photon
 			}
 		}
 
-		public string ConnectAddress
+		public int MTU
 		{
 			get
 			{
-				return peerBase.ServerAddress;
-			}
-		}
-
-		public string ServerAddress { get; protected set; }
-
-		public string ProxyServerAddress { get; protected set; }
-
-		public static string ServerIpAddress { get; protected set; }
-
-		public int ServerPort { get; protected set; }
-
-		public bool AddressResolvedAsIpv6 { get; protected internal set; }
-
-		public string UrlProtocol { get; protected set; }
-
-		public string UrlPath { get; protected set; }
-
-		protected internal string SerializationProtocol
-		{
-			get
-			{
-				if (peerBase == null || peerBase.photonPeer == null)
-				{
-					return "GpBinaryV18";
-				}
-				return Enum.GetName(typeof(SerializationProtocol), peerBase.photonPeer.SerializationProtocolType);
+				return peerBase.mtu;
 			}
 		}
 
@@ -79,7 +48,6 @@ namespace ExitGames.Client.Photon
 			{
 				throw new Exception("Can't init without peer");
 			}
-			Protocol = peerBase.usedTransportProtocol;
 			this.peerBase = peerBase;
 		}
 
@@ -93,15 +61,13 @@ namespace ExitGames.Client.Photon
 				}
 				return false;
 			}
-			if (peerBase == null || Protocol != peerBase.usedTransportProtocol)
+			if (peerBase == null || Protocol != peerBase.usedProtocol)
 			{
 				return false;
 			}
 			string address;
 			ushort port;
-			string urlProtocol;
-			string urlPath;
-			if (!TryParseAddress(peerBase.ServerAddress, out address, out port, out urlProtocol, out urlPath))
+			if (!TryParseAddress(peerBase.ServerAddress, out address, out port))
 			{
 				if ((int)peerBase.debugOut >= 1)
 				{
@@ -109,15 +75,8 @@ namespace ExitGames.Client.Photon
 				}
 				return false;
 			}
-			ServerIpAddress = string.Empty;
 			ServerAddress = address;
 			ServerPort = port;
-			UrlProtocol = urlProtocol;
-			UrlPath = urlPath;
-			if ((int)peerBase.debugOut >= 5)
-			{
-				Listener.DebugReturn(DebugLevel.ALL, "IPhotonSocket.Connect() " + ServerAddress + ":" + ServerPort + " this.Protocol: " + Protocol);
-			}
 			return true;
 		}
 
@@ -133,13 +92,19 @@ namespace ExitGames.Client.Photon
 			{
 				if (willBeReused)
 				{
-					byte[] array = new byte[length];
-					Buffer.BlockCopy(inBuffer, 0, array, 0, length);
-					peerBase.ReceiveNetworkSimulated(array);
+					byte[] inBufferCopy = new byte[length];
+					Buffer.BlockCopy(inBuffer, 0, inBufferCopy, 0, length);
+					peerBase.ReceiveNetworkSimulated(delegate
+					{
+						peerBase.ReceiveIncomingCommands(inBufferCopy, length);
+					});
 				}
 				else
 				{
-					peerBase.ReceiveNetworkSimulated(inBuffer);
+					peerBase.ReceiveNetworkSimulated(delegate
+					{
+						peerBase.ReceiveIncomingCommands(inBuffer, length);
+					});
 				}
 			}
 			else
@@ -168,117 +133,41 @@ namespace ExitGames.Client.Photon
 			});
 		}
 
-		protected internal bool TryParseAddress(string url, out string address, out ushort port, out string urlProtocol, out string urlPath)
+		protected internal bool TryParseAddress(string addressAndPort, out string address, out ushort port)
 		{
 			address = string.Empty;
 			port = 0;
-			urlProtocol = string.Empty;
-			urlPath = string.Empty;
-			string text = url;
-			if (string.IsNullOrEmpty(text))
+			if (string.IsNullOrEmpty(addressAndPort))
 			{
 				return false;
 			}
-			int num = text.IndexOf("://");
-			if (num >= 0)
-			{
-				urlProtocol = text.Substring(0, num);
-				text = text.Substring(num + 3);
-			}
-			num = text.IndexOf("/");
-			if (num >= 0)
-			{
-				urlPath = text.Substring(num);
-				text = text.Substring(0, num);
-			}
-			num = text.LastIndexOf(':');
-			if (num < 0)
+			string[] array = addressAndPort.Split(':');
+			if (array.Length != 2)
 			{
 				return false;
 			}
-			if (text.IndexOf(':') != num && (!text.Contains("[") || !text.Contains("]")))
-			{
-				return false;
-			}
-			address = text.Substring(0, num);
-			string s = text.Substring(num + 1);
-			return ushort.TryParse(s, out port);
+			address = array[0];
+			return ushort.TryParse(array[1], out port);
 		}
 
-		protected internal bool IsIpv6SimpleCheck(IPAddress address)
-		{
-			return address != null && address.ToString().Contains(":");
-		}
-
-		protected internal IPAddress[] GetIpAddresses(string hostname)
+		protected internal static IPAddress GetIpAddress(string serverIp)
 		{
 			IPAddress address = null;
-			if (IPAddress.TryParse(hostname, out address))
+			if (IPAddress.TryParse(serverIp, out address))
 			{
-				return new IPAddress[1] { address };
+				return address;
 			}
-			IPAddress[] addressList;
-			try
-			{
-				IPHostEntry hostEntry = Dns.GetHostEntry(ServerAddress);
-				addressList = hostEntry.AddressList;
-			}
-			catch (Exception ex)
-			{
-				if (ReportDebugOfLevel(DebugLevel.ERROR))
-				{
-					EnqueueDebugReturn(DebugLevel.ERROR, "DNS.GetHostEntry() failed for: " + ServerAddress + ". Exception: " + ex);
-				}
-				HandleException(StatusCode.ExceptionOnConnect);
-				return null;
-			}
-			Array.Sort(addressList, AddressSortComparer);
-			if (ReportDebugOfLevel(DebugLevel.INFO))
-			{
-				string[] value = addressList.Select((IPAddress x) => string.Concat(x.ToString(), " (", x.AddressFamily, ")")).ToArray();
-				string text = string.Join(", ", value);
-				if (ReportDebugOfLevel(DebugLevel.INFO))
-				{
-					EnqueueDebugReturn(DebugLevel.INFO, ServerAddress + " resolved to these addresses: " + text);
-				}
-			}
-			return addressList;
-		}
-
-		private int AddressSortComparer(IPAddress x, IPAddress y)
-		{
-			if (x.AddressFamily == y.AddressFamily)
-			{
-				return 0;
-			}
-			return (x.AddressFamily != AddressFamily.InterNetworkV6) ? 1 : (-1);
-		}
-
-		[Obsolete("Use GetIpAddresses instead.")]
-		protected internal static IPAddress GetIpAddress(string address)
-		{
-			IPAddress address2 = null;
-			if (IPAddress.TryParse(address, out address2))
-			{
-				return address2;
-			}
-			IPHostEntry hostEntry = Dns.GetHostEntry(address);
+			IPHostEntry hostEntry = Dns.GetHostEntry(serverIp);
 			IPAddress[] addressList = hostEntry.AddressList;
 			IPAddress[] array = addressList;
 			foreach (IPAddress iPAddress in array)
 			{
-				if (iPAddress.AddressFamily == AddressFamily.InterNetworkV6)
+				if (iPAddress.AddressFamily == AddressFamily.InterNetwork)
 				{
-					ServerIpAddress = iPAddress.ToString();
 					return iPAddress;
 				}
-				if (address2 == null && iPAddress.AddressFamily == AddressFamily.InterNetwork)
-				{
-					address2 = iPAddress;
-				}
 			}
-			ServerIpAddress = ((address2 != null) ? address2.ToString() : (address + " not resolved"));
-			return address2;
+			return null;
 		}
 	}
 }

@@ -1,10 +1,10 @@
-using Settings;
 using UnityEngine;
 
 public class BTN_ServerUS : MonoBehaviour
 {
 	private void OnClick()
 	{
-		SettingsManager.MultiplayerSettings.ConnectServer(MultiplayerRegion.US);
+		PhotonNetwork.Disconnect();
+		PhotonNetwork.ConnectToMaster("app-us.exitgamescloud.com", 5055, FengGameManagerMKII.applicationId, UIMainReferences.version);
 	}
 }

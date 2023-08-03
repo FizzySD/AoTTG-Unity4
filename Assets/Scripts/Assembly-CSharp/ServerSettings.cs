@@ -15,29 +15,29 @@ public class ServerSettings : ScriptableObject
 		BestRegion = 4
 	}
 
-	public string AppID = string.Empty;
-
-	[HideInInspector]
-	public bool DisableAutoOpenWizard;
-
 	public HostingOption HostType;
 
-	public bool PingCloudServersOnAwake;
-
-	public CloudRegionCode PreferredRegion;
-
 	public ConnectionProtocol Protocol;
-
-	public List<string> RpcList = new List<string>();
 
 	public string ServerAddress = string.Empty;
 
 	public int ServerPort = 5055;
 
-	public override string ToString()
+	public CloudRegionCode PreferredRegion;
+
+	public string AppID = string.Empty;
+
+	public bool PingCloudServersOnAwake;
+
+	public List<string> RpcList = new List<string>();
+
+	[HideInInspector]
+	public bool DisableAutoOpenWizard;
+
+	public void UseCloudBestResion(string cloudAppid)
 	{
-		object[] array = new object[4] { "ServerSettings: ", HostType, " ", ServerAddress };
-		return string.Concat(array);
+		HostType = HostingOption.BestRegion;
+		AppID = cloudAppid;
 	}
 
 	public void UseCloud(string cloudAppid)
@@ -53,17 +53,16 @@ public class ServerSettings : ScriptableObject
 		PreferredRegion = code;
 	}
 
-	public void UseCloudBestResion(string cloudAppid)
-	{
-		HostType = HostingOption.BestRegion;
-		AppID = cloudAppid;
-	}
-
 	public void UseMyServer(string serverAddress, int serverPort, string application)
 	{
 		HostType = HostingOption.SelfHosted;
 		AppID = ((application == null) ? "master" : application);
 		ServerAddress = serverAddress;
 		ServerPort = serverPort;
+	}
+
+	public override string ToString()
+	{
+		return string.Concat("ServerSettings: ", HostType, " ", ServerAddress);
 	}
 }

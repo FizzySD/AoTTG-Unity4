@@ -5,25 +5,54 @@ using UnityEngine;
 [RequireComponent(typeof(PhotonView))]
 public class PickupItem : Photon.MonoBehaviour, IPunObservable
 {
-	public static HashSet<PickupItem> DisabledPickupItems = new HashSet<PickupItem>();
-
-	public UnityEngine.MonoBehaviour OnPickedUpCall;
-
-	public bool PickupIsMine;
+	public float SecondsBeforeRespawn = 2f;
 
 	public bool PickupOnTrigger;
 
-	public float SecondsBeforeRespawn = 2f;
+	public bool PickupIsMine;
+
+	public UnityEngine.MonoBehaviour OnPickedUpCall;
 
 	public bool SentPickup;
 
 	public double TimeOfRespawn;
+
+	public static HashSet<PickupItem> DisabledPickupItems = new HashSet<PickupItem>();
 
 	public int ViewID
 	{
 		get
 		{
 			return base.photonView.viewID;
+		}
+	}
+
+	public void OnTriggerEnter(Collider other)
+	{
+		PhotonView component = other.GetComponent<PhotonView>();
+		if (PickupOnTrigger && component != null && component.isMine)
+		{
+			Pickup();
+		}
+	}
+
+	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+		if (stream.isWriting && SecondsBeforeRespawn <= 0f)
+		{
+			stream.SendNext(base.gameObject.transform.position);
+			return;
+		}
+		Vector3 position = (Vector3)stream.ReceiveNext();
+		base.gameObject.transform.position = position;
+	}
+
+	public void Pickup()
+	{
+		if (!SentPickup)
+		{
+			SentPickup = true;
+			base.photonView.RPC("PunPickup", PhotonTargets.AllViaServer);
 		}
 	}
 
@@ -39,49 +68,7 @@ public class PickupItem : Photon.MonoBehaviour, IPunObservable
 	{
 		if (PickupIsMine)
 		{
-			object[] parameters = new object[1] { newPosition };
-			base.photonView.RPC("PunRespawn", PhotonTargets.AllViaServer, parameters);
-		}
-	}
-
-	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
-	{
-		if (stream.isWriting && SecondsBeforeRespawn <= 0f)
-		{
-			stream.SendNext(base.gameObject.transform.position);
-			return;
-		}
-		Vector3 position = (Vector3)stream.ReceiveNext();
-		base.gameObject.transform.position = position;
-	}
-
-	public void OnTriggerEnter(Collider other)
-	{
-		PhotonView component = other.GetComponent<PhotonView>();
-		if (PickupOnTrigger && component != null && component.isMine)
-		{
-			Pickup();
-		}
-	}
-
-	internal void PickedUp(float timeUntilRespawn)
-	{
-		base.gameObject.SetActive(false);
-		DisabledPickupItems.Add(this);
-		TimeOfRespawn = 0.0;
-		if (timeUntilRespawn > 0f)
-		{
-			TimeOfRespawn = PhotonNetwork.time + (double)timeUntilRespawn;
-			Invoke("PunRespawn", timeUntilRespawn);
-		}
-	}
-
-	public void Pickup()
-	{
-		if (!SentPickup)
-		{
-			SentPickup = true;
-			base.photonView.RPC("PunPickup", PhotonTargets.AllViaServer);
+			base.photonView.RPC("PunRespawn", PhotonTargets.AllViaServer, newPosition);
 		}
 	}
 
@@ -115,6 +102,26 @@ public class PickupItem : Photon.MonoBehaviour, IPunObservable
 		}
 	}
 
+	internal void PickedUp(float timeUntilRespawn)
+	{
+		base.gameObject.SetActive(false);
+		DisabledPickupItems.Add(this);
+		TimeOfRespawn = 0.0;
+		if (timeUntilRespawn > 0f)
+		{
+			TimeOfRespawn = PhotonNetwork.time + (double)timeUntilRespawn;
+			Invoke("PunRespawn", timeUntilRespawn);
+		}
+	}
+
+	[RPC]
+	internal void PunRespawn(Vector3 pos)
+	{
+		Debug.Log("PunRespawn with Position.");
+		PunRespawn();
+		base.gameObject.transform.position = pos;
+	}
+
 	[RPC]
 	internal void PunRespawn()
 	{
@@ -125,13 +132,5 @@ public class PickupItem : Photon.MonoBehaviour, IPunObservable
 		{
 			base.gameObject.SetActive(true);
 		}
-	}
-
-	[RPC]
-	internal void PunRespawn(Vector3 pos)
-	{
-		Debug.Log("PunRespawn with Position.");
-		PunRespawn();
-		base.gameObject.transform.position = pos;
 	}
 }

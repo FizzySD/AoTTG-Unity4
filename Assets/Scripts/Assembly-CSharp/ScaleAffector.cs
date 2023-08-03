@@ -2,23 +2,15 @@ using UnityEngine;
 
 public class ScaleAffector : Affector
 {
-	protected float DeltaX;
-
-	protected float DeltaY;
-
 	protected AnimationCurve ScaleXCurve;
 
 	protected AnimationCurve ScaleYCurve;
 
 	protected RSTYPE Type;
 
-	public ScaleAffector(float x, float y, EffectNode node)
-		: base(node)
-	{
-		Type = RSTYPE.SIMPLE;
-		DeltaX = x;
-		DeltaY = y;
-	}
+	protected float DeltaX;
+
+	protected float DeltaY;
 
 	public ScaleAffector(AnimationCurve curveX, AnimationCurve curveY, EffectNode node)
 		: base(node)
@@ -26,6 +18,14 @@ public class ScaleAffector : Affector
 		Type = RSTYPE.CURVE;
 		ScaleXCurve = curveX;
 		ScaleYCurve = curveY;
+	}
+
+	public ScaleAffector(float x, float y, EffectNode node)
+		: base(node)
+	{
+		Type = RSTYPE.SIMPLE;
+		DeltaX = x;
+		DeltaY = y;
 	}
 
 	public override void Update()

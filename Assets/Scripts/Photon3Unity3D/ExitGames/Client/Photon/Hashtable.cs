@@ -5,6 +5,8 @@ namespace ExitGames.Client.Photon
 {
 	public class Hashtable : Dictionary<object, object>
 	{
+		private DictionaryEntryEnumerator enumerator;
+
 		public new object this[object key]
 		{
 			get
@@ -38,11 +40,6 @@ namespace ExitGames.Client.Photon
 			List<string> list = new List<string>();
 			foreach (object key in base.Keys)
 			{
-				if (key == null || this[key] == null)
-				{
-					list.Add(string.Concat(key, "=", this[key]));
-					continue;
-				}
 				list.Add(string.Concat("(", key.GetType(), ")", key, "=(", this[key].GetType(), ")", this[key]));
 			}
 			return string.Join(", ", list.ToArray());

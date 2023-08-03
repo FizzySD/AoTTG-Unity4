@@ -9,6 +9,5 @@ public enum GAMEMODE
 	TROST = 6,
 	TUTORIAL = 7,
 	RACING = 8,
-	PVP_CAPTURE = 9,
-	None = 10
+	PVP_CAPTURE = 9
 }

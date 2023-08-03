@@ -2,228 +2,129 @@ using UnityEngine;
 
 public class Language
 {
-	public static string[] abnormal = new string[25];
+	public static int type = -1;
 
-	public static string[] btn_back = new string[25];
-
-	public static string[] btn_continue = new string[25];
-
-	public static string[] btn_create_game = new string[25];
-
-	public static string[] btn_credits = new string[25];
-
-	public static string[] btn_default = new string[25];
-
-	public static string[] btn_join = new string[25];
-
-	public static string[] btn_LAN = new string[25];
+	public static string[] btn_single = new string[25];
 
 	public static string[] btn_multiplayer = new string[25];
 
 	public static string[] btn_option = new string[25];
 
-	public static string[] btn_QUICK_MATCH = new string[25];
+	public static string[] btn_credits = new string[25];
 
-	public static string[] btn_quit = new string[25];
-
-	public static string[] btn_ready = new string[25];
+	public static string[] btn_back = new string[25];
 
 	public static string[] btn_refresh = new string[25];
 
-	public static string[] btn_server_ASIA = new string[25];
-
-	public static string[] btn_server_EU = new string[25];
-
-	public static string[] btn_server_JAPAN = new string[25];
-
-	public static string[] btn_server_US = new string[25];
-
-	public static string[] btn_single = new string[25];
+	public static string[] btn_join = new string[25];
 
 	public static string[] btn_start = new string[25];
 
-	public static string[] camera_info = new string[25];
+	public static string[] btn_create_game = new string[25];
 
-	public static string[] camera_original = new string[25];
+	public static string[] btn_LAN = new string[25];
 
-	public static string[] camera_tilt = new string[25];
+	public static string[] btn_server_US = new string[25];
 
-	public static string[] camera_tps = new string[25];
+	public static string[] btn_server_EU = new string[25];
 
-	public static string[] camera_type = new string[25];
+	public static string[] btn_server_ASIA = new string[25];
 
-	public static string[] camera_wow = new string[25];
+	public static string[] btn_server_JAPAN = new string[25];
 
-	public static string[] change_quality = new string[25];
+	public static string[] btn_QUICK_MATCH = new string[25];
 
-	public static string[] choose_character = new string[25];
+	public static string[] btn_default = new string[25];
+
+	public static string[] btn_ready = new string[25];
+
+	public static string[] server_name = new string[25];
+
+	public static string[] server_ip = new string[25];
+
+	public static string[] port = new string[25];
 
 	public static string[] choose_map = new string[25];
 
-	public static string[] choose_region_server = new string[25];
+	public static string[] choose_character = new string[25];
 
-	public static string[] difficulty = new string[25];
+	public static string[] camera_type = new string[25];
 
-	public static string[] game_time = new string[25];
+	public static string[] camera_original = new string[25];
 
-	public static string[] hard = new string[25];
+	public static string[] camera_wow = new string[25];
 
-	public static string[] invert_mouse = new string[25];
-
-	public static string[] key_set_info_1 = new string[25];
-
-	public static string[] key_set_info_2 = new string[25];
+	public static string[] camera_tps = new string[25];
 
 	public static string[] max_player = new string[25];
 
 	public static string[] max_Time = new string[25];
 
-	public static string[] mouse_sensitivity = new string[25];
+	public static string[] game_time = new string[25];
+
+	public static string[] difficulty = new string[25];
 
 	public static string[] normal = new string[25];
 
-	public static string[] port = new string[25];
+	public static string[] hard = new string[25];
 
-	public static string[] select_titan = new string[25];
+	public static string[] abnormal = new string[25];
 
-	public static string[] server_ip = new string[25];
+	public static string[] mouse_sensitivity = new string[25];
 
-	public static string[] server_name = new string[25];
+	public static string[] change_quality = new string[25];
+
+	public static string[] camera_tilt = new string[25];
+
+	public static string[] invert_mouse = new string[25];
+
+	public static string[] waiting_for_input = new string[25];
+
+	public static string[] key_set_info_1 = new string[25];
+
+	public static string[] key_set_info_2 = new string[25];
 
 	public static string[] soldier = new string[25];
 
 	public static string[] titan = new string[25];
 
-	public static int type = -1;
+	public static string[] select_titan = new string[25];
 
-	public static string[] waiting_for_input = new string[25];
+	public static string[] camera_info = new string[25];
 
-	public static string GetLang(int id)
-	{
-		switch (id)
-		{
-		case 1:
-			return "简体中文";
-		case 2:
-			return "SPANISH";
-		case 3:
-			return "POLSKI";
-		case 4:
-			return "ITALIANO";
-		case 5:
-			return "NORWEGIAN";
-		case 6:
-			return "PORTUGUESE";
-		case 7:
-			return "PORTUGUESE_BR";
-		case 8:
-			return "繁體中文_台";
-		case 9:
-			return "繁體中文_港";
-		case 10:
-			return "SLOVAK";
-		case 11:
-			return "GERMAN";
-		case 12:
-			return "FRANCAIS";
-		case 13:
-			return "TÜRKÇE";
-		case 14:
-			return "ARABIC";
-		case 15:
-			return "Thai";
-		case 16:
-			return "Русский";
-		case 17:
-			return "NEDERLANDS";
-		case 18:
-			return "Hebrew";
-		case 19:
-			return "DANSK";
-		default:
-			return "ENGLISH";
-		}
-	}
+	public static string[] btn_continue = new string[25];
 
-	public static int GetLangIndex(string txt)
-	{
-		if (txt != "ENGLISH")
-		{
-			switch (txt)
-			{
-			case "SPANISH":
-				return 2;
-			case "POLSKI":
-				return 3;
-			case "ITALIANO":
-				return 4;
-			case "NORWEGIAN":
-				return 5;
-			case "PORTUGUESE":
-				return 6;
-			case "PORTUGUESE_BR":
-				return 7;
-			case "SLOVAK":
-				return 10;
-			case "GERMAN":
-				return 11;
-			case "FRANCAIS":
-				return 12;
-			case "TÜRKÇE":
-				return 13;
-			case "ARABIC":
-				return 14;
-			case "Thai":
-				return 15;
-			case "Русский":
-				return 16;
-			case "NEDERLANDS":
-				return 17;
-			case "Hebrew":
-				return 18;
-			case "DANSK":
-				return 19;
-			case "简体中文":
-				return 1;
-			case "繁體中文_台":
-				return 8;
-			case "繁體中文_港":
-				return 9;
-			}
-		}
-		return 0;
-	}
+	public static string[] btn_quit = new string[25];
+
+	public static string[] choose_region_server = new string[25];
 
 	public static void init()
 	{
-		char[] separator = new char[1] { "\n"[0] };
-		string[] array = ((TextAsset)Resources.Load("lang")).text.Split(separator);
-		string text = string.Empty;
+		string text = ((TextAsset)Resources.Load("lang")).text;
+		string[] array = text.Split("\n"[0]);
+		string text2 = string.Empty;
 		int num = 0;
 		string empty = string.Empty;
 		string empty2 = string.Empty;
-		foreach (string text2 in array)
+		foreach (string text3 in array)
 		{
-			if (text2.Contains("//"))
+			if (text3.Contains("//"))
 			{
 				continue;
 			}
-			if (text2.Contains("#START"))
+			if (text3.Contains("#START"))
 			{
-				char[] separator2 = new char[1] { "@"[0] };
-				text = text2.Split(separator2)[1];
-				num = GetLangIndex(text);
+				text2 = text3.Split("@"[0])[1];
+				num = GetLangIndex(text2);
 			}
-			else if (text2.Contains("#END"))
+			else if (text3.Contains("#END"))
 			{
-				text = string.Empty;
+				text2 = string.Empty;
 			}
-			else if (text != string.Empty && text2.Contains("@"))
+			else if (text2 != string.Empty && text3.Contains("@"))
 			{
-				char[] separator3 = new char[1] { "@"[0] };
-				empty = text2.Split(separator3)[0];
-				char[] separator4 = new char[1] { "@"[0] };
-				empty2 = text2.Split(separator4)[1];
+				empty = text3.Split("@"[0])[0];
+				empty2 = text3.Split("@"[0])[1];
 				switch (empty)
 				{
 				case "btn_single":
@@ -369,6 +270,104 @@ public class Language
 					break;
 				}
 			}
+		}
+	}
+
+	public static int GetLangIndex(string txt)
+	{
+		switch (txt)
+		{
+		case "ENGLISH":
+			return 0;
+		case "SPANISH":
+			return 2;
+		case "POLSKI":
+			return 3;
+		case "ITALIANO":
+			return 4;
+		case "NORWEGIAN":
+			return 5;
+		case "PORTUGUESE":
+			return 6;
+		case "PORTUGUESE_BR":
+			return 7;
+		case "SLOVAK":
+			return 10;
+		case "GERMAN":
+			return 11;
+		case "FRANCAIS":
+			return 12;
+		case "TÜRKÇE":
+			return 13;
+		case "ARABIC":
+			return 14;
+		case "Thai":
+			return 15;
+		case "Русский":
+			return 16;
+		case "NEDERLANDS":
+			return 17;
+		case "Hebrew":
+			return 18;
+		case "DANSK":
+			return 19;
+		case "简体中文":
+			return 1;
+		case "繁體中文_台":
+			return 8;
+		case "繁體中文_港":
+			return 9;
+		default:
+			return 0;
+		}
+	}
+
+	public static string GetLang(int id)
+	{
+		switch (id)
+		{
+		case 0:
+			return "ENGLISH";
+		case 1:
+			return "简体中文";
+		case 2:
+			return "SPANISH";
+		case 3:
+			return "POLSKI";
+		case 4:
+			return "ITALIANO";
+		case 5:
+			return "NORWEGIAN";
+		case 6:
+			return "PORTUGUESE";
+		case 7:
+			return "PORTUGUESE_BR";
+		case 8:
+			return "繁體中文_台";
+		case 9:
+			return "繁體中文_港";
+		case 10:
+			return "SLOVAK";
+		case 11:
+			return "GERMAN";
+		case 12:
+			return "FRANCAIS";
+		case 13:
+			return "TÜRKÇE";
+		case 14:
+			return "ARABIC";
+		case 15:
+			return "Thai";
+		case 16:
+			return "Русский";
+		case 17:
+			return "NEDERLANDS";
+		case 18:
+			return "Hebrew";
+		case 19:
+			return "DANSK";
+		default:
+			return "ENGLISH";
 		}
 	}
 }

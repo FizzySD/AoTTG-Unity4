@@ -11,20 +11,12 @@ public class UIEquipmentSlot : UIItemSlot
 	{
 		get
 		{
-			if (!(equipment == null))
-			{
-				return equipment.GetItem(slot);
-			}
-			return null;
+			return (!(equipment != null)) ? null : equipment.GetItem(slot);
 		}
 	}
 
 	protected override InvGameItem Replace(InvGameItem item)
 	{
-		if (!(equipment == null))
-		{
-			return equipment.Replace(slot, item);
-		}
-		return item;
+		return (!(equipment != null)) ? item : equipment.Replace(slot, item);
 	}
 }

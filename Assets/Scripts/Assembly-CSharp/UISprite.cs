@@ -1,9 +1,18 @@
+using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
 [AddComponentMenu("NGUI/UI/Sprite")]
 public class UISprite : UIWidget
 {
+	public enum Type
+	{
+		Simple = 0,
+		Sliced = 1,
+		Tiled = 2,
+		Filled = 3
+	}
+
 	public enum FillDirection
 	{
 		Horizontal = 0,
@@ -13,37 +22,39 @@ public class UISprite : UIWidget
 		Radial360 = 4
 	}
 
-	public enum Type
-	{
-		Simple = 0,
-		Sliced = 1,
-		Tiled = 2,
-		Filled = 3
-	}
-
 	[SerializeField]
 	[HideInInspector]
 	private UIAtlas mAtlas;
 
 	[SerializeField]
 	[HideInInspector]
-	private float mFillAmount = 1f;
+	private string mSpriteName;
+
+	[SerializeField]
+	[HideInInspector]
+	private bool mFillCenter = true;
 
 	[HideInInspector]
 	[SerializeField]
-	private bool mFillCenter = true;
+	private Type mType;
 
 	[SerializeField]
 	[HideInInspector]
 	private FillDirection mFillDirection = FillDirection.Radial360;
 
-	protected Rect mInner;
-
-	protected Rect mInnerUV;
+	[HideInInspector]
+	[SerializeField]
+	private float mFillAmount = 1f;
 
 	[SerializeField]
 	[HideInInspector]
 	private bool mInvert;
+
+	protected UIAtlas.Sprite mSprite;
+
+	protected Rect mInner;
+
+	protected Rect mInnerUV;
 
 	protected Rect mOuter;
 
@@ -51,17 +62,23 @@ public class UISprite : UIWidget
 
 	protected Vector3 mScale = Vector3.one;
 
-	protected UIAtlas.Sprite mSprite;
-
-	[SerializeField]
-	[HideInInspector]
-	private string mSpriteName;
-
 	private bool mSpriteSet;
 
-	[HideInInspector]
-	[SerializeField]
-	private Type mType;
+	public virtual Type type
+	{
+		get
+		{
+			return mType;
+		}
+		set
+		{
+			if (mType != value)
+			{
+				mType = value;
+				MarkAsChanged();
+			}
+		}
+	}
 
 	public UIAtlas atlas
 	{
@@ -76,7 +93,7 @@ public class UISprite : UIWidget
 				mAtlas = value;
 				mSpriteSet = false;
 				mSprite = null;
-				material = ((mAtlas == null) ? null : mAtlas.spriteMaterial);
+				material = ((!(mAtlas != null)) ? null : mAtlas.spriteMaterial);
 				if (string.IsNullOrEmpty(mSpriteName) && mAtlas != null && mAtlas.spriteList.Count > 0)
 				{
 					SetAtlasSprite(mAtlas.spriteList[0]);
@@ -91,161 +108,6 @@ public class UISprite : UIWidget
 					UpdateUVs(true);
 				}
 			}
-		}
-	}
-
-	public override Vector4 border
-	{
-		get
-		{
-			if (type != Type.Sliced)
-			{
-				return base.border;
-			}
-			UIAtlas.Sprite atlasSprite = GetAtlasSprite();
-			if (atlasSprite == null)
-			{
-				return Vector2.zero;
-			}
-			Rect rect = atlasSprite.outer;
-			Rect rect2 = atlasSprite.inner;
-			Texture texture = mainTexture;
-			if (atlas.coordinates == UIAtlas.Coordinates.TexCoords && texture != null)
-			{
-				rect = NGUIMath.ConvertToPixels(rect, texture.width, texture.height, true);
-				rect2 = NGUIMath.ConvertToPixels(rect2, texture.width, texture.height, true);
-			}
-			return new Vector4(rect2.xMin - rect.xMin, rect2.yMin - rect.yMin, rect.xMax - rect2.xMax, rect.yMax - rect2.yMax) * atlas.pixelSize;
-		}
-	}
-
-	public float fillAmount
-	{
-		get
-		{
-			return mFillAmount;
-		}
-		set
-		{
-			float num = Mathf.Clamp01(value);
-			if (mFillAmount != num)
-			{
-				mFillAmount = num;
-				mChanged = true;
-			}
-		}
-	}
-
-	public bool fillCenter
-	{
-		get
-		{
-			return mFillCenter;
-		}
-		set
-		{
-			if (mFillCenter != value)
-			{
-				mFillCenter = value;
-				MarkAsChanged();
-			}
-		}
-	}
-
-	public FillDirection fillDirection
-	{
-		get
-		{
-			return mFillDirection;
-		}
-		set
-		{
-			if (mFillDirection != value)
-			{
-				mFillDirection = value;
-				mChanged = true;
-			}
-		}
-	}
-
-	public Rect innerUV
-	{
-		get
-		{
-			UpdateUVs(false);
-			return mInnerUV;
-		}
-	}
-
-	public bool invert
-	{
-		get
-		{
-			return mInvert;
-		}
-		set
-		{
-			if (mInvert != value)
-			{
-				mInvert = value;
-				mChanged = true;
-			}
-		}
-	}
-
-	public bool isValid
-	{
-		get
-		{
-			return GetAtlasSprite() != null;
-		}
-	}
-
-	public override Material material
-	{
-		get
-		{
-			Material material = base.material;
-			if (material == null)
-			{
-				material = ((mAtlas == null) ? null : mAtlas.spriteMaterial);
-				mSprite = null;
-				this.material = material;
-				if (material != null)
-				{
-					UpdateUVs(true);
-				}
-			}
-			return material;
-		}
-	}
-
-	public Rect outerUV
-	{
-		get
-		{
-			UpdateUVs(false);
-			return mOuterUV;
-		}
-	}
-
-	public override bool pixelPerfectAfterResize
-	{
-		get
-		{
-			return type == Type.Sliced;
-		}
-	}
-
-	public override Vector4 relativePadding
-	{
-		get
-		{
-			if (isValid && type == Type.Simple)
-			{
-				return new Vector4(mSprite.paddingLeft, mSprite.paddingTop, mSprite.paddingRight, mSprite.paddingBottom);
-			}
-			return base.relativePadding;
 		}
 	}
 
@@ -281,18 +143,464 @@ public class UISprite : UIWidget
 		}
 	}
 
-	public virtual Type type
+	public bool isValid
 	{
 		get
 		{
-			return mType;
+			return GetAtlasSprite() != null;
+		}
+	}
+
+	public override Material material
+	{
+		get
+		{
+			Material material = base.material;
+			if (material == null)
+			{
+				material = ((!(mAtlas != null)) ? null : mAtlas.spriteMaterial);
+				mSprite = null;
+				this.material = material;
+				if (material != null)
+				{
+					UpdateUVs(true);
+				}
+			}
+			return material;
+		}
+	}
+
+	public Rect innerUV
+	{
+		get
+		{
+			UpdateUVs(false);
+			return mInnerUV;
+		}
+	}
+
+	public Rect outerUV
+	{
+		get
+		{
+			UpdateUVs(false);
+			return mOuterUV;
+		}
+	}
+
+	public bool fillCenter
+	{
+		get
+		{
+			return mFillCenter;
 		}
 		set
 		{
-			if (mType != value)
+			if (mFillCenter != value)
 			{
-				mType = value;
+				mFillCenter = value;
 				MarkAsChanged();
+			}
+		}
+	}
+
+	public FillDirection fillDirection
+	{
+		get
+		{
+			return mFillDirection;
+		}
+		set
+		{
+			if (mFillDirection != value)
+			{
+				mFillDirection = value;
+				mChanged = true;
+			}
+		}
+	}
+
+	public float fillAmount
+	{
+		get
+		{
+			return mFillAmount;
+		}
+		set
+		{
+			float num = Mathf.Clamp01(value);
+			if (mFillAmount != num)
+			{
+				mFillAmount = num;
+				mChanged = true;
+			}
+		}
+	}
+
+	public bool invert
+	{
+		get
+		{
+			return mInvert;
+		}
+		set
+		{
+			if (mInvert != value)
+			{
+				mInvert = value;
+				mChanged = true;
+			}
+		}
+	}
+
+	public override Vector4 relativePadding
+	{
+		get
+		{
+			if (isValid && type == Type.Simple)
+			{
+				return new Vector4(mSprite.paddingLeft, mSprite.paddingTop, mSprite.paddingRight, mSprite.paddingBottom);
+			}
+			return base.relativePadding;
+		}
+	}
+
+	public override Vector4 border
+	{
+		get
+		{
+			if (type == Type.Sliced)
+			{
+				UIAtlas.Sprite atlasSprite = GetAtlasSprite();
+				if (atlasSprite == null)
+				{
+					return Vector2.zero;
+				}
+				Rect rect = atlasSprite.outer;
+				Rect rect2 = atlasSprite.inner;
+				Texture texture = mainTexture;
+				if (atlas.coordinates == UIAtlas.Coordinates.TexCoords && texture != null)
+				{
+					rect = NGUIMath.ConvertToPixels(rect, texture.width, texture.height, true);
+					rect2 = NGUIMath.ConvertToPixels(rect2, texture.width, texture.height, true);
+				}
+				return new Vector4(rect2.xMin - rect.xMin, rect2.yMin - rect.yMin, rect.xMax - rect2.xMax, rect.yMax - rect2.yMax) * atlas.pixelSize;
+			}
+			return base.border;
+		}
+	}
+
+	public override bool pixelPerfectAfterResize
+	{
+		get
+		{
+			return type == Type.Sliced;
+		}
+	}
+
+	public UIAtlas.Sprite GetAtlasSprite()
+	{
+		if (!mSpriteSet)
+		{
+			mSprite = null;
+		}
+		if (mSprite == null && mAtlas != null)
+		{
+			if (!string.IsNullOrEmpty(mSpriteName))
+			{
+				UIAtlas.Sprite sprite = mAtlas.GetSprite(mSpriteName);
+				if (sprite == null)
+				{
+					return null;
+				}
+				SetAtlasSprite(sprite);
+			}
+			if (mSprite == null && mAtlas.spriteList.Count > 0)
+			{
+				UIAtlas.Sprite sprite2 = mAtlas.spriteList[0];
+				if (sprite2 == null)
+				{
+					return null;
+				}
+				SetAtlasSprite(sprite2);
+				if (mSprite == null)
+				{
+					Debug.LogError(mAtlas.name + " seems to have a null sprite!");
+					return null;
+				}
+				mSpriteName = mSprite.name;
+			}
+			if (mSprite != null)
+			{
+				material = mAtlas.spriteMaterial;
+				UpdateUVs(true);
+			}
+		}
+		return mSprite;
+	}
+
+	protected void SetAtlasSprite(UIAtlas.Sprite sp)
+	{
+		mChanged = true;
+		mSpriteSet = true;
+		if (sp != null)
+		{
+			mSprite = sp;
+			mSpriteName = mSprite.name;
+		}
+		else
+		{
+			mSpriteName = ((mSprite == null) ? string.Empty : mSprite.name);
+			mSprite = sp;
+		}
+	}
+
+	public virtual void UpdateUVs(bool force)
+	{
+		if ((type == Type.Sliced || type == Type.Tiled) && base.cachedTransform.localScale != mScale)
+		{
+			mScale = base.cachedTransform.localScale;
+			mChanged = true;
+		}
+		if (!isValid || !force)
+		{
+			return;
+		}
+		Texture texture = mainTexture;
+		if (texture != null)
+		{
+			mInner = mSprite.inner;
+			mOuter = mSprite.outer;
+			mInnerUV = mInner;
+			mOuterUV = mOuter;
+			if (atlas.coordinates == UIAtlas.Coordinates.Pixels)
+			{
+				mOuterUV = NGUIMath.ConvertToTexCoords(mOuterUV, texture.width, texture.height);
+				mInnerUV = NGUIMath.ConvertToTexCoords(mInnerUV, texture.width, texture.height);
+			}
+		}
+	}
+
+	public override void MakePixelPerfect()
+	{
+		if (!isValid)
+		{
+			return;
+		}
+		UpdateUVs(false);
+		switch (type)
+		{
+		case Type.Sliced:
+		{
+			Vector3 localPosition = base.cachedTransform.localPosition;
+			localPosition.x = Mathf.RoundToInt(localPosition.x);
+			localPosition.y = Mathf.RoundToInt(localPosition.y);
+			localPosition.z = Mathf.RoundToInt(localPosition.z);
+			base.cachedTransform.localPosition = localPosition;
+			Vector3 localScale = base.cachedTransform.localScale;
+			localScale.x = Mathf.RoundToInt(localScale.x * 0.5f) << 1;
+			localScale.y = Mathf.RoundToInt(localScale.y * 0.5f) << 1;
+			localScale.z = 1f;
+			base.cachedTransform.localScale = localScale;
+			return;
+		}
+		case Type.Tiled:
+		{
+			Vector3 localPosition2 = base.cachedTransform.localPosition;
+			localPosition2.x = Mathf.RoundToInt(localPosition2.x);
+			localPosition2.y = Mathf.RoundToInt(localPosition2.y);
+			localPosition2.z = Mathf.RoundToInt(localPosition2.z);
+			base.cachedTransform.localPosition = localPosition2;
+			Vector3 localScale2 = base.cachedTransform.localScale;
+			localScale2.x = Mathf.RoundToInt(localScale2.x);
+			localScale2.y = Mathf.RoundToInt(localScale2.y);
+			localScale2.z = 1f;
+			base.cachedTransform.localScale = localScale2;
+			return;
+		}
+		}
+		Texture texture = mainTexture;
+		Vector3 localScale3 = base.cachedTransform.localScale;
+		if (texture != null)
+		{
+			Rect rect = NGUIMath.ConvertToPixels(outerUV, texture.width, texture.height, true);
+			float pixelSize = atlas.pixelSize;
+			localScale3.x = (float)Mathf.RoundToInt(rect.width * pixelSize) * Mathf.Sign(localScale3.x);
+			localScale3.y = (float)Mathf.RoundToInt(rect.height * pixelSize) * Mathf.Sign(localScale3.y);
+			localScale3.z = 1f;
+			base.cachedTransform.localScale = localScale3;
+		}
+		int num = Mathf.RoundToInt(Mathf.Abs(localScale3.x) * (1f + mSprite.paddingLeft + mSprite.paddingRight));
+		int num2 = Mathf.RoundToInt(Mathf.Abs(localScale3.y) * (1f + mSprite.paddingTop + mSprite.paddingBottom));
+		Vector3 localPosition3 = base.cachedTransform.localPosition;
+		localPosition3.x = Mathf.CeilToInt(localPosition3.x * 4f) >> 2;
+		localPosition3.y = Mathf.CeilToInt(localPosition3.y * 4f) >> 2;
+		localPosition3.z = Mathf.RoundToInt(localPosition3.z);
+		if (num % 2 == 1 && (base.pivot == Pivot.Top || base.pivot == Pivot.Center || base.pivot == Pivot.Bottom))
+		{
+			localPosition3.x += 0.5f;
+		}
+		if (num2 % 2 == 1 && (base.pivot == Pivot.Left || base.pivot == Pivot.Center || base.pivot == Pivot.Right))
+		{
+			localPosition3.y += 0.5f;
+		}
+		base.cachedTransform.localPosition = localPosition3;
+	}
+
+	protected override void OnStart()
+	{
+		if (mAtlas != null)
+		{
+			UpdateUVs(true);
+		}
+	}
+
+	public override void Update()
+	{
+		base.Update();
+		if (mChanged || !mSpriteSet)
+		{
+			mSpriteSet = true;
+			mSprite = null;
+			mChanged = true;
+			UpdateUVs(true);
+		}
+		else
+		{
+			UpdateUVs(false);
+		}
+	}
+
+	public override void OnFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
+	{
+		switch (type)
+		{
+		case Type.Simple:
+			SimpleFill(verts, uvs, cols);
+			break;
+		case Type.Sliced:
+			SlicedFill(verts, uvs, cols);
+			break;
+		case Type.Filled:
+			FilledFill(verts, uvs, cols);
+			break;
+		case Type.Tiled:
+			TiledFill(verts, uvs, cols);
+			break;
+		}
+	}
+
+	protected void SimpleFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
+	{
+		Vector2 item = new Vector2(mOuterUV.xMin, mOuterUV.yMin);
+		Vector2 item2 = new Vector2(mOuterUV.xMax, mOuterUV.yMax);
+		verts.Add(new Vector3(1f, 0f, 0f));
+		verts.Add(new Vector3(1f, -1f, 0f));
+		verts.Add(new Vector3(0f, -1f, 0f));
+		verts.Add(new Vector3(0f, 0f, 0f));
+		uvs.Add(item2);
+		uvs.Add(new Vector2(item2.x, item.y));
+		uvs.Add(item);
+		uvs.Add(new Vector2(item.x, item2.y));
+		Color color = base.color;
+		color.a *= mPanel.alpha;
+		Color32 item3 = ((!atlas.premultipliedAlpha) ? color : NGUITools.ApplyPMA(color));
+		cols.Add(item3);
+		cols.Add(item3);
+		cols.Add(item3);
+		cols.Add(item3);
+	}
+
+	protected void SlicedFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
+	{
+		if (mOuterUV == mInnerUV)
+		{
+			SimpleFill(verts, uvs, cols);
+			return;
+		}
+		Vector2[] array = new Vector2[4];
+		Vector2[] array2 = new Vector2[4];
+		Texture texture = mainTexture;
+		array[0] = Vector2.zero;
+		array[1] = Vector2.zero;
+		array[2] = new Vector2(1f, -1f);
+		array[3] = new Vector2(1f, -1f);
+		if (texture != null)
+		{
+			float pixelSize = atlas.pixelSize;
+			float num = (mInnerUV.xMin - mOuterUV.xMin) * pixelSize;
+			float num2 = (mOuterUV.xMax - mInnerUV.xMax) * pixelSize;
+			float num3 = (mInnerUV.yMax - mOuterUV.yMax) * pixelSize;
+			float num4 = (mOuterUV.yMin - mInnerUV.yMin) * pixelSize;
+			Vector3 localScale = base.cachedTransform.localScale;
+			localScale.x = Mathf.Max(0f, localScale.x);
+			localScale.y = Mathf.Max(0f, localScale.y);
+			Vector2 vector = new Vector2(localScale.x / (float)texture.width, localScale.y / (float)texture.height);
+			Vector2 vector2 = new Vector2(num / vector.x, num3 / vector.y);
+			Vector2 vector3 = new Vector2(num2 / vector.x, num4 / vector.y);
+			Pivot pivot = base.pivot;
+			if (pivot == Pivot.Right || pivot == Pivot.TopRight || pivot == Pivot.BottomRight)
+			{
+				array[0].x = Mathf.Min(0f, 1f - (vector3.x + vector2.x));
+				array[1].x = array[0].x + vector2.x;
+				array[2].x = array[0].x + Mathf.Max(vector2.x, 1f - vector3.x);
+				array[3].x = array[0].x + Mathf.Max(vector2.x + vector3.x, 1f);
+			}
+			else
+			{
+				array[1].x = vector2.x;
+				array[2].x = Mathf.Max(vector2.x, 1f - vector3.x);
+				array[3].x = Mathf.Max(vector2.x + vector3.x, 1f);
+			}
+			if (pivot == Pivot.Bottom || pivot == Pivot.BottomLeft || pivot == Pivot.BottomRight)
+			{
+				array[0].y = Mathf.Max(0f, -1f - (vector3.y + vector2.y));
+				array[1].y = array[0].y + vector2.y;
+				array[2].y = array[0].y + Mathf.Min(vector2.y, -1f - vector3.y);
+				array[3].y = array[0].y + Mathf.Min(vector2.y + vector3.y, -1f);
+			}
+			else
+			{
+				array[1].y = vector2.y;
+				array[2].y = Mathf.Min(vector2.y, -1f - vector3.y);
+				array[3].y = Mathf.Min(vector2.y + vector3.y, -1f);
+			}
+			array2[0] = new Vector2(mOuterUV.xMin, mOuterUV.yMax);
+			array2[1] = new Vector2(mInnerUV.xMin, mInnerUV.yMax);
+			array2[2] = new Vector2(mInnerUV.xMax, mInnerUV.yMin);
+			array2[3] = new Vector2(mOuterUV.xMax, mOuterUV.yMin);
+		}
+		else
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				array2[i] = Vector2.zero;
+			}
+		}
+		Color color = base.color;
+		color.a *= mPanel.alpha;
+		Color32 item = ((!atlas.premultipliedAlpha) ? color : NGUITools.ApplyPMA(color));
+		for (int j = 0; j < 3; j++)
+		{
+			int num5 = j + 1;
+			for (int k = 0; k < 3; k++)
+			{
+				if (mFillCenter || j != 1 || k != 1)
+				{
+					int num6 = k + 1;
+					verts.Add(new Vector3(array[num5].x, array[k].y, 0f));
+					verts.Add(new Vector3(array[num5].x, array[num6].y, 0f));
+					verts.Add(new Vector3(array[j].x, array[num6].y, 0f));
+					verts.Add(new Vector3(array[j].x, array[k].y, 0f));
+					uvs.Add(new Vector2(array2[num5].x, array2[k].y));
+					uvs.Add(new Vector2(array2[num5].x, array2[num6].y));
+					uvs.Add(new Vector2(array2[j].x, array2[num6].y));
+					uvs.Add(new Vector2(array2[j].x, array2[k].y));
+					cols.Add(item);
+					cols.Add(item);
+					cols.Add(item);
+					cols.Add(item);
+				}
 			}
 		}
 	}
@@ -303,57 +611,74 @@ public class UISprite : UIWidget
 		{
 			return false;
 		}
-		if (invert || fill <= 0.999f)
+		if (!invert && fill > 0.999f)
 		{
-			float num = Mathf.Clamp01(fill);
+			return true;
+		}
+		float num = Mathf.Clamp01(fill);
+		if (!invert)
+		{
+			num = 1f - num;
+		}
+		num *= (float)Math.PI / 2f;
+		float num2 = Mathf.Sin(num);
+		float num3 = Mathf.Cos(num);
+		if (num2 > num3)
+		{
+			num3 *= 1f / num2;
+			num2 = 1f;
 			if (!invert)
 			{
-				num = 1f - num;
-			}
-			num *= 1.570796f;
-			float num2 = Mathf.Sin(num);
-			float num3 = Mathf.Cos(num);
-			if (num2 > num3)
-			{
-				num3 *= 1f / num2;
-				num2 = 1f;
-				if (!invert)
-				{
-					xy[0].y = Mathf.Lerp(xy[2].y, xy[0].y, num3);
-					xy[3].y = xy[0].y;
-					uv[0].y = Mathf.Lerp(uv[2].y, uv[0].y, num3);
-					uv[3].y = uv[0].y;
-				}
-			}
-			else if (num3 > num2)
-			{
-				num2 *= 1f / num3;
-				num3 = 1f;
-				if (invert)
-				{
-					xy[0].x = Mathf.Lerp(xy[2].x, xy[0].x, num2);
-					xy[1].x = xy[0].x;
-					uv[0].x = Mathf.Lerp(uv[2].x, uv[0].x, num2);
-					uv[1].x = uv[0].x;
-				}
-			}
-			else
-			{
-				num2 = 1f;
-				num3 = 1f;
-			}
-			if (invert)
-			{
-				xy[1].y = Mathf.Lerp(xy[2].y, xy[0].y, num3);
-				uv[1].y = Mathf.Lerp(uv[2].y, uv[0].y, num3);
-			}
-			else
-			{
-				xy[3].x = Mathf.Lerp(xy[2].x, xy[0].x, num2);
-				uv[3].x = Mathf.Lerp(uv[2].x, uv[0].x, num2);
+				xy[0].y = Mathf.Lerp(xy[2].y, xy[0].y, num3);
+				xy[3].y = xy[0].y;
+				uv[0].y = Mathf.Lerp(uv[2].y, uv[0].y, num3);
+				uv[3].y = uv[0].y;
 			}
 		}
+		else if (num3 > num2)
+		{
+			num2 *= 1f / num3;
+			num3 = 1f;
+			if (invert)
+			{
+				xy[0].x = Mathf.Lerp(xy[2].x, xy[0].x, num2);
+				xy[1].x = xy[0].x;
+				uv[0].x = Mathf.Lerp(uv[2].x, uv[0].x, num2);
+				uv[1].x = uv[0].x;
+			}
+		}
+		else
+		{
+			num2 = 1f;
+			num3 = 1f;
+		}
+		if (invert)
+		{
+			xy[1].y = Mathf.Lerp(xy[2].y, xy[0].y, num3);
+			uv[1].y = Mathf.Lerp(uv[2].y, uv[0].y, num3);
+		}
+		else
+		{
+			xy[3].x = Mathf.Lerp(xy[2].x, xy[0].x, num2);
+			uv[3].x = Mathf.Lerp(uv[2].x, uv[0].x, num2);
+		}
 		return true;
+	}
+
+	protected void Rotate(Vector2[] v, int offset)
+	{
+		for (int i = 0; i < offset; i++)
+		{
+			Vector2 vector = new Vector2(v[3].x, v[3].y);
+			v[3].x = v[2].y;
+			v[3].y = v[2].x;
+			v[2].x = v[1].y;
+			v[2].y = v[1].x;
+			v[1].x = v[0].y;
+			v[1].y = v[0].x;
+			v[0].x = vector.y;
+			v[0].y = vector.x;
+		}
 	}
 
 	protected void FilledFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
@@ -589,291 +914,10 @@ public class UISprite : UIWidget
 		}
 	}
 
-	public UIAtlas.Sprite GetAtlasSprite()
-	{
-		if (!mSpriteSet)
-		{
-			mSprite = null;
-		}
-		if (mSprite == null && mAtlas != null)
-		{
-			if (!string.IsNullOrEmpty(mSpriteName))
-			{
-				UIAtlas.Sprite sprite = mAtlas.GetSprite(mSpriteName);
-				if (sprite == null)
-				{
-					return null;
-				}
-				SetAtlasSprite(sprite);
-			}
-			if (mSprite == null && mAtlas.spriteList.Count > 0)
-			{
-				UIAtlas.Sprite sprite2 = mAtlas.spriteList[0];
-				if (sprite2 == null)
-				{
-					return null;
-				}
-				SetAtlasSprite(sprite2);
-				if (mSprite == null)
-				{
-					Debug.LogError(mAtlas.name + " seems to have a null sprite!");
-					return null;
-				}
-				mSpriteName = mSprite.name;
-			}
-			if (mSprite != null)
-			{
-				material = mAtlas.spriteMaterial;
-				UpdateUVs(true);
-			}
-		}
-		return mSprite;
-	}
-
-	public override void MakePixelPerfect()
-	{
-		if (!isValid)
-		{
-			return;
-		}
-		UpdateUVs(false);
-		switch (type)
-		{
-		case Type.Sliced:
-		{
-			Vector3 localPosition = base.cachedTransform.localPosition;
-			localPosition.x = Mathf.RoundToInt(localPosition.x);
-			localPosition.y = Mathf.RoundToInt(localPosition.y);
-			localPosition.z = Mathf.RoundToInt(localPosition.z);
-			base.cachedTransform.localPosition = localPosition;
-			Vector3 localScale = base.cachedTransform.localScale;
-			localScale.x = Mathf.RoundToInt(localScale.x * 0.5f) << 1;
-			localScale.y = Mathf.RoundToInt(localScale.y * 0.5f) << 1;
-			localScale.z = 1f;
-			base.cachedTransform.localScale = localScale;
-			return;
-		}
-		case Type.Tiled:
-		{
-			Vector3 localPosition2 = base.cachedTransform.localPosition;
-			localPosition2.x = Mathf.RoundToInt(localPosition2.x);
-			localPosition2.y = Mathf.RoundToInt(localPosition2.y);
-			localPosition2.z = Mathf.RoundToInt(localPosition2.z);
-			base.cachedTransform.localPosition = localPosition2;
-			Vector3 localScale2 = base.cachedTransform.localScale;
-			localScale2.x = Mathf.RoundToInt(localScale2.x);
-			localScale2.y = Mathf.RoundToInt(localScale2.y);
-			localScale2.z = 1f;
-			base.cachedTransform.localScale = localScale2;
-			return;
-		}
-		}
-		Texture texture = mainTexture;
-		Vector3 localScale3 = base.cachedTransform.localScale;
-		if (texture != null)
-		{
-			Rect rect = NGUIMath.ConvertToPixels(outerUV, texture.width, texture.height, true);
-			float pixelSize = atlas.pixelSize;
-			localScale3.x = (float)Mathf.RoundToInt(rect.width * pixelSize) * Mathf.Sign(localScale3.x);
-			localScale3.y = (float)Mathf.RoundToInt(rect.height * pixelSize) * Mathf.Sign(localScale3.y);
-			localScale3.z = 1f;
-			base.cachedTransform.localScale = localScale3;
-		}
-		int num = Mathf.RoundToInt(Mathf.Abs(localScale3.x) * (1f + mSprite.paddingLeft + mSprite.paddingRight));
-		int num2 = Mathf.RoundToInt(Mathf.Abs(localScale3.y) * (1f + mSprite.paddingTop + mSprite.paddingBottom));
-		Vector3 localPosition3 = base.cachedTransform.localPosition;
-		localPosition3.x = Mathf.CeilToInt(localPosition3.x * 4f) >> 2;
-		localPosition3.y = Mathf.CeilToInt(localPosition3.y * 4f) >> 2;
-		localPosition3.z = Mathf.RoundToInt(localPosition3.z);
-		if (num % 2 == 1 && (base.pivot == Pivot.Top || base.pivot == Pivot.Center || base.pivot == Pivot.Bottom))
-		{
-			localPosition3.x += 0.5f;
-		}
-		if (num2 % 2 == 1 && (base.pivot == Pivot.Left || base.pivot == Pivot.Center || base.pivot == Pivot.Right))
-		{
-			localPosition3.y += 0.5f;
-		}
-		base.cachedTransform.localPosition = localPosition3;
-	}
-
-	public override void OnFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
-	{
-		switch (type)
-		{
-		case Type.Simple:
-			SimpleFill(verts, uvs, cols);
-			break;
-		case Type.Sliced:
-			SlicedFill(verts, uvs, cols);
-			break;
-		case Type.Tiled:
-			TiledFill(verts, uvs, cols);
-			break;
-		case Type.Filled:
-			FilledFill(verts, uvs, cols);
-			break;
-		}
-	}
-
-	protected override void OnStart()
-	{
-		if (mAtlas != null)
-		{
-			UpdateUVs(true);
-		}
-	}
-
-	protected void Rotate(Vector2[] v, int offset)
-	{
-		for (int i = 0; i < offset; i++)
-		{
-			Vector2 vector = new Vector2(v[3].x, v[3].y);
-			v[3].x = v[2].y;
-			v[3].y = v[2].x;
-			v[2].x = v[1].y;
-			v[2].y = v[1].x;
-			v[1].x = v[0].y;
-			v[1].y = v[0].x;
-			v[0].x = vector.y;
-			v[0].y = vector.x;
-		}
-	}
-
-	protected void SetAtlasSprite(UIAtlas.Sprite sp)
-	{
-		mChanged = true;
-		mSpriteSet = true;
-		if (sp != null)
-		{
-			mSprite = sp;
-			mSpriteName = mSprite.name;
-		}
-		else
-		{
-			mSpriteName = ((mSprite == null) ? string.Empty : mSprite.name);
-			mSprite = sp;
-		}
-	}
-
-	protected void SimpleFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
-	{
-		Vector2 item = new Vector2(mOuterUV.xMin, mOuterUV.yMin);
-		Vector2 item2 = new Vector2(mOuterUV.xMax, mOuterUV.yMax);
-		verts.Add(new Vector3(1f, 0f, 0f));
-		verts.Add(new Vector3(1f, -1f, 0f));
-		verts.Add(new Vector3(0f, -1f, 0f));
-		verts.Add(new Vector3(0f, 0f, 0f));
-		uvs.Add(item2);
-		uvs.Add(new Vector2(item2.x, item.y));
-		uvs.Add(item);
-		uvs.Add(new Vector2(item.x, item2.y));
-		Color color = base.color;
-		color.a *= mPanel.alpha;
-		Color32 item3 = ((!atlas.premultipliedAlpha) ? color : NGUITools.ApplyPMA(color));
-		cols.Add(item3);
-		cols.Add(item3);
-		cols.Add(item3);
-		cols.Add(item3);
-	}
-
-	protected void SlicedFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
-	{
-		if (mOuterUV == mInnerUV)
-		{
-			SimpleFill(verts, uvs, cols);
-			return;
-		}
-		Vector2[] array = new Vector2[4];
-		Vector2[] array2 = new Vector2[4];
-		Texture texture = mainTexture;
-		array[0] = Vector2.zero;
-		array[1] = Vector2.zero;
-		array[2] = new Vector2(1f, -1f);
-		array[3] = new Vector2(1f, -1f);
-		if (texture == null)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				array2[i] = Vector2.zero;
-			}
-		}
-		else
-		{
-			float pixelSize = atlas.pixelSize;
-			float num = (mInnerUV.xMin - mOuterUV.xMin) * pixelSize;
-			float num2 = (mOuterUV.xMax - mInnerUV.xMax) * pixelSize;
-			float num3 = (mInnerUV.yMax - mOuterUV.yMax) * pixelSize;
-			float num4 = (mOuterUV.yMin - mInnerUV.yMin) * pixelSize;
-			Vector3 localScale = base.cachedTransform.localScale;
-			localScale.x = Mathf.Max(0f, localScale.x);
-			localScale.y = Mathf.Max(0f, localScale.y);
-			Vector2 vector = new Vector2(localScale.x / (float)texture.width, localScale.y / (float)texture.height);
-			Vector2 vector2 = new Vector2(num / vector.x, num3 / vector.y);
-			Vector2 vector3 = new Vector2(num2 / vector.x, num4 / vector.y);
-			Pivot pivot = base.pivot;
-			if (pivot == Pivot.TopRight || pivot == Pivot.Right || pivot == Pivot.BottomRight)
-			{
-				array[0].x = Mathf.Min(0f, 1f - (vector3.x + vector2.x));
-				array[1].x = array[0].x + vector2.x;
-				array[2].x = array[0].x + Mathf.Max(vector2.x, 1f - vector3.x);
-				array[3].x = array[0].x + Mathf.Max(vector2.x + vector3.x, 1f);
-			}
-			else
-			{
-				array[1].x = vector2.x;
-				array[2].x = Mathf.Max(vector2.x, 1f - vector3.x);
-				array[3].x = Mathf.Max(vector2.x + vector3.x, 1f);
-			}
-			if ((uint)(pivot - 6) <= 2u)
-			{
-				array[0].y = Mathf.Max(0f, -1f - (vector3.y + vector2.y));
-				array[1].y = array[0].y + vector2.y;
-				array[2].y = array[0].y + Mathf.Min(vector2.y, -1f - vector3.y);
-				array[3].y = array[0].y + Mathf.Min(vector2.y + vector3.y, -1f);
-			}
-			else
-			{
-				array[1].y = vector2.y;
-				array[2].y = Mathf.Min(vector2.y, -1f - vector3.y);
-				array[3].y = Mathf.Min(vector2.y + vector3.y, -1f);
-			}
-			array2[0] = new Vector2(mOuterUV.xMin, mOuterUV.yMax);
-			array2[1] = new Vector2(mInnerUV.xMin, mInnerUV.yMax);
-			array2[2] = new Vector2(mInnerUV.xMax, mInnerUV.yMin);
-			array2[3] = new Vector2(mOuterUV.xMax, mOuterUV.yMin);
-		}
-		Color color = base.color;
-		color.a *= mPanel.alpha;
-		Color32 item = ((!atlas.premultipliedAlpha) ? color : NGUITools.ApplyPMA(color));
-		for (int j = 0; j < 3; j++)
-		{
-			int num5 = j + 1;
-			for (int k = 0; k < 3; k++)
-			{
-				if (mFillCenter || j != 1 || k != 1)
-				{
-					int num6 = k + 1;
-					verts.Add(new Vector3(array[num5].x, array[k].y, 0f));
-					verts.Add(new Vector3(array[num5].x, array[num6].y, 0f));
-					verts.Add(new Vector3(array[j].x, array[num6].y, 0f));
-					verts.Add(new Vector3(array[j].x, array[k].y, 0f));
-					uvs.Add(new Vector2(array2[num5].x, array2[k].y));
-					uvs.Add(new Vector2(array2[num5].x, array2[num6].y));
-					uvs.Add(new Vector2(array2[j].x, array2[num6].y));
-					uvs.Add(new Vector2(array2[j].x, array2[k].y));
-					cols.Add(item);
-					cols.Add(item);
-					cols.Add(item);
-					cols.Add(item);
-				}
-			}
-		}
-	}
-
 	protected void TiledFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
 	{
 		Texture texture = material.mainTexture;
-		if (!(texture != null))
+		if (texture == null)
 		{
 			return;
 		}
@@ -928,48 +972,6 @@ public class UISprite : UIWidget
 				cols.Add(item);
 				cols.Add(item);
 				cols.Add(item);
-			}
-		}
-	}
-
-	public override void Update()
-	{
-		base.Update();
-		if (mChanged || !mSpriteSet)
-		{
-			mSpriteSet = true;
-			mSprite = null;
-			mChanged = true;
-			UpdateUVs(true);
-		}
-		else
-		{
-			UpdateUVs(false);
-		}
-	}
-
-	public virtual void UpdateUVs(bool force)
-	{
-		if ((type == Type.Sliced || type == Type.Tiled) && base.cachedTransform.localScale != mScale)
-		{
-			mScale = base.cachedTransform.localScale;
-			mChanged = true;
-		}
-		if (!(isValid && force))
-		{
-			return;
-		}
-		Texture texture = mainTexture;
-		if (texture != null)
-		{
-			mInner = mSprite.inner;
-			mOuter = mSprite.outer;
-			mInnerUV = mInner;
-			mOuterUV = mOuter;
-			if (atlas.coordinates == UIAtlas.Coordinates.Pixels)
-			{
-				mOuterUV = NGUIMath.ConvertToTexCoords(mOuterUV, texture.width, texture.height);
-				mInnerUV = NGUIMath.ConvertToTexCoords(mInnerUV, texture.width, texture.height);
 			}
 		}
 	}

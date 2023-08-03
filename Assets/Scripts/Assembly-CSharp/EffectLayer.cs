@@ -3,39 +3,63 @@ using UnityEngine;
 
 public class EffectLayer : MonoBehaviour
 {
-	public EffectNode[] ActiveENodes;
+	public VertexPool Vertexpool;
 
-	public bool AlongVelocity;
-
-	public int AngleAroundAxis;
-
-	public bool AttractionAffectorEnable;
-
-	public AnimationCurve AttractionCurve;
-
-	public Vector3 AttractionPosition;
-
-	public float AttractMag = 0.1f;
-
-	public EffectNode[] AvailableENodes;
-
-	public int AvailableNodeCount;
-
-	public Vector3 BoxSize;
-
-	public float ChanceToEmit = 100f;
-
-	public Vector3 CircleDir;
+	protected Camera MainCamera;
 
 	public Transform ClientTransform;
 
-	public Color Color1 = Color.white;
+	public bool SyncClient;
 
-	public Color Color2;
+	public Material Material;
 
-	public Color Color3;
+	public int RenderType;
 
-	public Color Color4;
+	public float StartTime;
+
+	public float MaxFps = 60f;
+
+	public int SpriteType;
+
+	public int OriPoint;
+
+	public float SpriteWidth = 1f;
+
+	public float SpriteHeight = 1f;
+
+	public int SpriteUVStretch;
+
+	public int OriRotationMin;
+
+	public int OriRotationMax;
+
+	public bool RotAffectorEnable;
+
+	public RSTYPE RotateType;
+
+	public float DeltaRot;
+
+	public AnimationCurve RotateCurve;
+
+	public float OriScaleXMin = 1f;
+
+	public float OriScaleXMax = 1f;
+
+	public float OriScaleYMin = 1f;
+
+	public float OriScaleYMax = 1f;
+
+	public bool ScaleAffectorEnable;
+
+	public RSTYPE ScaleType;
+
+	public float DeltaScaleX;
+
+	public float DeltaScaleY;
+
+	public AnimationCurve ScaleXCurve;
+
+	public AnimationCurve ScaleYCurve;
 
 	public bool ColorAffectorEnable;
 
@@ -45,245 +69,135 @@ public class EffectLayer : MonoBehaviour
 
 	public COLOR_GRADUAL_TYPE ColorGradualType;
 
-	public int Cols = 1;
+	public Color Color1 = Color.white;
 
-	public float DeltaRot;
+	public Color Color2;
 
-	public float DeltaScaleX;
+	public Color Color3;
 
-	public float DeltaScaleY;
+	public Color Color4;
 
-	public float DiffDistance = 0.1f;
+	public float RibbonWidth = 0.5f;
 
-	public int EanIndex;
+	public int MaxRibbonElements = 6;
 
-	public string EanPath = "none";
+	public float RibbonLen = 1f;
 
-	public float EmitDelay;
+	public float TailDistance;
 
-	public float EmitDuration = 10f;
-
-	public int EmitLoop = 1;
-
-	public Vector3 EmitPoint;
-
-	public int EmitRate = 20;
-
-	protected Emitter emitter;
+	public int StretchType;
 
 	public int EmitType;
 
-	public bool IsEmitByDistance;
+	public Vector3 BoxSize;
 
-	public bool IsNodeLifeLoop = true;
+	public Vector3 EmitPoint;
 
-	public bool IsRandomDir;
+	public float Radius;
 
-	public bool JetAffectorEnable;
-
-	public float JetMax;
-
-	public float JetMin;
-
-	public Vector3 LastClientPos;
-
-	public Vector3 LinearForce;
-
-	public bool LinearForceAffectorEnable;
-
-	public float LinearMagnitude = 1f;
+	public Vector3 CircleDir;
 
 	public float LineLengthLeft = -1f;
 
 	public float LineLengthRight = 1f;
 
-	public int LoopCircles = -1;
-
-	protected Camera MainCamera;
-
-	public Material Material;
-
 	public int MaxENodes = 1;
 
-	public float MaxFps = 60f;
-
-	public int MaxRibbonElements = 6;
-
-	public float NodeLifeMax = 1f;
+	public bool IsNodeLifeLoop = true;
 
 	public float NodeLifeMin = 1f;
 
-	public Vector2 OriLowerLeftUV = Vector2.zero;
+	public float NodeLifeMax = 1f;
 
-	public int OriPoint;
+	public bool IsEmitByDistance;
 
-	public int OriRotationMax;
+	public float DiffDistance = 0.1f;
 
-	public int OriRotationMin;
+	public float ChanceToEmit = 100f;
 
-	public float OriScaleXMax = 1f;
+	public float EmitDuration = 10f;
 
-	public float OriScaleXMin = 1f;
+	public int EmitRate = 20;
 
-	public float OriScaleYMax = 1f;
+	public int EmitLoop = 1;
 
-	public float OriScaleYMin = 1f;
+	public float EmitDelay;
 
-	public float OriSpeed;
-
-	public Vector2 OriUVDimensions = Vector2.one;
+	public bool IsRandomDir;
 
 	public Vector3 OriVelocityAxis;
 
-	public float Radius;
+	public int AngleAroundAxis;
 
-	public bool RandomOriRot;
+	public float OriSpeed;
 
-	public bool RandomOriScale;
+	public bool AlongVelocity;
 
-	public int RenderType;
+	public bool LinearForceAffectorEnable;
 
-	public float RibbonLen = 1f;
+	public Vector3 LinearForce;
 
-	public float RibbonWidth = 0.5f;
+	public float LinearMagnitude = 1f;
 
-	public bool RotAffectorEnable;
+	public bool JetAffectorEnable;
 
-	public AnimationCurve RotateCurve;
+	public float JetMin;
 
-	public RSTYPE RotateType;
+	public float JetMax;
 
-	public int Rows = 1;
-
-	public bool ScaleAffectorEnable;
-
-	public RSTYPE ScaleType;
-
-	public AnimationCurve ScaleXCurve;
-
-	public AnimationCurve ScaleYCurve;
-
-	public float SpriteHeight = 1f;
-
-	public int SpriteType;
-
-	public int SpriteUVStretch;
-
-	public float SpriteWidth = 1f;
-
-	public float StartTime;
-
-	public int StretchType;
-
-	public bool SyncClient;
-
-	public float TailDistance;
-
-	public bool UseAttractCurve;
+	public bool VortexAffectorEnable;
 
 	public bool UseVortexCurve;
 
-	public bool UVAffectorEnable;
-
-	public float UVTime = 30f;
-
-	public int UVType;
-
-	public VertexPool Vertexpool;
-
-	public bool VortexAffectorEnable;
+	public float VortexMag = 0.1f;
 
 	public AnimationCurve VortexCurve;
 
 	public Vector3 VortexDirection;
 
-	public float VortexMag = 0.1f;
+	public bool AttractionAffectorEnable;
 
-	public void AddActiveNode(EffectNode node)
-	{
-		if (AvailableNodeCount == 0)
-		{
-			Debug.LogError("out index!");
-		}
-		if (AvailableENodes[node.Index] != null)
-		{
-			ActiveENodes[node.Index] = node;
-			AvailableENodes[node.Index] = null;
-			AvailableNodeCount--;
-		}
-	}
+	public bool UseAttractCurve;
 
-	protected void AddNodes(int num)
-	{
-		int num2 = 0;
-		for (int i = 0; i < MaxENodes; i++)
-		{
-			if (num2 == num)
-			{
-				break;
-			}
-			EffectNode effectNode = AvailableENodes[i];
-			if (effectNode != null)
-			{
-				AddActiveNode(effectNode);
-				num2++;
-				emitter.SetEmitPosition(effectNode);
-				float num3 = 0f;
-				effectNode.Init(life: (!IsNodeLifeLoop) ? Random.Range(NodeLifeMin, NodeLifeMax) : (-1f), oriDir: emitter.GetEmitRotation(effectNode).normalized, speed: OriSpeed, oriRot: Random.Range(OriRotationMin, OriRotationMax), oriScaleX: Random.Range(OriScaleXMin, OriScaleXMax), oriScaleY: Random.Range(OriScaleYMin, OriScaleYMax), oriColor: Color1, oriLowerUv: OriLowerLeftUV, oriUVDimension: OriUVDimensions);
-			}
-		}
-	}
+	public float AttractMag = 0.1f;
 
-	public void FixedUpdateCustom()
-	{
-		int nodes = emitter.GetNodes();
-		AddNodes(nodes);
-		for (int i = 0; i < MaxENodes; i++)
-		{
-			EffectNode effectNode = ActiveENodes[i];
-			if (effectNode != null)
-			{
-				effectNode.Update();
-			}
-		}
-	}
+	public AnimationCurve AttractionCurve;
 
-	public RibbonTrail GetRibbonTrail()
-	{
-		if (!((ActiveENodes == null) | (ActiveENodes.Length != 1)) && MaxENodes == 1 && RenderType == 1)
-		{
-			return ActiveENodes[0].Ribbon;
-		}
-		return null;
-	}
+	public Vector3 AttractionPosition;
 
-	public VertexPool GetVertexPool()
-	{
-		return Vertexpool;
-	}
+	public bool UVAffectorEnable;
 
-	protected void Init()
-	{
-		AvailableENodes = new EffectNode[MaxENodes];
-		ActiveENodes = new EffectNode[MaxENodes];
-		for (int i = 0; i < MaxENodes; i++)
-		{
-			EffectNode effectNode = new EffectNode(i, ClientTransform, SyncClient, this);
-			ArrayList affectorList = InitAffectors(effectNode);
-			effectNode.SetAffectorList(affectorList);
-			if (RenderType == 0)
-			{
-				effectNode.SetType(SpriteWidth, SpriteHeight, (STYPE)SpriteType, (ORIPOINT)OriPoint, SpriteUVStretch, MaxFps);
-			}
-			else
-			{
-				effectNode.SetType(RibbonWidth, MaxRibbonElements, RibbonLen, ClientTransform.position, StretchType, MaxFps);
-			}
-			AvailableENodes[i] = effectNode;
-		}
-		AvailableNodeCount = MaxENodes;
-		emitter = new Emitter(this);
-	}
+	public int UVType;
+
+	public Vector2 OriLowerLeftUV = Vector2.zero;
+
+	public Vector2 OriUVDimensions = Vector2.one;
+
+	public int Cols = 1;
+
+	public int Rows = 1;
+
+	public int LoopCircles = -1;
+
+	public float UVTime = 30f;
+
+	public string EanPath = "none";
+
+	public int EanIndex;
+
+	public bool RandomOriScale;
+
+	public bool RandomOriRot;
+
+	protected Emitter emitter;
+
+	public EffectNode[] AvailableENodes;
+
+	public EffectNode[] ActiveENodes;
+
+	public int AvailableNodeCount;
+
+	public Vector3 LastClientPos;
 
 	protected ArrayList InitAffectors(EffectNode node)
 	{
@@ -333,17 +247,7 @@ public class EffectLayer : MonoBehaviour
 		}
 		if (ColorAffectorEnable && ColorAffectType != 0)
 		{
-			ColorAffector value4;
-			if (ColorAffectType == 2)
-			{
-				Color[] colorArr = new Color[4] { Color1, Color2, Color3, Color4 };
-				value4 = new ColorAffector(colorArr, ColorGradualTimeLength, ColorGradualType, node);
-			}
-			else
-			{
-				Color[] colorArr2 = new Color[2] { Color1, Color2 };
-				value4 = new ColorAffector(colorArr2, ColorGradualTimeLength, ColorGradualType, node);
-			}
+			ColorAffector value4 = ((ColorAffectType != 2) ? new ColorAffector(new Color[2] { Color1, Color2 }, ColorGradualTimeLength, ColorGradualType, node) : new ColorAffector(new Color[4] { Color1, Color2, Color3, Color4 }, ColorGradualTimeLength, ColorGradualType, node));
 			arrayList.Add(value4);
 		}
 		if (LinearForceAffectorEnable)
@@ -369,8 +273,32 @@ public class EffectLayer : MonoBehaviour
 		return arrayList;
 	}
 
-	private void OnDrawGizmosSelected()
+	protected void Init()
 	{
+		AvailableENodes = new EffectNode[MaxENodes];
+		ActiveENodes = new EffectNode[MaxENodes];
+		for (int i = 0; i < MaxENodes; i++)
+		{
+			EffectNode effectNode = new EffectNode(i, ClientTransform, SyncClient, this);
+			ArrayList affectorList = InitAffectors(effectNode);
+			effectNode.SetAffectorList(affectorList);
+			if (RenderType == 0)
+			{
+				effectNode.SetType(SpriteWidth, SpriteHeight, (STYPE)SpriteType, (ORIPOINT)OriPoint, SpriteUVStretch, MaxFps);
+			}
+			else
+			{
+				effectNode.SetType(RibbonWidth, MaxRibbonElements, RibbonLen, ClientTransform.position, StretchType, MaxFps);
+			}
+			AvailableENodes[i] = effectNode;
+		}
+		AvailableNodeCount = MaxENodes;
+		emitter = new Emitter(this);
+	}
+
+	public VertexPool GetVertexPool()
+	{
+		return Vertexpool;
 	}
 
 	public void RemoveActiveNode(EffectNode node)
@@ -384,6 +312,41 @@ public class EffectLayer : MonoBehaviour
 			ActiveENodes[node.Index] = null;
 			AvailableENodes[node.Index] = node;
 			AvailableNodeCount++;
+		}
+	}
+
+	public void AddActiveNode(EffectNode node)
+	{
+		if (AvailableNodeCount == 0)
+		{
+			Debug.LogError("out index!");
+		}
+		if (AvailableENodes[node.Index] != null)
+		{
+			ActiveENodes[node.Index] = node;
+			AvailableENodes[node.Index] = null;
+			AvailableNodeCount--;
+		}
+	}
+
+	protected void AddNodes(int num)
+	{
+		int num2 = 0;
+		for (int i = 0; i < MaxENodes; i++)
+		{
+			if (num2 == num)
+			{
+				break;
+			}
+			EffectNode effectNode = AvailableENodes[i];
+			if (effectNode != null)
+			{
+				AddActiveNode(effectNode);
+				num2++;
+				emitter.SetEmitPosition(effectNode);
+				float num3 = 0f;
+				effectNode.Init(life: (!IsNodeLifeLoop) ? Random.Range(NodeLifeMin, NodeLifeMax) : (-1f), oriDir: emitter.GetEmitRotation(effectNode).normalized, speed: OriSpeed, oriRot: Random.Range(OriRotationMin, OriRotationMax), oriScaleX: Random.Range(OriScaleXMin, OriScaleXMax), oriScaleY: Random.Range(OriScaleYMin, OriScaleYMax), oriColor: Color1, oriLowerUv: OriLowerLeftUV, oriUVDimension: OriUVDimensions);
+			}
 		}
 	}
 
@@ -405,6 +368,20 @@ public class EffectLayer : MonoBehaviour
 		emitter.Reset();
 	}
 
+	public void FixedUpdateCustom()
+	{
+		int nodes = emitter.GetNodes();
+		AddNodes(nodes);
+		for (int i = 0; i < MaxENodes; i++)
+		{
+			EffectNode effectNode = ActiveENodes[i];
+			if (effectNode != null)
+			{
+				effectNode.Update();
+			}
+		}
+	}
+
 	public void StartCustom()
 	{
 		if (MainCamera == null)
@@ -413,5 +390,18 @@ public class EffectLayer : MonoBehaviour
 		}
 		Init();
 		LastClientPos = ClientTransform.position;
+	}
+
+	private void OnDrawGizmosSelected()
+	{
+	}
+
+	public RibbonTrail GetRibbonTrail()
+	{
+		if (((ActiveENodes == null) | (ActiveENodes.Length != 1)) || MaxENodes != 1 || RenderType != 1)
+		{
+			return null;
+		}
+		return ActiveENodes[0].Ribbon;
 	}
 }

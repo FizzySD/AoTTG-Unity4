@@ -2,13 +2,13 @@ using UnityEngine;
 
 public class PopuplistCharacterSelection : MonoBehaviour
 {
-	public GameObject ACL;
-
-	public GameObject BLA;
+	public GameObject SPD;
 
 	public GameObject GAS;
 
-	public GameObject SPD;
+	public GameObject BLA;
+
+	public GameObject ACL;
 
 	private void onCharacterChange()
 	{

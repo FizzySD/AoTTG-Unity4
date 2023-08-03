@@ -4,36 +4,17 @@ using UnityEngine;
 [AddComponentMenu("Xffect")]
 public class Xffect : MonoBehaviour
 {
-	private List<EffectLayer> EflList = new List<EffectLayer>();
+	private Dictionary<string, VertexPool> MatDic = new Dictionary<string, VertexPool>();
 
-	protected float ElapsedTime;
+	private List<EffectLayer> EflList = new List<EffectLayer>();
 
 	public float LifeTime = -1f;
 
-	private Dictionary<string, VertexPool> MatDic = new Dictionary<string, VertexPool>();
-
-	public void Active()
-	{
-		foreach (Transform item in base.transform)
-		{
-			item.gameObject.SetActive(true);
-		}
-		base.gameObject.SetActive(true);
-		ElapsedTime = 0f;
-	}
+	protected float ElapsedTime;
 
 	private void Awake()
 	{
 		Initialize();
-	}
-
-	public void DeActive()
-	{
-		foreach (Transform item in base.transform)
-		{
-			item.gameObject.SetActive(false);
-		}
-		base.gameObject.SetActive(false);
 	}
 
 	public void Initialize()
@@ -45,7 +26,7 @@ public class Xffect : MonoBehaviour
 		foreach (Transform item in base.transform)
 		{
 			EffectLayer effectLayer = (EffectLayer)item.GetComponent(typeof(EffectLayer));
-			if (effectLayer != null && effectLayer.Material != null)
+			if (!(effectLayer == null) && !(effectLayer.Material == null))
 			{
 				Material material = effectLayer.Material;
 				EflList.Add(effectLayer);
@@ -59,9 +40,8 @@ public class Xffect : MonoBehaviour
 				}
 				if (!MatDic.ContainsKey(material.name))
 				{
-					GameObject obj = new GameObject("mesh " + material.name);
-					obj.transform.parent = base.transform;
-					GameObject gameObject = obj;
+					GameObject gameObject = new GameObject("mesh " + material.name);
+					gameObject.transform.parent = base.transform;
 					gameObject.AddComponent("MeshFilter");
 					gameObject.AddComponent("MeshRenderer");
 					MeshFilter meshFilter = (MeshFilter)gameObject.GetComponent(typeof(MeshFilter));
@@ -77,28 +57,6 @@ public class Xffect : MonoBehaviour
 		{
 			efl.Vertexpool = MatDic[efl.Material.name];
 		}
-	}
-
-	private void LateUpdate()
-	{
-		foreach (KeyValuePair<string, VertexPool> item in MatDic)
-		{
-			item.Value.LateUpdate();
-		}
-		if (!(ElapsedTime > LifeTime) || !(LifeTime >= 0f))
-		{
-			return;
-		}
-		foreach (EffectLayer efl in EflList)
-		{
-			efl.Reset();
-		}
-		DeActive();
-		ElapsedTime = 0f;
-	}
-
-	private void OnDrawGizmosSelected()
-	{
 	}
 
 	public void SetClient(Transform client)
@@ -125,6 +83,15 @@ public class Xffect : MonoBehaviour
 		}
 	}
 
+	public void DeActive()
+	{
+		foreach (Transform item in base.transform)
+		{
+			item.gameObject.active = false;
+		}
+		base.gameObject.active = false;
+	}
+
 	private void Start()
 	{
 		base.transform.position = Vector3.zero;
@@ -142,6 +109,16 @@ public class Xffect : MonoBehaviour
 		}
 	}
 
+	public void Active()
+	{
+		foreach (Transform item in base.transform)
+		{
+			item.gameObject.active = true;
+		}
+		base.gameObject.active = true;
+		ElapsedTime = 0f;
+	}
+
 	private void Update()
 	{
 		ElapsedTime += Time.deltaTime;
@@ -152,5 +129,27 @@ public class Xffect : MonoBehaviour
 				efl.FixedUpdateCustom();
 			}
 		}
+	}
+
+	private void LateUpdate()
+	{
+		foreach (KeyValuePair<string, VertexPool> item in MatDic)
+		{
+			item.Value.LateUpdate();
+		}
+		if (!(ElapsedTime > LifeTime) || !(LifeTime >= 0f))
+		{
+			return;
+		}
+		foreach (EffectLayer efl in EflList)
+		{
+			efl.Reset();
+		}
+		DeActive();
+		ElapsedTime = 0f;
+	}
+
+	private void OnDrawGizmosSelected()
+	{
 	}
 }

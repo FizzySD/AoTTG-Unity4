@@ -1,7 +1,7 @@
 using UnityEngine;
 
-[AddComponentMenu("NGUI/Interaction/Sound Volume")]
 [RequireComponent(typeof(UISlider))]
+[AddComponentMenu("NGUI/Interaction/Sound Volume")]
 public class UISoundVolume : MonoBehaviour
 {
 	private UISlider mSlider;

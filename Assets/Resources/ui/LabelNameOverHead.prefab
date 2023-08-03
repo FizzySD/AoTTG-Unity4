@@ -9,18 +9,18 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1600265257741067}
+  m_RootGameObject: {fileID: 1142558500266471}
   m_IsPrefabParent: 1
   m_IsExploded: 0
---- !u!1 &1600265257741067
+--- !u!1 &1142558500266471
 GameObject:
   serializedVersion: 4
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_Component:
-  - 4: {fileID: 4525285247223131}
-  - 114: {fileID: 114793718947648599}
+  - 4: {fileID: 4978996724507218}
+  - 114: {fileID: 114108317288680092}
   m_Layer: 5
   m_Name: LabelNameOverHead
   m_TagString: Untagged
@@ -28,30 +28,30 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4525285247223131
+--- !u!4 &4978996724507218
 Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1600265257741067}
+  m_GameObject: {fileID: 1142558500266471}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 14, y: 14, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!114 &114793718947648599
+--- !u!114 &114108317288680092
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1600265257741067}
+  m_GameObject: {fileID: 1142558500266471}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 848282c0978acd885155e93949b74925, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  mMat: {fileID: 2100000, guid: cfb4a653a9b263742b2e7ff61f8bc30a, type: 2}
+  mMat: {fileID: 2100000, guid: c12eb9f28ca839741a806ca68d744f63, type: 2}
   mTex: {fileID: 0}
   mColor:
     r: 1
@@ -60,7 +60,7 @@ MonoBehaviour:
     a: 1
   mPivot: 4
   mDepth: 2
-  mFont: {fileID: 114147872061215054, guid: d2de15ceb34675a4992571b89aa15da8, type: 2}
+  mFont: {fileID: 114827694409775006, guid: 81534d2f84527374d977802a032849bb, type: 2}
   mText: New Label
   mMaxLineWidth: 0
   mEncoding: 1

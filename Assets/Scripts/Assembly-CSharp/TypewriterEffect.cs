@@ -8,11 +8,11 @@ public class TypewriterEffect : MonoBehaviour
 
 	private UILabel mLabel;
 
-	private float mNextChar;
+	private string mText;
 
 	private int mOffset;
 
-	private string mText;
+	private float mNextChar;
 
 	private void Update()
 	{
@@ -29,14 +29,10 @@ public class TypewriterEffect : MonoBehaviour
 			{
 				charsPerSecond = Mathf.Max(1, charsPerSecond);
 				float num = 1f / (float)charsPerSecond;
-				switch (mText[mOffset])
+				char c = mText[mOffset];
+				if (c == '.' || c == '\n' || c == '!' || c == '?')
 				{
-				case '\n':
-				case '!':
-				case '.':
-				case '?':
 					num *= 4f;
-					break;
 				}
 				mNextChar = Time.time + num;
 				mLabel.text = mText.Substring(0, ++mOffset);

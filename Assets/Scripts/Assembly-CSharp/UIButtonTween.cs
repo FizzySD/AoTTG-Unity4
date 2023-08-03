@@ -4,55 +4,40 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Button Tween")]
 public class UIButtonTween : MonoBehaviour
 {
-	public string callWhenFinished;
+	public GameObject tweenTarget;
 
-	public DisableCondition disableWhenFinished;
+	public int tweenGroup;
 
-	public GameObject eventReceiver;
-
-	public EnableCondition ifDisabledOnPlay;
-
-	public bool includeChildren;
-
-	private bool mHighlighted;
-
-	private bool mStarted;
-
-	private UITweener[] mTweens;
-
-	public UITweener.OnFinished onFinished;
+	public Trigger trigger;
 
 	public Direction playDirection = Direction.Forward;
 
 	public bool resetOnPlay;
 
-	public Trigger trigger;
+	public EnableCondition ifDisabledOnPlay;
 
-	public int tweenGroup;
+	public DisableCondition disableWhenFinished;
 
-	public GameObject tweenTarget;
+	public bool includeChildren;
 
-	private void OnActivate(bool isActive)
+	public GameObject eventReceiver;
+
+	public string callWhenFinished;
+
+	public UITweener.OnFinished onFinished;
+
+	private UITweener[] mTweens;
+
+	private bool mStarted;
+
+	private bool mHighlighted;
+
+	private void Start()
 	{
-		if (base.enabled && (trigger == Trigger.OnActivate || (trigger == Trigger.OnActivateTrue && isActive) || (trigger == Trigger.OnActivateFalse && !isActive)))
+		mStarted = true;
+		if (tweenTarget == null)
 		{
-			Play(isActive);
-		}
-	}
-
-	private void OnClick()
-	{
-		if (base.enabled && trigger == Trigger.OnClick)
-		{
-			Play(true);
-		}
-	}
-
-	private void OnDoubleClick()
-	{
-		if (base.enabled && trigger == Trigger.OnDoubleClick)
-		{
-			Play(true);
+			tweenTarget = base.gameObject;
 		}
 	}
 
@@ -84,6 +69,22 @@ public class UIButtonTween : MonoBehaviour
 		}
 	}
 
+	private void OnClick()
+	{
+		if (base.enabled && trigger == Trigger.OnClick)
+		{
+			Play(true);
+		}
+	}
+
+	private void OnDoubleClick()
+	{
+		if (base.enabled && trigger == Trigger.OnDoubleClick)
+		{
+			Play(true);
+		}
+	}
+
 	private void OnSelect(bool isSelected)
 	{
 		if (base.enabled && (trigger == Trigger.OnSelect || (trigger == Trigger.OnSelectTrue && isSelected) || (trigger == Trigger.OnSelectFalse && !isSelected)))
@@ -92,9 +93,52 @@ public class UIButtonTween : MonoBehaviour
 		}
 	}
 
+	private void OnActivate(bool isActive)
+	{
+		if (base.enabled && (trigger == Trigger.OnActivate || (trigger == Trigger.OnActivateTrue && isActive) || (trigger == Trigger.OnActivateFalse && !isActive)))
+		{
+			Play(isActive);
+		}
+	}
+
+	private void Update()
+	{
+		if (disableWhenFinished == DisableCondition.DoNotDisable || mTweens == null)
+		{
+			return;
+		}
+		bool flag = true;
+		bool flag2 = true;
+		int i = 0;
+		for (int num = mTweens.Length; i < num; i++)
+		{
+			UITweener uITweener = mTweens[i];
+			if (uITweener.tweenGroup == tweenGroup)
+			{
+				if (uITweener.enabled)
+				{
+					flag = false;
+					break;
+				}
+				if (uITweener.direction != (Direction)disableWhenFinished)
+				{
+					flag2 = false;
+				}
+			}
+		}
+		if (flag)
+		{
+			if (flag2)
+			{
+				NGUITools.SetActive(tweenTarget, false);
+			}
+			mTweens = null;
+		}
+	}
+
 	public void Play(bool forward)
 	{
-		GameObject gameObject = ((tweenTarget != null) ? tweenTarget : base.gameObject);
+		GameObject gameObject = ((!(tweenTarget == null)) ? tweenTarget : base.gameObject);
 		if (!NGUITools.GetActive(gameObject))
 		{
 			if (ifDisabledOnPlay != EnableCondition.EnableThenPlay)
@@ -147,50 +191,6 @@ public class UIButtonTween : MonoBehaviour
 					uITweener.callWhenFinished = callWhenFinished;
 				}
 			}
-		}
-	}
-
-	private void Start()
-	{
-		mStarted = true;
-		if (tweenTarget == null)
-		{
-			tweenTarget = base.gameObject;
-		}
-	}
-
-	private void Update()
-	{
-		if (disableWhenFinished == DisableCondition.DoNotDisable || mTweens == null)
-		{
-			return;
-		}
-		bool flag = true;
-		bool flag2 = true;
-		int i = 0;
-		for (int num = mTweens.Length; i < num; i++)
-		{
-			UITweener uITweener = mTweens[i];
-			if (uITweener.tweenGroup == tweenGroup)
-			{
-				if (uITweener.enabled)
-				{
-					flag = false;
-					break;
-				}
-				if (uITweener.direction != (Direction)disableWhenFinished)
-				{
-					flag2 = false;
-				}
-			}
-		}
-		if (flag)
-		{
-			if (flag2)
-			{
-				NGUITools.SetActive(tweenTarget, false);
-			}
-			mTweens = null;
 		}
 	}
 }

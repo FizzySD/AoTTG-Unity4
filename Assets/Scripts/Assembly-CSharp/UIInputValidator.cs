@@ -1,7 +1,7 @@
 using UnityEngine;
 
-[RequireComponent(typeof(UIInput))]
 [AddComponentMenu("NGUI/Interaction/Input Validator")]
+[RequireComponent(typeof(UIInput))]
 public class UIInputValidator : MonoBehaviour
 {
 	public enum Validation

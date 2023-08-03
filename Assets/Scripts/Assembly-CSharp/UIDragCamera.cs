@@ -1,7 +1,7 @@
 using UnityEngine;
 
-[AddComponentMenu("NGUI/Interaction/Drag Camera")]
 [ExecuteInEditMode]
+[AddComponentMenu("NGUI/Interaction/Drag Camera")]
 public class UIDragCamera : IgnoreTimeScale
 {
 	public UIDraggableCamera draggableCamera;
@@ -30,19 +30,19 @@ public class UIDragCamera : IgnoreTimeScale
 		}
 	}
 
-	private void OnDrag(Vector2 delta)
-	{
-		if (base.enabled && NGUITools.GetActive(base.gameObject) && draggableCamera != null)
-		{
-			draggableCamera.Drag(delta);
-		}
-	}
-
 	private void OnPress(bool isPressed)
 	{
 		if (base.enabled && NGUITools.GetActive(base.gameObject) && draggableCamera != null)
 		{
 			draggableCamera.Press(isPressed);
+		}
+	}
+
+	private void OnDrag(Vector2 delta)
+	{
+		if (base.enabled && NGUITools.GetActive(base.gameObject) && draggableCamera != null)
+		{
+			draggableCamera.Drag(delta);
 		}
 	}
 

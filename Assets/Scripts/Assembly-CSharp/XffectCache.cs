@@ -6,25 +6,6 @@ public class XffectCache : MonoBehaviour
 {
 	private Dictionary<string, ArrayList> ObjectDic = new Dictionary<string, ArrayList>();
 
-	protected Transform AddObject(string name)
-	{
-		Transform transform = base.transform.Find(name);
-		if (transform == null)
-		{
-			Debug.Log("object:" + name + "doesn't exist!");
-			return null;
-		}
-		Transform transform2 = Object.Instantiate(transform, Vector3.zero, Quaternion.identity) as Transform;
-		ObjectDic[name].Add(transform2);
-		transform2.gameObject.SetActive(false);
-		Xffect component = transform2.GetComponent<Xffect>();
-		if (component != null)
-		{
-			component.Initialize();
-		}
-		return transform2;
-	}
-
 	private void Awake()
 	{
 		foreach (Transform item in base.transform)
@@ -36,8 +17,42 @@ public class XffectCache : MonoBehaviour
 			{
 				component.Initialize();
 			}
-			item.gameObject.SetActive(false);
+			item.gameObject.active = false;
 		}
+	}
+
+	private void Start()
+	{
+	}
+
+	protected Transform AddObject(string name)
+	{
+		Transform transform = base.transform.Find(name);
+		if (transform == null)
+		{
+			Debug.Log("object:" + name + "doesn't exist!");
+			return null;
+		}
+		Transform transform2 = Object.Instantiate(transform, Vector3.zero, Quaternion.identity) as Transform;
+		ObjectDic[name].Add(transform2);
+		transform2.gameObject.active = false;
+		Xffect component = transform2.GetComponent<Xffect>();
+		if (component != null)
+		{
+			component.Initialize();
+		}
+		return transform2;
+	}
+
+	public ArrayList GetObjectCache(string name)
+	{
+		ArrayList arrayList = ObjectDic[name];
+		if (arrayList == null)
+		{
+			Debug.LogError(name + ": cache doesnt exist!");
+			return null;
+		}
+		return arrayList;
 	}
 
 	public Transform GetObject(string name)
@@ -52,25 +67,10 @@ public class XffectCache : MonoBehaviour
 		{
 			if (!item.gameObject.active)
 			{
-				item.gameObject.SetActive(true);
+				item.gameObject.active = true;
 				return item;
 			}
 		}
 		return AddObject(name);
-	}
-
-	public ArrayList GetObjectCache(string name)
-	{
-		ArrayList arrayList = ObjectDic[name];
-		if (arrayList == null)
-		{
-			Debug.LogError(name + ": cache doesnt exist!");
-			return null;
-		}
-		return arrayList;
-	}
-
-	private void Start()
-	{
 	}
 }

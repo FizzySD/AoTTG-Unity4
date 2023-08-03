@@ -3,27 +3,43 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Forward Events")]
 public class UIForwardEvents : MonoBehaviour
 {
+	public GameObject target;
+
+	public bool onHover;
+
+	public bool onPress;
+
 	public bool onClick;
 
 	public bool onDoubleClick;
+
+	public bool onSelect;
 
 	public bool onDrag;
 
 	public bool onDrop;
 
-	public bool onHover;
-
 	public bool onInput;
-
-	public bool onPress;
-
-	public bool onScroll;
-
-	public bool onSelect;
 
 	public bool onSubmit;
 
-	public GameObject target;
+	public bool onScroll;
+
+	private void OnHover(bool isOver)
+	{
+		if (onHover && target != null)
+		{
+			target.SendMessage("OnHover", isOver, SendMessageOptions.DontRequireReceiver);
+		}
+	}
+
+	private void OnPress(bool pressed)
+	{
+		if (onPress && target != null)
+		{
+			target.SendMessage("OnPress", pressed, SendMessageOptions.DontRequireReceiver);
+		}
+	}
 
 	private void OnClick()
 	{
@@ -38,6 +54,14 @@ public class UIForwardEvents : MonoBehaviour
 		if (onDoubleClick && target != null)
 		{
 			target.SendMessage("OnDoubleClick", SendMessageOptions.DontRequireReceiver);
+		}
+	}
+
+	private void OnSelect(bool selected)
+	{
+		if (onSelect && target != null)
+		{
+			target.SendMessage("OnSelect", selected, SendMessageOptions.DontRequireReceiver);
 		}
 	}
 
@@ -57,14 +81,6 @@ public class UIForwardEvents : MonoBehaviour
 		}
 	}
 
-	private void OnHover(bool isOver)
-	{
-		if (onHover && target != null)
-		{
-			target.SendMessage("OnHover", isOver, SendMessageOptions.DontRequireReceiver);
-		}
-	}
-
 	private void OnInput(string text)
 	{
 		if (onInput && target != null)
@@ -73,11 +89,11 @@ public class UIForwardEvents : MonoBehaviour
 		}
 	}
 
-	private void OnPress(bool pressed)
+	private void OnSubmit()
 	{
-		if (onPress && target != null)
+		if (onSubmit && target != null)
 		{
-			target.SendMessage("OnPress", pressed, SendMessageOptions.DontRequireReceiver);
+			target.SendMessage("OnSubmit", SendMessageOptions.DontRequireReceiver);
 		}
 	}
 
@@ -86,22 +102,6 @@ public class UIForwardEvents : MonoBehaviour
 		if (onScroll && target != null)
 		{
 			target.SendMessage("OnScroll", delta, SendMessageOptions.DontRequireReceiver);
-		}
-	}
-
-	private void OnSelect(bool selected)
-	{
-		if (onSelect && target != null)
-		{
-			target.SendMessage("OnSelect", selected, SendMessageOptions.DontRequireReceiver);
-		}
-	}
-
-	private void OnSubmit()
-	{
-		if (onSubmit && target != null)
-		{
-			target.SendMessage("OnSubmit", SendMessageOptions.DontRequireReceiver);
 		}
 	}
 }

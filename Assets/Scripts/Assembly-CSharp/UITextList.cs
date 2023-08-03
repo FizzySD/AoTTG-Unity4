@@ -5,24 +5,32 @@ using UnityEngine;
 [AddComponentMenu("NGUI/UI/Text List")]
 public class UITextList : MonoBehaviour
 {
-	protected class Paragraph
-	{
-		public string[] lines;
-
-		public string text;
-	}
-
 	public enum Style
 	{
 		Text = 0,
 		Chat = 1
 	}
 
-	public int maxEntries = 50;
+	protected class Paragraph
+	{
+		public string text;
+
+		public string[] lines;
+	}
+
+	public Style style;
+
+	public UILabel textLabel;
+
+	public float maxWidth;
 
 	public float maxHeight;
 
-	public float maxWidth;
+	public int maxEntries = 50;
+
+	public bool supportScrollWheel = true;
+
+	protected char[] mSeparator = new char[1] { '\n' };
 
 	protected List<Paragraph> mParagraphs = new List<Paragraph>();
 
@@ -30,15 +38,13 @@ public class UITextList : MonoBehaviour
 
 	protected bool mSelected;
 
-	protected char[] mSeparator = new char[1] { '\n' };
-
 	protected int mTotalLines;
 
-	public Style style;
-
-	public bool supportScrollWheel = true;
-
-	public UILabel textLabel;
+	public void Clear()
+	{
+		mParagraphs.Clear();
+		UpdateVisibleText();
+	}
 
 	public void Add(string text)
 	{
@@ -99,22 +105,6 @@ public class UITextList : MonoBehaviour
 		}
 	}
 
-	public void Clear()
-	{
-		mParagraphs.Clear();
-		UpdateVisibleText();
-	}
-
-	private void OnScroll(float val)
-	{
-		if (mSelected && supportScrollWheel)
-		{
-			val *= ((style != Style.Chat) ? (-10f) : 10f);
-			mScroll = Mathf.Max(0f, mScroll + val);
-			UpdateVisibleText();
-		}
-	}
-
 	private void OnSelect(bool selected)
 	{
 		mSelected = selected;
@@ -122,12 +112,17 @@ public class UITextList : MonoBehaviour
 
 	protected void UpdateVisibleText()
 	{
-		if (!(textLabel != null) || !(textLabel.font != null))
+		if (!(textLabel != null))
+		{
+			return;
+		}
+		UIFont font = textLabel.font;
+		if (!(font != null))
 		{
 			return;
 		}
 		int num = 0;
-		int num2 = ((maxHeight <= 0f) ? 100000 : Mathf.FloorToInt(maxHeight / textLabel.cachedTransform.localScale.y));
+		int num2 = ((!(maxHeight > 0f)) ? 100000 : Mathf.FloorToInt(maxHeight / textLabel.cachedTransform.localScale.y));
 		int num3 = Mathf.RoundToInt(mScroll);
 		if (num2 + num3 > mTotalLines)
 		{
@@ -169,5 +164,15 @@ public class UITextList : MonoBehaviour
 			}
 		}
 		textLabel.text = stringBuilder.ToString();
+	}
+
+	private void OnScroll(float val)
+	{
+		if (mSelected && supportScrollWheel)
+		{
+			val *= ((style != Style.Chat) ? (-10f) : 10f);
+			mScroll = Mathf.Max(0f, mScroll + val);
+			UpdateVisibleText();
+		}
 	}
 }

@@ -4,8 +4,8 @@ public class BTN_START_SINGLE_GAMEPLAY : MonoBehaviour
 {
 	private void OnClick()
 	{
-		string selection = GameObject.Find("PopupListMap").GetComponent<UIPopupList>().selection;
-		string selection2 = GameObject.Find("PopupListCharacter").GetComponent<UIPopupList>().selection;
+		string selection = "[S]Forest";
+        string selection2 = GameObject.Find("PopupListCharacter").GetComponent<UIPopupList>().selection;
 		int difficulty = (GameObject.Find("CheckboxHard").GetComponent<UICheckbox>().isChecked ? 1 : (GameObject.Find("CheckboxAbnormal").GetComponent<UICheckbox>().isChecked ? 2 : 0));
 		IN_GAME_MAIN_CAMERA.difficulty = difficulty;
 		IN_GAME_MAIN_CAMERA.gametype = GAMETYPE.SINGLE;

@@ -3,11 +3,19 @@ using System.Collections.Generic;
 
 public class PBitStream
 {
-	private int currentByte;
-
 	private List<byte> streamBytes;
 
+	private int currentByte;
+
 	private int totalBits;
+
+	public int ByteCount
+	{
+		get
+		{
+			return BytesForBits(totalBits);
+		}
+	}
 
 	public int BitCount
 	{
@@ -18,14 +26,6 @@ public class PBitStream
 		private set
 		{
 			totalBits = value;
-		}
-	}
-
-	public int ByteCount
-	{
-		get
-		{
-			return BytesForBits(totalBits);
 		}
 	}
 
@@ -47,6 +47,15 @@ public class PBitStream
 		BitCount = bitCount;
 	}
 
+	public static int BytesForBits(int bitCount)
+	{
+		if (bitCount <= 0)
+		{
+			return 0;
+		}
+		return (bitCount - 1) / 8 + 1;
+	}
+
 	public void Add(bool val)
 	{
 		int num = totalBits / 8;
@@ -57,25 +66,19 @@ public class PBitStream
 		if (val)
 		{
 			int num2 = 7 - totalBits % 8;
-			streamBytes[num] |= (byte)(1 << num2);
+			List<byte> list;
+			List<byte> list2 = (list = streamBytes);
+			int index;
+			int index2 = (index = num);
+			byte b = list[index];
+			list2[index2] = (byte)(b | (byte)(1 << num2));
 		}
 		totalBits++;
 	}
 
-	public static int BytesForBits(int bitCount)
+	public byte[] ToBytes()
 	{
-		if (bitCount <= 0)
-		{
-			return 0;
-		}
-		return (bitCount - 1) / 8 + 1;
-	}
-
-	public bool Get(int bitIndex)
-	{
-		int index = bitIndex / 8;
-		int num = 7 - bitIndex % 8;
-		return (streamBytes[index] & (byte)(1 << num)) > 0;
+		return streamBytes.ToArray();
 	}
 
 	public bool GetNext()
@@ -87,15 +90,22 @@ public class PBitStream
 		return Get(Position++);
 	}
 
-	public void Set(int bitIndex, bool value)
+	public bool Get(int bitIndex)
 	{
 		int index = bitIndex / 8;
 		int num = 7 - bitIndex % 8;
-		streamBytes[index] |= (byte)(1 << num);
+		return (streamBytes[index] & (byte)(1 << num)) > 0;
 	}
 
-	public byte[] ToBytes()
+	public void Set(int bitIndex, bool value)
 	{
-		return streamBytes.ToArray();
+		int num = bitIndex / 8;
+		int num2 = 7 - bitIndex % 8;
+		List<byte> list;
+		List<byte> list2 = (list = streamBytes);
+		int index;
+		int index2 = (index = num);
+		byte b = list[index];
+		list2[index2] = (byte)(b | (byte)(1 << num2));
 	}
 }

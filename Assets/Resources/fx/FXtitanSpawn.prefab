@@ -9,21 +9,21 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1351911133446003}
+  m_RootGameObject: {fileID: 1340854402540541}
   m_IsPrefabParent: 1
   m_IsExploded: 0
---- !u!1 &1351911133446003
+--- !u!1 &1340854402540541
 GameObject:
   serializedVersion: 4
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_Component:
-  - 4: {fileID: 4574397295650968}
-  - 198: {fileID: 198180582706209877}
-  - 199: {fileID: 199409513256463210}
-  - 114: {fileID: 114188736605621451}
-  - 114: {fileID: 114896664129287780}
+  - 4: {fileID: 4098512497075196}
+  - 198: {fileID: 198681417688410867}
+  - 199: {fileID: 199828058136287752}
+  - 114: {fileID: 114080079678579355}
+  - 114: {fileID: 114942224608507247}
   m_Layer: 0
   m_Name: FXtitanSpawn
   m_TagString: Untagged
@@ -31,24 +31,24 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4574397295650968
+--- !u!4 &4098512497075196
 Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1351911133446003}
+  m_GameObject: {fileID: 1340854402540541}
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: -14.440729, y: 8.2882034E-05, z: -400.2731}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!198 &198180582706209877
+--- !u!198 &198681417688410867
 ParticleSystem:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1351911133446003}
+  m_GameObject: {fileID: 1340854402540541}
   lengthInSec: 0.1
   startDelay: 0
   speed: 1
@@ -1045,19 +1045,19 @@ ParticleSystem:
     subEmitterCollision1: {fileID: 0}
     subEmitterDeath: {fileID: 0}
     subEmitterDeath1: {fileID: 0}
---- !u!199 &199409513256463210
+--- !u!199 &199828058136287752
 ParticleSystemRenderer:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1351911133446003}
+  m_GameObject: {fileID: 1340854402540541}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_LightmapIndex: 255
   m_LightmapTilingOffset: {x: 1, y: 1, z: 0, w: 0}
   m_Materials:
-  - {fileID: 2100000, guid: 2746dca72b6e3c94aaa7b63e5beea183, type: 2}
+  - {fileID: 2100000, guid: 42cc493d35ba95a43aab8105b53e0797, type: 2}
   m_SubsetIndices: []
   m_StaticBatchRoot: {fileID: 0}
   m_UseLightProbes: 0
@@ -1077,24 +1077,24 @@ ParticleSystemRenderer:
   m_Mesh1: {fileID: 0}
   m_Mesh2: {fileID: 0}
   m_Mesh3: {fileID: 0}
---- !u!114 &114188736605621451
+--- !u!114 &114080079678579355
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1351911133446003}
+  m_GameObject: {fileID: 1340854402540541}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a72ec263b8b746400270866c256d94e8, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   CountDown: 10
---- !u!114 &114896664129287780
+--- !u!114 &114942224608507247
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1351911133446003}
+  m_GameObject: {fileID: 1340854402540541}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dbc57f5a7a2407cb7f003832c688bfd8, type: 3}
@@ -1104,7 +1104,7 @@ MonoBehaviour:
   ownerId: 0
   group: 0
   prefixBackup: -1
-  observed: {fileID: 4574397295650968}
+  observed: {fileID: 4098512497075196}
   synchronization: 3
   onSerializeTransformOption: 3
   onSerializeRigidBodyOption: 2

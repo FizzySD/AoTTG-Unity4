@@ -4,15 +4,6 @@ public class CheckBoxCamera : MonoBehaviour
 {
 	public new CAMERA_TYPE camera;
 
-	private void OnSelectionChange(bool yes)
-	{
-		if (yes)
-		{
-			IN_GAME_MAIN_CAMERA.cameraMode = camera;
-			PlayerPrefs.SetString("cameraType", camera.ToString().ToUpper());
-		}
-	}
-
 	private void Start()
 	{
 		if (PlayerPrefs.HasKey("cameraType"))
@@ -25,6 +16,15 @@ public class CheckBoxCamera : MonoBehaviour
 			{
 				GetComponent<UICheckbox>().isChecked = false;
 			}
+		}
+	}
+
+	private void OnSelectionChange(bool yes)
+	{
+		if (yes)
+		{
+			IN_GAME_MAIN_CAMERA.cameraMode = camera;
+			PlayerPrefs.SetString("cameraType", camera.ToString().ToUpper());
 		}
 	}
 }

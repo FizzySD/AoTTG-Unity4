@@ -1,51 +1,47 @@
-using Settings;
 using UnityEngine;
 
 public class SpectatorMovement : MonoBehaviour
 {
-	public bool disable;
+	public FengCustomInputs inputManager;
 
 	private float speed = 100f;
 
+	public bool disable;
+
 	private void Start()
 	{
+		inputManager = GameObject.Find("InputManagerController").GetComponent<FengCustomInputs>();
 	}
 
 	private void Update()
 	{
 		if (!disable)
 		{
-			float num = speed;
-			if (SettingsManager.InputSettings.Human.Jump.GetKey())
+			float num = (inputManager.isInput[InputCode.up] ? 1f : ((!inputManager.isInput[InputCode.down]) ? 0f : (-1f)));
+			float num2 = (inputManager.isInput[InputCode.left] ? (-1f) : ((!inputManager.isInput[InputCode.right]) ? 0f : 1f));
+			if (num > 0f)
 			{
-				num *= 3f;
+				base.transform.position += base.transform.forward * speed * Time.deltaTime;
 			}
-			float num2 = (SettingsManager.InputSettings.General.Forward.GetKey() ? 1f : ((!SettingsManager.InputSettings.General.Back.GetKey()) ? 0f : (-1f)));
-			float num3 = (SettingsManager.InputSettings.General.Left.GetKey() ? (-1f) : ((!SettingsManager.InputSettings.General.Right.GetKey()) ? 0f : 1f));
-			Transform transform = base.transform;
+			if (num < 0f)
+			{
+				base.transform.position -= base.transform.forward * speed * Time.deltaTime;
+			}
 			if (num2 > 0f)
 			{
-				transform.position += base.transform.forward * num * Time.deltaTime;
+				base.transform.position += base.transform.right * speed * Time.deltaTime;
 			}
-			else if (num2 < 0f)
+			if (num2 < 0f)
 			{
-				transform.position -= base.transform.forward * num * Time.deltaTime;
+				base.transform.position -= base.transform.right * speed * Time.deltaTime;
 			}
-			if (num3 > 0f)
+			if (inputManager.isInput[InputCode.leftRope])
 			{
-				transform.position += base.transform.right * num * Time.deltaTime;
+				base.transform.position -= base.transform.up * speed * Time.deltaTime;
 			}
-			else if (num3 < 0f)
+			if (inputManager.isInput[InputCode.rightRope])
 			{
-				transform.position -= base.transform.right * num * Time.deltaTime;
-			}
-			if (SettingsManager.InputSettings.Human.HookLeft.GetKey())
-			{
-				transform.position -= base.transform.up * num * Time.deltaTime;
-			}
-			else if (SettingsManager.InputSettings.Human.HookRight.GetKey())
-			{
-				transform.position += base.transform.up * num * Time.deltaTime;
+				base.transform.position += base.transform.up * speed * Time.deltaTime;
 			}
 		}
 	}

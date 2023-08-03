@@ -8,7 +8,7 @@ namespace ExitGames.Client.Photon
 
 		public int TimeToExecute;
 
-		public byte[] DelayedData;
+		public PeerBase.MyAction ActionToExecute;
 
 		public int Delay { get; internal set; }
 

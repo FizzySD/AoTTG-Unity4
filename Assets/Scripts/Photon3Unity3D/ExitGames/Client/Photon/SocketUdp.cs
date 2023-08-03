@@ -1,11 +1,12 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Security;
 using System.Threading;
 
 namespace ExitGames.Client.Photon
 {
-	internal class SocketUdp : IPhotonSocket, IDisposable
+	internal class SocketUdp : IPhotonSocket
 	{
 		private Socket sock;
 
@@ -14,37 +15,12 @@ namespace ExitGames.Client.Photon
 		public SocketUdp(PeerBase npeer)
 			: base(npeer)
 		{
-			if (ReportDebugOfLevel(DebugLevel.INFO))
+			if (ReportDebugOfLevel(DebugLevel.ALL))
 			{
-				base.Listener.DebugReturn(DebugLevel.INFO, "SocketUdp, .Net, Unity.");
+				base.Listener.DebugReturn(DebugLevel.ALL, "CSharpSocket: UDP, Unity3d.");
 			}
+			base.Protocol = ConnectionProtocol.Udp;
 			PollReceive = false;
-		}
-
-		~SocketUdp()
-		{
-			Dispose();
-		}
-
-		public void Dispose()
-		{
-			base.State = PhotonSocketState.Disconnecting;
-			if (sock != null)
-			{
-				try
-				{
-					if (sock.Connected)
-					{
-						sock.Close();
-					}
-				}
-				catch (Exception ex)
-				{
-					EnqueueDebugReturn(DebugLevel.INFO, "Exception in Dispose(): " + ex);
-				}
-			}
-			sock = null;
-			base.State = PhotonSocketState.Disconnected;
 		}
 
 		public override bool Connect()
@@ -56,22 +32,23 @@ namespace ExitGames.Client.Photon
 					return false;
 				}
 				base.State = PhotonSocketState.Connecting;
+				Thread thread = new Thread(DnsAndConnect);
+				thread.Name = "photon dns thread";
+				thread.IsBackground = true;
+				thread.Start();
+				return true;
 			}
-			Thread thread = new Thread(DnsAndConnect);
-			thread.IsBackground = true;
-			thread.Start();
-			return true;
 		}
 
 		public override bool Disconnect()
 		{
 			if (ReportDebugOfLevel(DebugLevel.INFO))
 			{
-				EnqueueDebugReturn(DebugLevel.INFO, "SocketUdp.Disconnect()");
+				EnqueueDebugReturn(DebugLevel.INFO, "CSharpSocket.Disconnect()");
 			}
+			base.State = PhotonSocketState.Disconnecting;
 			lock (syncer)
 			{
-				base.State = PhotonSocketState.Disconnecting;
 				if (sock != null)
 				{
 					try
@@ -80,47 +57,31 @@ namespace ExitGames.Client.Photon
 					}
 					catch (Exception ex)
 					{
-						if (ReportDebugOfLevel(DebugLevel.INFO))
-						{
-							EnqueueDebugReturn(DebugLevel.INFO, "Exception in Disconnect(): " + ex);
-						}
+						EnqueueDebugReturn(DebugLevel.INFO, "Exception in Disconnect(): " + ex);
 					}
+					sock = null;
 				}
-				base.State = PhotonSocketState.Disconnected;
 			}
+			base.State = PhotonSocketState.Disconnected;
 			return true;
 		}
 
 		public override PhotonSocketError Send(byte[] data, int length)
 		{
-			try
+			lock (syncer)
 			{
-				if (sock == null || !sock.Connected)
+				if (!sock.Connected)
 				{
 					return PhotonSocketError.Skipped;
 				}
-				sock.Send(data, 0, length, SocketFlags.None);
-			}
-			catch (Exception ex)
-			{
-				if (base.State != PhotonSocketState.Disconnecting && base.State != 0)
+				try
 				{
-					if (ReportDebugOfLevel(DebugLevel.INFO))
-					{
-						string text = "";
-						if (sock != null)
-						{
-							text = string.Format(" Local: {0} Remote: {1} ({2}, {3})", sock.LocalEndPoint, sock.RemoteEndPoint, sock.Connected ? "connected" : "not connected", sock.IsBound ? "bound" : "not bound");
-						}
-						EnqueueDebugReturn(DebugLevel.INFO, string.Format("Cannot send to: {0}. Uptime: {1} ms. {2} {3}\n{4}", base.ServerAddress, SupportClass.GetTickCount() - peerBase.timeBase, base.AddressResolvedAsIpv6 ? " IPv6" : string.Empty, text, ex));
-					}
-					if (!sock.Connected)
-					{
-						EnqueueDebugReturn(DebugLevel.INFO, "Socket got closed by the local system. Disconnecting from within Send with StatusCode.Disconnect.");
-						HandleException(StatusCode.SendError);
-					}
+					sock.Send(data, 0, length, SocketFlags.None);
 				}
-				return PhotonSocketError.Exception;
+				catch
+				{
+					return PhotonSocketError.Exception;
+				}
 			}
 			return PhotonSocketError.Success;
 		}
@@ -133,59 +94,38 @@ namespace ExitGames.Client.Photon
 
 		internal void DnsAndConnect()
 		{
-			IPAddress[] ipAddresses = GetIpAddresses(base.ServerAddress);
-			if (ipAddresses == null)
+			try
 			{
-				return;
-			}
-			string text = string.Empty;
-			IPAddress[] array = ipAddresses;
-			foreach (IPAddress iPAddress in array)
-			{
-				try
+				lock (syncer)
 				{
-					sock = new Socket(iPAddress.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
-					sock.Connect(iPAddress, base.ServerPort);
-					if (sock != null && sock.Connected)
-					{
-						break;
-					}
-				}
-				catch (SocketException ex)
-				{
-					if (ReportDebugOfLevel(DebugLevel.WARNING))
-					{
-						text = string.Concat(text, ex, " ", ex.ErrorCode, "; ");
-						EnqueueDebugReturn(DebugLevel.WARNING, string.Concat("SocketException catched: ", ex, " ErrorCode: ", ex.ErrorCode));
-					}
-				}
-				catch (Exception ex2)
-				{
-					if (ReportDebugOfLevel(DebugLevel.WARNING))
-					{
-						text = string.Concat(text, ex2, "; ");
-						EnqueueDebugReturn(DebugLevel.WARNING, "Exception catched: " + ex2);
-					}
+					sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+					IPAddress ipAddress = IPhotonSocket.GetIpAddress(base.ServerAddress);
+					sock.Connect(ipAddress, base.ServerPort);
+					base.State = PhotonSocketState.Connected;
 				}
 			}
-			if (sock == null || !sock.Connected)
+			catch (SecurityException ex)
 			{
 				if (ReportDebugOfLevel(DebugLevel.ERROR))
 				{
-					EnqueueDebugReturn(DebugLevel.ERROR, "Failed to connect to server after testing each known IP. Error(s): " + text);
+					base.Listener.DebugReturn(DebugLevel.ERROR, "Connect() failed: " + ex.ToString());
+				}
+				HandleException(StatusCode.SecurityExceptionOnConnect);
+				return;
+			}
+			catch (Exception ex2)
+			{
+				if (ReportDebugOfLevel(DebugLevel.ERROR))
+				{
+					base.Listener.DebugReturn(DebugLevel.ERROR, "Connect() failed: " + ex2.ToString());
 				}
 				HandleException(StatusCode.ExceptionOnConnect);
+				return;
 			}
-			else
-			{
-				base.AddressResolvedAsIpv6 = sock.AddressFamily == AddressFamily.InterNetworkV6;
-				IPhotonSocket.ServerIpAddress = sock.RemoteEndPoint.ToString();
-				base.State = PhotonSocketState.Connected;
-				peerBase.OnConnect();
-				Thread thread = new Thread(ReceiveLoop);
-				thread.IsBackground = true;
-				thread.Start();
-			}
+			Thread thread = new Thread(ReceiveLoop);
+			thread.Name = "photon receive thread";
+			thread.IsBackground = true;
+			thread.Start();
 		}
 
 		public void ReceiveLoop()
@@ -198,24 +138,13 @@ namespace ExitGames.Client.Photon
 					int length = sock.Receive(array);
 					HandleReceivedDatagram(array, length, true);
 				}
-				catch (SocketException ex)
+				catch (Exception ex)
 				{
 					if (base.State != PhotonSocketState.Disconnecting && base.State != 0)
 					{
 						if (ReportDebugOfLevel(DebugLevel.ERROR))
 						{
-							EnqueueDebugReturn(DebugLevel.ERROR, string.Concat("Receive issue. State: ", base.State, ". Server: '", base.ServerAddress, "' ErrorCode: ", ex.ErrorCode, " SocketErrorCode: ", ex.SocketErrorCode, " Message: ", ex.Message, " ", ex));
-						}
-						HandleException(StatusCode.ExceptionOnReceive);
-					}
-				}
-				catch (Exception ex2)
-				{
-					if (base.State != PhotonSocketState.Disconnecting && base.State != 0)
-					{
-						if (ReportDebugOfLevel(DebugLevel.ERROR))
-						{
-							EnqueueDebugReturn(DebugLevel.ERROR, string.Concat("Receive issue. State: ", base.State, ". Server: '", base.ServerAddress, "' Message: ", ex2.Message, " Exception: ", ex2));
+							EnqueueDebugReturn(DebugLevel.ERROR, string.Concat("Receive issue. State: ", base.State, " Exception: ", ex));
 						}
 						HandleException(StatusCode.ExceptionOnReceive);
 					}

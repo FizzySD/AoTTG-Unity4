@@ -3,52 +3,50 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Internal/Event Listener")]
 public class UIEventListener : MonoBehaviour
 {
+	public delegate void VoidDelegate(GameObject go);
+
 	public delegate void BoolDelegate(GameObject go, bool state);
 
 	public delegate void FloatDelegate(GameObject go, float delta);
 
-	public delegate void KeyCodeDelegate(GameObject go, KeyCode key);
-
-	public delegate void ObjectDelegate(GameObject go, GameObject draggedObject);
+	public delegate void VectorDelegate(GameObject go, Vector2 delta);
 
 	public delegate void StringDelegate(GameObject go, string text);
 
-	public delegate void VectorDelegate(GameObject go, Vector2 delta);
+	public delegate void ObjectDelegate(GameObject go, GameObject draggedObject);
 
-	public delegate void VoidDelegate(GameObject go);
+	public delegate void KeyCodeDelegate(GameObject go, KeyCode key);
+
+	public object parameter;
+
+	public VoidDelegate onSubmit;
 
 	public VoidDelegate onClick;
 
 	public VoidDelegate onDoubleClick;
 
+	public BoolDelegate onHover;
+
+	public BoolDelegate onPress;
+
+	public BoolDelegate onSelect;
+
+	public FloatDelegate onScroll;
+
 	public VectorDelegate onDrag;
 
 	public ObjectDelegate onDrop;
-
-	public BoolDelegate onHover;
 
 	public StringDelegate onInput;
 
 	public KeyCodeDelegate onKey;
 
-	public BoolDelegate onPress;
-
-	public FloatDelegate onScroll;
-
-	public BoolDelegate onSelect;
-
-	public VoidDelegate onSubmit;
-
-	public object parameter;
-
-	public static UIEventListener Get(GameObject go)
+	private void OnSubmit()
 	{
-		UIEventListener uIEventListener = go.GetComponent<UIEventListener>();
-		if (uIEventListener == null)
+		if (onSubmit != null)
 		{
-			uIEventListener = go.AddComponent<UIEventListener>();
+			onSubmit(base.gameObject);
 		}
-		return uIEventListener;
 	}
 
 	private void OnClick()
@@ -64,6 +62,38 @@ public class UIEventListener : MonoBehaviour
 		if (onDoubleClick != null)
 		{
 			onDoubleClick(base.gameObject);
+		}
+	}
+
+	private void OnHover(bool isOver)
+	{
+		if (onHover != null)
+		{
+			onHover(base.gameObject, isOver);
+		}
+	}
+
+	private void OnPress(bool isPressed)
+	{
+		if (onPress != null)
+		{
+			onPress(base.gameObject, isPressed);
+		}
+	}
+
+	private void OnSelect(bool selected)
+	{
+		if (onSelect != null)
+		{
+			onSelect(base.gameObject, selected);
+		}
+	}
+
+	private void OnScroll(float delta)
+	{
+		if (onScroll != null)
+		{
+			onScroll(base.gameObject, delta);
 		}
 	}
 
@@ -83,14 +113,6 @@ public class UIEventListener : MonoBehaviour
 		}
 	}
 
-	private void OnHover(bool isOver)
-	{
-		if (onHover != null)
-		{
-			onHover(base.gameObject, isOver);
-		}
-	}
-
 	private void OnInput(string text)
 	{
 		if (onInput != null)
@@ -107,35 +129,13 @@ public class UIEventListener : MonoBehaviour
 		}
 	}
 
-	private void OnPress(bool isPressed)
+	public static UIEventListener Get(GameObject go)
 	{
-		if (onPress != null)
+		UIEventListener uIEventListener = go.GetComponent<UIEventListener>();
+		if (uIEventListener == null)
 		{
-			onPress(base.gameObject, isPressed);
+			uIEventListener = go.AddComponent<UIEventListener>();
 		}
-	}
-
-	private void OnScroll(float delta)
-	{
-		if (onScroll != null)
-		{
-			onScroll(base.gameObject, delta);
-		}
-	}
-
-	private void OnSelect(bool selected)
-	{
-		if (onSelect != null)
-		{
-			onSelect(base.gameObject, selected);
-		}
-	}
-
-	private void OnSubmit()
-	{
-		if (onSubmit != null)
-		{
-			onSubmit(base.gameObject);
-		}
+		return uIEventListener;
 	}
 }

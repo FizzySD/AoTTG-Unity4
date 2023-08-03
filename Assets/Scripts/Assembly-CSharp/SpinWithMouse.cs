@@ -3,11 +3,16 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Examples/Spin With Mouse")]
 public class SpinWithMouse : MonoBehaviour
 {
-	private Transform mTrans;
+	public Transform target;
 
 	public float speed = 1f;
 
-	public Transform target;
+	private Transform mTrans;
+
+	private void Start()
+	{
+		mTrans = base.transform;
+	}
 
 	private void OnDrag(Vector2 delta)
 	{
@@ -20,10 +25,5 @@ public class SpinWithMouse : MonoBehaviour
 		{
 			mTrans.localRotation = Quaternion.Euler(0f, -0.5f * delta.x * speed, 0f) * mTrans.localRotation;
 		}
-	}
-
-	private void Start()
-	{
-		mTrans = base.transform;
 	}
 }

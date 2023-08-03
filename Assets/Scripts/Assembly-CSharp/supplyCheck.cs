@@ -2,16 +2,12 @@ using UnityEngine;
 
 public class supplyCheck : MonoBehaviour
 {
-	private float elapsedTime;
-
 	private float stepTime = 1f;
+
+	private float elapsedTime;
 
 	private void Start()
 	{
-		if (Minimap.instance != null)
-		{
-			Minimap.instance.TrackGameObjectOnMinimap(base.gameObject, Color.white, false, true, Minimap.IconStyle.SUPPLY);
-		}
 	}
 
 	private void Update()
@@ -23,7 +19,8 @@ public class supplyCheck : MonoBehaviour
 		}
 		elapsedTime -= stepTime;
 		GameObject[] array = GameObject.FindGameObjectsWithTag("Player");
-		foreach (GameObject gameObject in array)
+		GameObject[] array2 = array;
+		foreach (GameObject gameObject in array2)
 		{
 			if (!(gameObject.GetComponent<HERO>() != null))
 			{

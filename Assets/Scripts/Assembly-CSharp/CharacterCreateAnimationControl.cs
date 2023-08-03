@@ -1,24 +1,20 @@
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class CharacterCreateAnimationControl : MonoBehaviour
 {
-	[CompilerGenerated]
-	private static Dictionary<string, int> fswitchSmap0;
+	private HERO_SETUP setup;
 
 	private string currentAnimation;
 
-	private float interval = 10f;
-
-	private HERO_SETUP setup;
-
 	private float timeElapsed;
 
-	private void play(string id)
+	private float interval = 10f;
+
+	private void Start()
 	{
-		currentAnimation = id;
-		base.animation.Play(id);
+		setup = base.gameObject.GetComponent<HERO_SETUP>();
+		currentAnimation = "stand_levi";
+		play(currentAnimation);
 	}
 
 	public void playAttack(string id)
@@ -50,13 +46,6 @@ public class CharacterCreateAnimationControl : MonoBehaviour
 		base.animation.Play(currentAnimation);
 	}
 
-	private void Start()
-	{
-		setup = base.gameObject.GetComponent<HERO_SETUP>();
-		currentAnimation = "stand_levi";
-		play(currentAnimation);
-	}
-
 	public void toStand()
 	{
 		if (setup.myCostume.sex == SEX.FEMALE)
@@ -69,6 +58,12 @@ public class CharacterCreateAnimationControl : MonoBehaviour
 		}
 		base.animation.CrossFade(currentAnimation, 0.1f);
 		timeElapsed = 0f;
+	}
+
+	private void play(string id)
+	{
+		currentAnimation = id;
+		base.animation.Play(id);
 	}
 
 	private void Update()

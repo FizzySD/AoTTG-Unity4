@@ -2,37 +2,37 @@ using System.Collections.Generic;
 
 public class HeroStat
 {
-	public int ACL;
+	public string name;
 
-	public static HeroStat ARMIN;
-
-	public int BLA;
-
-	public static HeroStat EREN;
+	public int SPD;
 
 	public int GAS;
 
-	public static HeroStat[] heroStats;
+	public int BLA;
 
-	private static bool init;
+	public int ACL;
 
-	public static HeroStat JEAN;
-
-	public static HeroStat LEVI;
-
-	public static HeroStat MARCO;
+	public string skillId = "petra";
 
 	public static HeroStat MIKASA;
 
-	public string name;
+	public static HeroStat LEVI;
+
+	public static HeroStat ARMIN;
+
+	public static HeroStat MARCO;
+
+	public static HeroStat JEAN;
+
+	public static HeroStat EREN;
 
 	public static HeroStat PETRA;
 
 	public static HeroStat SASHA;
 
-	public string skillId = "petra";
+	private static bool init;
 
-	public int SPD;
+	public static HeroStat[] heroStats;
 
 	public static Dictionary<string, HeroStat> stats;
 
@@ -103,21 +103,19 @@ public class HeroStat
 			SASHA.GAS = 100;
 			SASHA.BLA = 100;
 			SASHA.ACL = 115;
-			HeroStat value = new HeroStat
-			{
-				skillId = "petra",
-				SPD = 100,
-				GAS = 100,
-				BLA = 100,
-				ACL = 100
-			};
 			HeroStat heroStat = new HeroStat();
-			SASHA.name = "AHSS";
-			heroStat.skillId = "sasha";
+			heroStat.skillId = "petra";
 			heroStat.SPD = 100;
 			heroStat.GAS = 100;
 			heroStat.BLA = 100;
 			heroStat.ACL = 100;
+			HeroStat heroStat2 = new HeroStat();
+			SASHA.name = "AHSS";
+			heroStat2.skillId = "sasha";
+			heroStat2.SPD = 100;
+			heroStat2.GAS = 100;
+			heroStat2.BLA = 100;
+			heroStat2.ACL = 100;
 			stats = new Dictionary<string, HeroStat>();
 			stats.Add("MIKASA", MIKASA);
 			stats.Add("LEVI", LEVI);
@@ -127,8 +125,8 @@ public class HeroStat
 			stats.Add("EREN", EREN);
 			stats.Add("PETRA", PETRA);
 			stats.Add("SASHA", SASHA);
-			stats.Add("CUSTOM_DEFAULT", value);
-			stats.Add("AHSS", heroStat);
+			stats.Add("CUSTOM_DEFAULT", heroStat);
+			stats.Add("AHSS", heroStat2);
 		}
 	}
 }

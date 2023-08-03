@@ -12,19 +12,11 @@ public class CameraFacingBillboard : MonoBehaviour
 		back = 5
 	}
 
-	public Axis axis;
-
 	private Camera referenceCamera;
 
 	public bool reverseFace;
 
-	private void Awake()
-	{
-		if (referenceCamera == null)
-		{
-			referenceCamera = Camera.main;
-		}
-	}
+	public Axis axis;
 
 	public Vector3 GetAxis(Axis refAxis)
 	{
@@ -32,16 +24,24 @@ public class CameraFacingBillboard : MonoBehaviour
 		{
 		case Axis.down:
 			return Vector3.down;
-		case Axis.left:
-			return Vector3.left;
-		case Axis.right:
-			return Vector3.right;
 		case Axis.forward:
 			return Vector3.forward;
 		case Axis.back:
 			return Vector3.back;
+		case Axis.left:
+			return Vector3.left;
+		case Axis.right:
+			return Vector3.right;
 		default:
 			return Vector3.up;
+		}
+	}
+
+	private void Awake()
+	{
+		if (!referenceCamera)
+		{
+			referenceCamera = Camera.main;
 		}
 	}
 

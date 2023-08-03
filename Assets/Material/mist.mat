@@ -7,7 +7,7 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: mist
-  m_Shader: {fileID: 4800000, guid: 5ee3d9815f8acb149a492f0829ed2051, type: 3}
+  m_Shader: {fileID: 4800000, guid: 42025b1b0cb5377489462ea98a58dc6d, type: 3}
   m_ShaderKeywords: []
   m_CustomRenderQueue: -1
   m_SavedProperties:
@@ -16,7 +16,7 @@ Material:
     - first:
         name: _MainTex
       second:
-        m_Texture: {fileID: 2800000, guid: 818e6a49448cd564caa368019e76f03e, type: 3}
+        m_Texture: {fileID: 2800000, guid: b2568fd9827f5dd4c99eae9555a08af2, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:

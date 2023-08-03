@@ -2,90 +2,57 @@ using UnityEngine;
 
 public class KillInfoComponent : MonoBehaviour
 {
-	private float alpha = 1f;
+	public GameObject leftTitan;
 
-	private int col;
+	public GameObject rightTitan;
 
-	public GameObject groupBig;
-
-	public GameObject groupSmall;
+	public GameObject labelScore;
 
 	public GameObject labelNameLeft;
 
 	public GameObject labelNameRight;
 
-	public GameObject labelScore;
+	public GameObject spriteSkeleton;
 
-	public GameObject leftTitan;
+	public GameObject spriteSword;
 
-	private float lifeTime = 8f;
+	public GameObject sleftTitan;
 
-	private float maxScale = 1.5f;
+	public GameObject srightTitan;
 
-	private int offset = 24;
-
-	public GameObject rightTitan;
+	public GameObject slabelScore;
 
 	public GameObject slabelNameLeft;
 
 	public GameObject slabelNameRight;
 
-	public GameObject slabelScore;
-
-	public GameObject sleftTitan;
-
-	public GameObject spriteSkeleton;
-
-	public GameObject spriteSword;
-
-	public GameObject srightTitan;
-
 	public GameObject sspriteSkeleton;
 
 	public GameObject sspriteSword;
+
+	public GameObject groupBig;
+
+	public GameObject groupSmall;
 
 	private bool start;
 
 	private float timeElapsed;
 
-	public void destory()
-	{
-		timeElapsed = lifeTime;
-	}
+	private float lifeTime = 8f;
 
-	public void moveOn()
-	{
-		col++;
-		if (col > 4)
-		{
-			timeElapsed = lifeTime;
-		}
-		groupBig.SetActive(false);
-		groupSmall.SetActive(true);
-	}
+	private float alpha = 1f;
 
-	private void setAlpha(float alpha)
+	private float maxScale = 1.5f;
+
+	private int offset = 24;
+
+	private int col;
+
+	private void Start()
 	{
-		if (groupBig.activeInHierarchy)
-		{
-			labelScore.GetComponent<UILabel>().color = new Color(labelScore.GetComponent<UILabel>().color.r, labelScore.GetComponent<UILabel>().color.g, labelScore.GetComponent<UILabel>().color.b, alpha);
-			leftTitan.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
-			rightTitan.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
-			labelNameLeft.GetComponent<UILabel>().color = new Color(1f, 1f, 1f, alpha);
-			labelNameRight.GetComponent<UILabel>().color = new Color(1f, 1f, 1f, alpha);
-			spriteSkeleton.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
-			spriteSword.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
-		}
-		if (groupSmall.activeInHierarchy)
-		{
-			slabelScore.GetComponent<UILabel>().color = new Color(labelScore.GetComponent<UILabel>().color.r, labelScore.GetComponent<UILabel>().color.g, labelScore.GetComponent<UILabel>().color.b, alpha);
-			sleftTitan.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
-			srightTitan.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
-			slabelNameLeft.GetComponent<UILabel>().color = new Color(1f, 1f, 1f, alpha);
-			slabelNameRight.GetComponent<UILabel>().color = new Color(1f, 1f, 1f, alpha);
-			sspriteSkeleton.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
-			sspriteSword.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
-		}
+		start = true;
+		base.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
+		base.transform.localPosition = new Vector3(0f, -100f + (float)Screen.height * 0.5f, 0f);
 	}
 
 	public void show(bool isTitan1, string name1, bool isTitan2, string name2, int dmg = 0)
@@ -135,11 +102,20 @@ public class KillInfoComponent : MonoBehaviour
 		groupSmall.SetActive(false);
 	}
 
-	private void Start()
+	public void moveOn()
 	{
-		start = true;
-		base.transform.localScale = new Vector3(0.85f, 0.85f, 0.85f);
-		base.transform.localPosition = new Vector3(0f, -100f + (float)Screen.height * 0.5f, 0f);
+		col++;
+		if (col > 4)
+		{
+			timeElapsed = lifeTime;
+		}
+		groupBig.SetActive(false);
+		groupSmall.SetActive(true);
+	}
+
+	public void destory()
+	{
+		timeElapsed = lifeTime;
 	}
 
 	private void Update()
@@ -157,19 +133,43 @@ public class KillInfoComponent : MonoBehaviour
 			}
 			if (timeElapsed > lifeTime)
 			{
-				base.transform.position += new Vector3(0f, Time.deltaTime * 0.15f, 0f);
+				base.transform.position = base.transform.position + new Vector3(0f, Time.deltaTime * 0.15f, 0f);
 				alpha = 1f - Time.deltaTime * 45f + lifeTime - timeElapsed;
 				setAlpha(alpha);
 			}
 			else
 			{
-				float num = (int)(100f - (float)Screen.height * 0.5f) + col * offset;
+				float num = (int)(100f - (float)Screen.height * 0.5f + (float)(col * offset));
 				base.transform.localPosition = Vector3.Lerp(base.transform.localPosition, new Vector3(0f, 0f - num, 0f), Time.deltaTime * 10f);
 			}
 			if (timeElapsed > lifeTime + 0.5f)
 			{
 				Object.Destroy(base.gameObject);
 			}
+		}
+	}
+
+	private void setAlpha(float alpha)
+	{
+		if (groupBig.activeInHierarchy)
+		{
+			labelScore.GetComponent<UILabel>().color = new Color(labelScore.GetComponent<UILabel>().color.r, labelScore.GetComponent<UILabel>().color.g, labelScore.GetComponent<UILabel>().color.b, alpha);
+			leftTitan.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
+			rightTitan.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
+			labelNameLeft.GetComponent<UILabel>().color = new Color(1f, 1f, 1f, alpha);
+			labelNameRight.GetComponent<UILabel>().color = new Color(1f, 1f, 1f, alpha);
+			spriteSkeleton.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
+			spriteSword.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
+		}
+		if (groupSmall.activeInHierarchy)
+		{
+			slabelScore.GetComponent<UILabel>().color = new Color(labelScore.GetComponent<UILabel>().color.r, labelScore.GetComponent<UILabel>().color.g, labelScore.GetComponent<UILabel>().color.b, alpha);
+			sleftTitan.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
+			srightTitan.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
+			slabelNameLeft.GetComponent<UILabel>().color = new Color(1f, 1f, 1f, alpha);
+			slabelNameRight.GetComponent<UILabel>().color = new Color(1f, 1f, 1f, alpha);
+			sspriteSkeleton.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
+			sspriteSword.GetComponent<UISprite>().color = new Color(1f, 1f, 1f, alpha);
 		}
 	}
 }

@@ -2,19 +2,13 @@ using System.IO;
 
 public class EanAnimation
 {
-	public ushort CellHeight;
-
-	public ushort CellWidth;
+	public int Offset;
 
 	public int FrameCount;
 
-	public EanFrame[] Frames;
-
-	public int MipHeight;
-
 	public int MipWidth;
 
-	public int Offset;
+	public int MipHeight;
 
 	public int StartX;
 
@@ -23,6 +17,12 @@ public class EanAnimation
 	public ushort TileCount;
 
 	public ushort TotalCount;
+
+	public ushort CellWidth;
+
+	public ushort CellHeight;
+
+	public EanFrame[] Frames;
 
 	public void Load(BinaryReader br, FileStream fs)
 	{

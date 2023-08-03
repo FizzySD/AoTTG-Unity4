@@ -2,123 +2,319 @@ using UnityEngine;
 
 public class CustomCharacterManager : MonoBehaviour
 {
-	private int capeId;
+	private HeroCostume currentCostume;
 
-	private int[] capeOption;
+	private HERO_SETUP setup;
 
 	public GameObject character;
 
-	private int costumeId = 1;
-
-	private HeroCostume[] costumeOption;
-
-	private HeroCostume currentCostume;
-
-	private string currentSlot = "Set 1";
-
-	private int divisionId;
-
-	private DIVISION[] divisionOption;
-
-	private int eyeId;
-
-	private int[] eyeOption;
-
-	private int faceId;
-
-	private int[] faceOption;
-
-	private int glassId;
-
-	private int[] glassOption;
-
-	public GameObject hairB;
-
-	public GameObject hairG;
-
-	private int hairId;
-
-	private int[] hairOption;
-
-	public GameObject hairR;
-
-	public GameObject labelACL;
-
-	public GameObject labelBLA;
-
-	public GameObject labelCape;
-
-	public GameObject labelCostume;
-
-	public GameObject labelDivision;
+	public GameObject labelSex;
 
 	public GameObject labelEye;
 
 	public GameObject labelFace;
 
-	public GameObject labelGAS;
-
 	public GameObject labelGlass;
 
 	public GameObject labelHair;
 
-	public GameObject labelPOINT;
+	public GameObject labelCostume;
 
-	public GameObject labelPreset;
+	public GameObject labelCape;
 
-	public GameObject labelSex;
-
-	public GameObject labelSKILL;
+	public GameObject labelDivision;
 
 	public GameObject labelSkin;
 
+	public GameObject labelPreset;
+
+	public GameObject labelPOINT;
+
 	public GameObject labelSPD;
 
-	private int presetId;
+	public GameObject labelGAS;
 
-	private HERO_SETUP setup;
+	public GameObject labelBLA;
 
-	private int sexId;
+	public GameObject labelACL;
+
+	public GameObject labelSKILL;
+
+	public GameObject hairR;
+
+	public GameObject hairG;
+
+	public GameObject hairB;
 
 	private SEX[] sexOption;
 
-	private int skillId;
+	private int sexId;
 
-	private string[] skillOption;
+	private int[] eyeOption;
 
-	private int skinId;
+	private int eyeId;
+
+	private int[] faceOption;
+
+	private int faceId;
+
+	private int[] glassOption;
+
+	private int glassId;
+
+	private int[] hairOption;
+
+	private int hairId;
 
 	private int[] skinOption;
 
-	private int calTotalPoints()
+	private int skinId;
+
+	private HeroCostume[] costumeOption;
+
+	private int costumeId = 1;
+
+	private int[] capeOption;
+
+	private int capeId;
+
+	private DIVISION[] divisionOption;
+
+	private int divisionId;
+
+	private int presetId;
+
+	private string[] skillOption;
+
+	private int skillId;
+
+	private string currentSlot = "Set 1";
+
+	private void Start()
 	{
-		if (setup.myCostume != null)
+		QualitySettings.SetQualityLevel(5, true);
+		costumeOption = HeroCostume.costumeOption;
+		setup = character.GetComponent<HERO_SETUP>();
+		setup.init();
+		setup.myCostume = new HeroCostume();
+		copyCostume(HeroCostume.costume[2], setup.myCostume);
+		setup.myCostume.setMesh();
+		setup.setCharacterComponent();
+		sexOption = new SEX[2]
 		{
-			int num = 0;
-			num += setup.myCostume.stat.SPD;
-			num += setup.myCostume.stat.GAS;
-			num += setup.myCostume.stat.BLA;
-			return num + setup.myCostume.stat.ACL;
+			SEX.MALE,
+			SEX.FEMALE
+		};
+		eyeOption = new int[28];
+		for (int i = 0; i < 28; i++)
+		{
+			eyeOption[i] = i;
 		}
-		return 400;
+		faceOption = new int[14];
+		for (int i = 0; i < 14; i++)
+		{
+			faceOption[i] = i + 32;
+		}
+		glassOption = new int[10];
+		for (int i = 0; i < 10; i++)
+		{
+			glassOption[i] = i + 48;
+		}
+		hairOption = new int[11];
+		for (int i = 0; i < 11; i++)
+		{
+			hairOption[i] = i;
+		}
+		skinOption = new int[3];
+		for (int i = 0; i < 3; i++)
+		{
+			skinOption[i] = i + 1;
+		}
+		capeOption = new int[2];
+		for (int i = 0; i < 2; i++)
+		{
+			capeOption[i] = i;
+		}
+		divisionOption = new DIVISION[4]
+		{
+			DIVISION.TraineesSquad,
+			DIVISION.TheGarrison,
+			DIVISION.TheMilitaryPolice,
+			DIVISION.TheSurveryCorps
+		};
+		skillOption = new string[7] { "mikasa", "levi", "sasha", "jean", "marco", "armin", "petra" };
+		CostumeDataToMyID();
+		freshLabel();
 	}
 
-	private void copyBodyCostume(HeroCostume from, HeroCostume to)
+	private int toNext(int id, int Count, int start = 0)
 	{
-		to.arm_l_mesh = from.arm_l_mesh;
-		to.arm_r_mesh = from.arm_r_mesh;
-		to.body_mesh = from.body_mesh;
-		to.body_texture = from.body_texture;
-		to.uniform_type = from.uniform_type;
-		to.part_chest_1_object_mesh = from.part_chest_1_object_mesh;
-		to.part_chest_1_object_texture = from.part_chest_1_object_texture;
-		to.part_chest_object_mesh = from.part_chest_object_mesh;
-		to.part_chest_object_texture = from.part_chest_object_texture;
-		to.part_chest_skinned_cloth_mesh = from.part_chest_skinned_cloth_mesh;
-		to.part_chest_skinned_cloth_texture = from.part_chest_skinned_cloth_texture;
-		to.division = from.division;
-		to.id = from.id;
-		to.costumeId = from.costumeId;
+		id++;
+		if (id >= Count)
+		{
+			id = start;
+		}
+		id = Mathf.Clamp(id, start, start + Count - 1);
+		return id;
+	}
+
+	private int toPrev(int id, int Count, int start = 0)
+	{
+		id--;
+		if (id < start)
+		{
+			id = Count - 1;
+		}
+		id = Mathf.Clamp(id, start, start + Count - 1);
+		return id;
+	}
+
+	public void nextOption(CreatePart part)
+	{
+		if (part == CreatePart.Preset)
+		{
+			presetId = toNext(presetId, HeroCostume.costume.Length);
+			copyCostume(HeroCostume.costume[presetId], setup.myCostume, true);
+			CostumeDataToMyID();
+			setup.deleteCharacterComponent();
+			setup.setCharacterComponent();
+			labelPreset.GetComponent<UILabel>().text = HeroCostume.costume[presetId].name;
+			freshLabel();
+		}
+		else
+		{
+			toOption(part, true);
+		}
+	}
+
+	public void prevOption(CreatePart part)
+	{
+		if (part == CreatePart.Preset)
+		{
+			presetId = toPrev(presetId, HeroCostume.costume.Length);
+			copyCostume(HeroCostume.costume[presetId], setup.myCostume, true);
+			CostumeDataToMyID();
+			setup.deleteCharacterComponent();
+			setup.setCharacterComponent();
+			labelPreset.GetComponent<UILabel>().text = HeroCostume.costume[presetId].name;
+			freshLabel();
+		}
+		else
+		{
+			toOption(part, false);
+		}
+	}
+
+	public void toOption(CreatePart part, bool next)
+	{
+		switch (part)
+		{
+		case CreatePart.Sex:
+			sexId = ((!next) ? toPrev(sexId, sexOption.Length) : toNext(sexId, sexOption.Length));
+			if (sexId == 0)
+			{
+				costumeId = 11;
+			}
+			else
+			{
+				costumeId = 0;
+			}
+			copyCostume(costumeOption[costumeId], setup.myCostume, true);
+			setup.myCostume.sex = sexOption[sexId];
+			character.GetComponent<CharacterCreateAnimationControl>().toStand();
+			CostumeDataToMyID();
+			setup.deleteCharacterComponent();
+			setup.setCharacterComponent();
+			break;
+		case CreatePart.Eye:
+			eyeId = ((!next) ? toPrev(eyeId, eyeOption.Length) : toNext(eyeId, eyeOption.Length));
+			setup.myCostume.eye_texture_id = eyeId;
+			setup.setFacialTexture(setup.part_eye, eyeOption[eyeId]);
+			break;
+		case CreatePart.Face:
+			faceId = ((!next) ? toPrev(faceId, faceOption.Length) : toNext(faceId, faceOption.Length));
+			setup.myCostume.beard_texture_id = faceOption[faceId];
+			if (setup.part_face == null)
+			{
+				setup.createFace();
+			}
+			setup.setFacialTexture(setup.part_face, faceOption[faceId]);
+			break;
+		case CreatePart.Glass:
+			glassId = ((!next) ? toPrev(glassId, glassOption.Length) : toNext(glassId, glassOption.Length));
+			setup.myCostume.glass_texture_id = glassOption[glassId];
+			if (setup.part_glass == null)
+			{
+				setup.createGlass();
+			}
+			setup.setFacialTexture(setup.part_glass, glassOption[glassId]);
+			break;
+		case CreatePart.Skin:
+			if (setup.myCostume.uniform_type == UNIFORM_TYPE.CasualAHSS)
+			{
+				skinId = 2;
+			}
+			else
+			{
+				skinId = ((!next) ? toPrev(skinId, 2) : toNext(skinId, 2));
+			}
+			setup.myCostume.skin_color = skinOption[skinId];
+			setup.myCostume.setTexture();
+			setup.setSkin();
+			break;
+		case CreatePart.Hair:
+			hairId = ((!next) ? toPrev(hairId, hairOption.Length) : toNext(hairId, hairOption.Length));
+			if (sexId == 0)
+			{
+				setup.myCostume.hair_mesh = CostumeHair.hairsM[hairOption[hairId]].hair;
+				setup.myCostume.hair_1_mesh = CostumeHair.hairsM[hairOption[hairId]].hair_1;
+				setup.myCostume.hairInfo = CostumeHair.hairsM[hairOption[hairId]];
+			}
+			else
+			{
+				setup.myCostume.hair_mesh = CostumeHair.hairsF[hairOption[hairId]].hair;
+				setup.myCostume.hair_1_mesh = CostumeHair.hairsF[hairOption[hairId]].hair_1;
+				setup.myCostume.hairInfo = CostumeHair.hairsF[hairOption[hairId]];
+			}
+			setup.createHair();
+			setHairColor();
+			break;
+		case CreatePart.Costume:
+			if (setup.myCostume.uniform_type == UNIFORM_TYPE.CasualAHSS)
+			{
+				costumeId = 25;
+			}
+			else if (sexId == 0)
+			{
+				costumeId = ((!next) ? toPrev(costumeId, 24, 10) : toNext(costumeId, 24, 10));
+			}
+			else
+			{
+				costumeId = ((!next) ? toPrev(costumeId, 10) : toNext(costumeId, 10));
+			}
+			copyBodyCostume(costumeOption[costumeId], setup.myCostume);
+			setup.myCostume.setMesh();
+			setup.myCostume.setTexture();
+			setup.createUpperBody();
+			setup.createLeftArm();
+			setup.createRightArm();
+			setup.createLowerBody();
+			break;
+		case CreatePart.Cape:
+			capeId = ((!next) ? toPrev(capeId, capeOption.Length) : toNext(capeId, capeOption.Length));
+			setup.myCostume.cape = capeId == 1;
+			setup.myCostume.setCape();
+			setup.myCostume.setTexture();
+			setup.createCape();
+			break;
+		case CreatePart.Division:
+			divisionId = ((!next) ? toPrev(divisionId, divisionOption.Length) : toNext(divisionId, divisionOption.Length));
+			setup.myCostume.division = divisionOption[divisionId];
+			setup.myCostume.setTexture();
+			setup.createUpperBody();
+			break;
+		}
+		freshLabel();
 	}
 
 	private void copyCostume(HeroCostume from, HeroCostume to, bool init = false)
@@ -174,6 +370,82 @@ public class CustomCharacterManager : MonoBehaviour
 			to.stat.BLA = from.stat.BLA;
 			to.stat.skillId = from.stat.skillId;
 		}
+	}
+
+	private void copyBodyCostume(HeroCostume from, HeroCostume to)
+	{
+		to.arm_l_mesh = from.arm_l_mesh;
+		to.arm_r_mesh = from.arm_r_mesh;
+		to.body_mesh = from.body_mesh;
+		to.body_texture = from.body_texture;
+		to.uniform_type = from.uniform_type;
+		to.part_chest_1_object_mesh = from.part_chest_1_object_mesh;
+		to.part_chest_1_object_texture = from.part_chest_1_object_texture;
+		to.part_chest_object_mesh = from.part_chest_object_mesh;
+		to.part_chest_object_texture = from.part_chest_object_texture;
+		to.part_chest_skinned_cloth_mesh = from.part_chest_skinned_cloth_mesh;
+		to.part_chest_skinned_cloth_texture = from.part_chest_skinned_cloth_texture;
+		to.division = from.division;
+		to.id = from.id;
+		to.costumeId = from.costumeId;
+	}
+
+	public void OnHairRChange(float value)
+	{
+		if (setup.myCostume != null && setup.part_hair != null)
+		{
+			setup.myCostume.hair_color = new Color(value, setup.part_hair.renderer.material.color.g, setup.part_hair.renderer.material.color.b);
+			setHairColor();
+		}
+	}
+
+	public void OnHairGChange(float value)
+	{
+		if (setup.myCostume != null && setup.part_hair != null)
+		{
+			setup.myCostume.hair_color = new Color(setup.part_hair.renderer.material.color.r, value, setup.part_hair.renderer.material.color.b);
+			setHairColor();
+		}
+	}
+
+	public void OnHairBChange(float value)
+	{
+		if (setup != null && setup.myCostume != null && setup.part_hair != null)
+		{
+			setup.myCostume.hair_color = new Color(setup.part_hair.renderer.material.color.r, setup.part_hair.renderer.material.color.g, value);
+			setHairColor();
+		}
+	}
+
+	private void setHairColor()
+	{
+		if (setup.part_hair != null)
+		{
+			setup.part_hair.renderer.material.color = setup.myCostume.hair_color;
+		}
+		if (setup.part_hair_1 != null)
+		{
+			setup.part_hair_1.renderer.material.color = setup.myCostume.hair_color;
+		}
+	}
+
+	private void freshLabel()
+	{
+		labelSex.GetComponent<UILabel>().text = sexOption[sexId].ToString();
+		labelEye.GetComponent<UILabel>().text = "eye_" + eyeId;
+		labelFace.GetComponent<UILabel>().text = "face_" + faceId;
+		labelGlass.GetComponent<UILabel>().text = "glass_" + glassId;
+		labelHair.GetComponent<UILabel>().text = "hair_" + hairId;
+		labelSkin.GetComponent<UILabel>().text = "skin_" + skinId;
+		labelCostume.GetComponent<UILabel>().text = "costume_" + costumeId;
+		labelCape.GetComponent<UILabel>().text = "cape_" + capeId;
+		labelDivision.GetComponent<UILabel>().text = divisionOption[divisionId].ToString();
+		labelPOINT.GetComponent<UILabel>().text = "Points: " + (400 - calTotalPoints());
+		labelSPD.GetComponent<UILabel>().text = "SPD " + setup.myCostume.stat.SPD;
+		labelGAS.GetComponent<UILabel>().text = "GAS " + setup.myCostume.stat.GAS;
+		labelBLA.GetComponent<UILabel>().text = "BLA " + setup.myCostume.stat.BLA;
+		labelACL.GetComponent<UILabel>().text = "ACL " + setup.myCostume.stat.ACL;
+		labelSKILL.GetComponent<UILabel>().text = "SKILL " + setup.myCostume.stat.skillId.ToString();
 	}
 
 	private void CostumeDataToMyID()
@@ -262,56 +534,6 @@ public class CustomCharacterManager : MonoBehaviour
 		}
 	}
 
-	private void freshLabel()
-	{
-		labelSex.GetComponent<UILabel>().text = sexOption[sexId].ToString();
-		labelEye.GetComponent<UILabel>().text = "eye_" + eyeId;
-		labelFace.GetComponent<UILabel>().text = "face_" + faceId;
-		labelGlass.GetComponent<UILabel>().text = "glass_" + glassId;
-		labelHair.GetComponent<UILabel>().text = "hair_" + hairId;
-		labelSkin.GetComponent<UILabel>().text = "skin_" + skinId;
-		labelCostume.GetComponent<UILabel>().text = "costume_" + costumeId;
-		labelCape.GetComponent<UILabel>().text = "cape_" + capeId;
-		labelDivision.GetComponent<UILabel>().text = divisionOption[divisionId].ToString();
-		labelPOINT.GetComponent<UILabel>().text = "Points: " + (400 - calTotalPoints());
-		labelSPD.GetComponent<UILabel>().text = "SPD " + setup.myCostume.stat.SPD;
-		labelGAS.GetComponent<UILabel>().text = "GAS " + setup.myCostume.stat.GAS;
-		labelBLA.GetComponent<UILabel>().text = "BLA " + setup.myCostume.stat.BLA;
-		labelACL.GetComponent<UILabel>().text = "ACL " + setup.myCostume.stat.ACL;
-		labelSKILL.GetComponent<UILabel>().text = "SKILL " + setup.myCostume.stat.skillId.ToString();
-	}
-
-	public void LoadData()
-	{
-		HeroCostume heroCostume = CostumeConeveter.LocalDataToHeroCostume(currentSlot);
-		if (heroCostume != null)
-		{
-			copyCostume(heroCostume, setup.myCostume);
-			setup.deleteCharacterComponent2();
-			setup.setCharacterComponent();
-		}
-		CostumeDataToMyID();
-		freshLabel();
-	}
-
-	public void nextOption(CreatePart part)
-	{
-		if (part == CreatePart.Preset)
-		{
-			presetId = toNext(presetId, HeroCostume.costume.Length);
-			copyCostume(HeroCostume.costume[presetId], setup.myCostume, true);
-			CostumeDataToMyID();
-			setup.deleteCharacterComponent2();
-			setup.setCharacterComponent();
-			labelPreset.GetComponent<UILabel>().text = HeroCostume.costume[presetId].name;
-			freshLabel();
-		}
-		else
-		{
-			toOption2(part, true);
-		}
-	}
-
 	public void nextStatOption(CreateStat type)
 	{
 		if (type == CreateStat.Skill)
@@ -327,56 +549,6 @@ public class CustomCharacterManager : MonoBehaviour
 		}
 	}
 
-	public void OnHairBChange(float value)
-	{
-		if (setup != null && setup.myCostume != null && setup.part_hair != null)
-		{
-			setup.myCostume.hair_color = new Color(setup.part_hair.renderer.material.color.r, setup.part_hair.renderer.material.color.g, value);
-			setHairColor();
-		}
-	}
-
-	public void OnHairGChange(float value)
-	{
-		if (setup.myCostume != null && setup.part_hair != null)
-		{
-			setup.myCostume.hair_color = new Color(setup.part_hair.renderer.material.color.r, value, setup.part_hair.renderer.material.color.b);
-			setHairColor();
-		}
-	}
-
-	public void OnHairRChange(float value)
-	{
-		if (setup.myCostume != null && setup.part_hair != null)
-		{
-			setup.myCostume.hair_color = new Color(value, setup.part_hair.renderer.material.color.g, setup.part_hair.renderer.material.color.b);
-			setHairColor();
-		}
-	}
-
-	public void OnSoltChange(string id)
-	{
-		currentSlot = id;
-	}
-
-	public void prevOption(CreatePart part)
-	{
-		if (part == CreatePart.Preset)
-		{
-			presetId = toPrev(presetId, HeroCostume.costume.Length);
-			copyCostume(HeroCostume.costume[presetId], setup.myCostume, true);
-			CostumeDataToMyID();
-			setup.deleteCharacterComponent2();
-			setup.setCharacterComponent();
-			labelPreset.GetComponent<UILabel>().text = HeroCostume.costume[presetId].name;
-			freshLabel();
-		}
-		else
-		{
-			toOption2(part, false);
-		}
-	}
-
 	public void prevStatOption(CreateStat type)
 	{
 		if (type == CreateStat.Skill)
@@ -389,23 +561,6 @@ public class CustomCharacterManager : MonoBehaviour
 		else
 		{
 			setStatPoint(type, -1);
-		}
-	}
-
-	public void SaveData()
-	{
-		CostumeConeveter.HeroCostumeToLocalData(setup.myCostume, currentSlot);
-	}
-
-	private void setHairColor()
-	{
-		if (setup.part_hair != null)
-		{
-			setup.part_hair.renderer.material.color = setup.myCostume.hair_color;
-		}
-		if (setup.part_hair_1 != null)
-		{
-			setup.part_hair_1.renderer.material.color = setup.myCostume.hair_color;
 		}
 	}
 
@@ -433,315 +588,39 @@ public class CustomCharacterManager : MonoBehaviour
 		freshLabel();
 	}
 
-	private void Start()
+	private int calTotalPoints()
 	{
-		costumeOption = HeroCostume.costumeOption;
-		setup = character.GetComponent<HERO_SETUP>();
-		setup.init();
-		setup.myCostume = new HeroCostume();
-		copyCostume(HeroCostume.costume[2], setup.myCostume);
-		setup.myCostume.setMesh2();
-		setup.setCharacterComponent();
-		sexOption = new SEX[2]
+		if (setup.myCostume != null)
 		{
-			SEX.MALE,
-			SEX.FEMALE
-		};
-		eyeOption = new int[28];
-		for (int i = 0; i < 28; i++)
-		{
-			eyeOption[i] = i;
+			int num = 0;
+			num += setup.myCostume.stat.SPD;
+			num += setup.myCostume.stat.GAS;
+			num += setup.myCostume.stat.BLA;
+			return num + setup.myCostume.stat.ACL;
 		}
-		faceOption = new int[14];
-		for (int i = 0; i < 14; i++)
+		return 400;
+	}
+
+	public void SaveData()
+	{
+		CostumeConeveter.HeroCostumeToLocalData(setup.myCostume, currentSlot);
+	}
+
+	public void LoadData()
+	{
+		HeroCostume heroCostume = CostumeConeveter.LocalDataToHeroCostume(currentSlot);
+		if (heroCostume != null)
 		{
-			faceOption[i] = i + 32;
+			copyCostume(heroCostume, setup.myCostume);
+			setup.deleteCharacterComponent();
+			setup.setCharacterComponent();
 		}
-		glassOption = new int[10];
-		for (int i = 0; i < 10; i++)
-		{
-			glassOption[i] = i + 48;
-		}
-		hairOption = new int[11];
-		for (int i = 0; i < 11; i++)
-		{
-			hairOption[i] = i;
-		}
-		skinOption = new int[3];
-		for (int i = 0; i < 3; i++)
-		{
-			skinOption[i] = i + 1;
-		}
-		capeOption = new int[2];
-		for (int i = 0; i < 2; i++)
-		{
-			capeOption[i] = i;
-		}
-		divisionOption = new DIVISION[4]
-		{
-			DIVISION.TraineesSquad,
-			DIVISION.TheGarrison,
-			DIVISION.TheMilitaryPolice,
-			DIVISION.TheSurveryCorps
-		};
-		skillOption = new string[7] { "mikasa", "levi", "sasha", "jean", "marco", "armin", "petra" };
 		CostumeDataToMyID();
 		freshLabel();
 	}
 
-	private int toNext(int id, int Count, int start = 0)
+	public void OnSoltChange(string id)
 	{
-		id++;
-		if (id >= Count)
-		{
-			id = start;
-		}
-		id = Mathf.Clamp(id, start, start + Count - 1);
-		return id;
-	}
-
-	public void toOption(CreatePart part, bool next)
-	{
-		switch (part)
-		{
-		case CreatePart.Sex:
-			sexId = ((!next) ? toPrev(sexId, sexOption.Length) : toNext(sexId, sexOption.Length));
-			if (sexId != 0)
-			{
-				costumeId = 0;
-			}
-			else
-			{
-				costumeId = 11;
-			}
-			copyCostume(costumeOption[costumeId], setup.myCostume, true);
-			setup.myCostume.sex = sexOption[sexId];
-			character.GetComponent<CharacterCreateAnimationControl>().toStand();
-			CostumeDataToMyID();
-			setup.deleteCharacterComponent2();
-			setup.setCharacterComponent();
-			break;
-		case CreatePart.Eye:
-			eyeId = ((!next) ? toPrev(eyeId, eyeOption.Length) : toNext(eyeId, eyeOption.Length));
-			setup.myCostume.eye_texture_id = eyeId;
-			setup.setFacialTexture(setup.part_eye, eyeOption[eyeId]);
-			break;
-		case CreatePart.Face:
-			faceId = ((!next) ? toPrev(faceId, faceOption.Length) : toNext(faceId, faceOption.Length));
-			setup.myCostume.beard_texture_id = faceOption[faceId];
-			if (setup.part_face == null)
-			{
-				setup.createFace();
-			}
-			setup.setFacialTexture(setup.part_face, faceOption[faceId]);
-			break;
-		case CreatePart.Glass:
-			glassId = ((!next) ? toPrev(glassId, glassOption.Length) : toNext(glassId, glassOption.Length));
-			setup.myCostume.glass_texture_id = glassOption[glassId];
-			if (setup.part_glass == null)
-			{
-				setup.createGlass();
-			}
-			setup.setFacialTexture(setup.part_glass, glassOption[glassId]);
-			break;
-		case CreatePart.Hair:
-			hairId = ((!next) ? toPrev(hairId, hairOption.Length) : toNext(hairId, hairOption.Length));
-			if (sexId != 0)
-			{
-				setup.myCostume.hair_mesh = CostumeHair.hairsF[hairOption[hairId]].hair;
-				setup.myCostume.hair_1_mesh = CostumeHair.hairsF[hairOption[hairId]].hair_1;
-				setup.myCostume.hairInfo = CostumeHair.hairsF[hairOption[hairId]];
-			}
-			else
-			{
-				setup.myCostume.hair_mesh = CostumeHair.hairsM[hairOption[hairId]].hair;
-				setup.myCostume.hair_1_mesh = CostumeHair.hairsM[hairOption[hairId]].hair_1;
-				setup.myCostume.hairInfo = CostumeHair.hairsM[hairOption[hairId]];
-			}
-			setup.createHair2();
-			setHairColor();
-			break;
-		case CreatePart.Skin:
-			if (setup.myCostume.uniform_type != UNIFORM_TYPE.CasualAHSS)
-			{
-				skinId = ((!next) ? toPrev(skinId, 2) : toNext(skinId, 2));
-			}
-			else
-			{
-				skinId = 2;
-			}
-			setup.myCostume.skin_color = skinOption[skinId];
-			setup.myCostume.setTexture();
-			setup.setSkin();
-			break;
-		case CreatePart.Costume:
-			if (setup.myCostume.uniform_type != UNIFORM_TYPE.CasualAHSS)
-			{
-				if (sexId == 0)
-				{
-					costumeId = ((!next) ? toPrev(costumeId, 24, 10) : toNext(costumeId, 24, 10));
-				}
-				else
-				{
-					costumeId = ((!next) ? toPrev(costumeId, 10) : toNext(costumeId, 10));
-				}
-			}
-			else
-			{
-				costumeId = 25;
-			}
-			copyBodyCostume(costumeOption[costumeId], setup.myCostume);
-			setup.myCostume.setMesh2();
-			setup.myCostume.setTexture();
-			setup.createUpperBody2();
-			setup.createLeftArm();
-			setup.createRightArm();
-			setup.createLowerBody();
-			break;
-		case CreatePart.Cape:
-			capeId = ((!next) ? toPrev(capeId, capeOption.Length) : toNext(capeId, capeOption.Length));
-			setup.myCostume.cape = capeId == 1;
-			setup.myCostume.setCape();
-			setup.myCostume.setTexture();
-			setup.createCape2();
-			break;
-		case CreatePart.Division:
-			divisionId = ((!next) ? toPrev(divisionId, divisionOption.Length) : toNext(divisionId, divisionOption.Length));
-			setup.myCostume.division = divisionOption[divisionId];
-			setup.myCostume.setTexture();
-			setup.createUpperBody2();
-			break;
-		}
-		freshLabel();
-	}
-
-	public void toOption2(CreatePart part, bool next)
-	{
-		switch (part)
-		{
-		case CreatePart.Sex:
-			sexId = ((!next) ? toPrev(sexId, sexOption.Length) : toNext(sexId, sexOption.Length));
-			if (sexId == 0)
-			{
-				costumeId = 11;
-			}
-			else
-			{
-				costumeId = 0;
-			}
-			copyCostume(costumeOption[costumeId], setup.myCostume, true);
-			setup.myCostume.sex = sexOption[sexId];
-			character.GetComponent<CharacterCreateAnimationControl>().toStand();
-			CostumeDataToMyID();
-			setup.deleteCharacterComponent2();
-			setup.setCharacterComponent();
-			break;
-		case CreatePart.Eye:
-			eyeId = ((!next) ? toPrev(eyeId, eyeOption.Length) : toNext(eyeId, eyeOption.Length));
-			setup.myCostume.eye_texture_id = eyeId;
-			setup.setFacialTexture(setup.part_eye, eyeOption[eyeId]);
-			break;
-		case CreatePart.Face:
-			faceId = ((!next) ? toPrev(faceId, faceOption.Length) : toNext(faceId, faceOption.Length));
-			setup.myCostume.beard_texture_id = faceOption[faceId];
-			if (setup.part_face == null)
-			{
-				setup.createFace();
-			}
-			setup.setFacialTexture(setup.part_face, faceOption[faceId]);
-			break;
-		case CreatePart.Glass:
-			glassId = ((!next) ? toPrev(glassId, glassOption.Length) : toNext(glassId, glassOption.Length));
-			setup.myCostume.glass_texture_id = glassOption[glassId];
-			if (setup.part_glass == null)
-			{
-				setup.createGlass();
-			}
-			setup.setFacialTexture(setup.part_glass, glassOption[glassId]);
-			break;
-		case CreatePart.Hair:
-			hairId = ((!next) ? toPrev(hairId, hairOption.Length) : toNext(hairId, hairOption.Length));
-			if (sexId == 0)
-			{
-				setup.myCostume.hair_mesh = CostumeHair.hairsM[hairOption[hairId]].hair;
-				setup.myCostume.hair_1_mesh = CostumeHair.hairsM[hairOption[hairId]].hair_1;
-				setup.myCostume.hairInfo = CostumeHair.hairsM[hairOption[hairId]];
-			}
-			else
-			{
-				setup.myCostume.hair_mesh = CostumeHair.hairsF[hairOption[hairId]].hair;
-				setup.myCostume.hair_1_mesh = CostumeHair.hairsF[hairOption[hairId]].hair_1;
-				setup.myCostume.hairInfo = CostumeHair.hairsF[hairOption[hairId]];
-			}
-			setup.createHair2();
-			setHairColor();
-			break;
-		case CreatePart.Skin:
-			if (setup.myCostume.uniform_type == UNIFORM_TYPE.CasualAHSS)
-			{
-				skinId = 2;
-			}
-			else
-			{
-				skinId = ((!next) ? toPrev(skinId, 2) : toNext(skinId, 2));
-			}
-			setup.myCostume.skin_color = skinOption[skinId];
-			setup.myCostume.setTexture();
-			setup.setSkin();
-			break;
-		case CreatePart.Costume:
-			if (setup.myCostume.uniform_type == UNIFORM_TYPE.CasualAHSS)
-			{
-				if (setup.myCostume.sex == SEX.FEMALE)
-				{
-					costumeId = 26;
-				}
-				else if (setup.myCostume.sex == SEX.MALE)
-				{
-					costumeId = 25;
-				}
-			}
-			else if (sexId != 0)
-			{
-				costumeId = ((!next) ? toPrev(costumeId, 10) : toNext(costumeId, 10));
-			}
-			else
-			{
-				costumeId = ((!next) ? toPrev(costumeId, 24, 10) : toNext(costumeId, 24, 10));
-			}
-			copyBodyCostume(costumeOption[costumeId], setup.myCostume);
-			setup.myCostume.setMesh2();
-			setup.myCostume.setTexture();
-			setup.createUpperBody2();
-			setup.createLeftArm();
-			setup.createRightArm();
-			setup.createLowerBody();
-			break;
-		case CreatePart.Cape:
-			capeId = ((!next) ? toPrev(capeId, capeOption.Length) : toNext(capeId, capeOption.Length));
-			setup.myCostume.cape = capeId == 1;
-			setup.myCostume.setCape();
-			setup.myCostume.setTexture();
-			setup.createCape2();
-			break;
-		case CreatePart.Division:
-			divisionId = ((!next) ? toPrev(divisionId, divisionOption.Length) : toNext(divisionId, divisionOption.Length));
-			setup.myCostume.division = divisionOption[divisionId];
-			setup.myCostume.setTexture();
-			setup.createUpperBody2();
-			break;
-		}
-		freshLabel();
-	}
-
-	private int toPrev(int id, int Count, int start = 0)
-	{
-		id--;
-		if (id < start)
-		{
-			id = Count - 1;
-		}
-		id = Mathf.Clamp(id, start, start + Count - 1);
-		return id;
+		currentSlot = id;
 	}
 }

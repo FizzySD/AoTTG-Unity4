@@ -23,11 +23,43 @@ public class InvStat
 		Percent = 1
 	}
 
-	public int amount;
-
 	public Identifier id;
 
 	public Modifier modifier;
+
+	public int amount;
+
+	public static string GetName(Identifier i)
+	{
+		return i.ToString();
+	}
+
+	public static string GetDescription(Identifier i)
+	{
+		switch (i)
+		{
+		case Identifier.Strength:
+			return "Strength increases melee damage";
+		case Identifier.Constitution:
+			return "Constitution increases health";
+		case Identifier.Agility:
+			return "Agility increases armor";
+		case Identifier.Intelligence:
+			return "Intelligence increases mana";
+		case Identifier.Damage:
+			return "Damage adds to the amount of damage done in combat";
+		case Identifier.Crit:
+			return "Crit increases the chance of landing a critical strike";
+		case Identifier.Armor:
+			return "Armor protects from damage";
+		case Identifier.Health:
+			return "Health prolongs life";
+		case Identifier.Mana:
+			return "Mana increases the number of spells that can be cast";
+		default:
+			return null;
+		}
+	}
 
 	public static int CompareArmor(InvStat a, InvStat b)
 	{
@@ -121,37 +153,5 @@ public class InvStat
 			return 1;
 		}
 		return 0;
-	}
-
-	public static string GetDescription(Identifier i)
-	{
-		switch (i)
-		{
-		case Identifier.Strength:
-			return "Strength increases melee damage";
-		case Identifier.Constitution:
-			return "Constitution increases health";
-		case Identifier.Agility:
-			return "Agility increases armor";
-		case Identifier.Intelligence:
-			return "Intelligence increases mana";
-		case Identifier.Damage:
-			return "Damage adds to the amount of damage done in combat";
-		case Identifier.Crit:
-			return "Crit increases the chance of landing a critical strike";
-		case Identifier.Armor:
-			return "Armor protects from damage";
-		case Identifier.Health:
-			return "Health prolongs life";
-		case Identifier.Mana:
-			return "Mana increases the number of spells that can be cast";
-		default:
-			return null;
-		}
-	}
-
-	public static string GetName(Identifier i)
-	{
-		return i.ToString();
 	}
 }

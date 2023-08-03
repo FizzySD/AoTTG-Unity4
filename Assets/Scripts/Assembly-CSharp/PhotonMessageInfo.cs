@@ -1,16 +1,16 @@
 public class PhotonMessageInfo
 {
-	public PhotonView photonView;
+	private int timeInt;
 
 	public PhotonPlayer sender;
 
-	private int timeInt;
+	public PhotonView photonView;
 
 	public double timestamp
 	{
 		get
 		{
-			return (double)timeInt / 1000.0;
+			return (double)(uint)timeInt / 1000.0;
 		}
 	}
 

@@ -1,29 +1,30 @@
 using System;
+using System.Collections;
 using ExitGames.Client.Photon;
 using Photon;
 using UnityEngine;
 
 internal class PhotonHandler : Photon.MonoBehaviour, IPhotonPeerListener
 {
-	public static bool AppQuits;
-
-	internal static CloudRegionCode BestRegionCodeCurrently = CloudRegionCode.none;
-
-	private int nextSendTickCount;
-
-	private int nextSendTickCountOnSerialize;
-
-	public static Type PingImplementation;
-
 	private const string PlayerPrefsKey = "PUNCloudBestRegion";
-
-	private static bool sendThreadShouldRun;
 
 	public static PhotonHandler SP;
 
 	public int updateInterval;
 
 	public int updateIntervalOnSerialize;
+
+	private int nextSendTickCount;
+
+	private int nextSendTickCountOnSerialize;
+
+	private static bool sendThreadShouldRun;
+
+	public static bool AppQuits;
+
+	public static Type PingImplementation;
+
+	internal static CloudRegionCode BestRegionCodeCurrently = CloudRegionCode.none;
 
 	internal static CloudRegionCode BestRegionCodeInPreferences
 	{
@@ -62,86 +63,11 @@ internal class PhotonHandler : Photon.MonoBehaviour, IPhotonPeerListener
 		StartFallbackSendAckThread();
 	}
 
-	public void DebugReturn(DebugLevel level, string message)
-	{
-		switch (level)
-		{
-		case DebugLevel.ERROR:
-			Debug.LogError(message);
-			return;
-		case DebugLevel.WARNING:
-			Debug.LogWarning(message);
-			return;
-		case DebugLevel.INFO:
-			if (PhotonNetwork.logLevel >= PhotonLogLevel.Informational)
-			{
-				Debug.Log(message);
-				return;
-			}
-			break;
-		}
-		if (level == DebugLevel.ALL && PhotonNetwork.logLevel == PhotonLogLevel.Full)
-		{
-			Debug.Log(message);
-		}
-	}
-
-	public static bool FallbackSendAckThread()
-	{
-		if (sendThreadShouldRun && PhotonNetwork.networkingPeer != null)
-		{
-			PhotonNetwork.networkingPeer.SendAcksOnly();
-		}
-		return sendThreadShouldRun;
-	}
-
 	protected void OnApplicationQuit()
 	{
 		AppQuits = true;
 		StopFallbackSendAckThread();
 		PhotonNetwork.Disconnect();
-	}
-
-	protected void OnCreatedRoom()
-	{
-		PhotonNetwork.networkingPeer.SetLevelInPropsIfSynced(Application.loadedLevelName);
-	}
-
-	public void OnEvent(EventData photonEvent)
-	{
-	}
-
-	protected void OnJoinedRoom()
-	{
-		PhotonNetwork.networkingPeer.LoadLevelIfSynced();
-	}
-
-	protected void OnLevelWasLoaded(int level)
-	{
-		PhotonNetwork.networkingPeer.NewSceneLoaded();
-		PhotonNetwork.networkingPeer.SetLevelInPropsIfSynced(Application.loadedLevelName);
-	}
-
-	public void OnOperationResponse(OperationResponse operationResponse)
-	{
-	}
-
-	public void OnStatusChanged(StatusCode statusCode)
-	{
-	}
-
-	public static void StartFallbackSendAckThread()
-	{
-		if (!sendThreadShouldRun)
-		{
-			sendThreadShouldRun = true;
-			SupportClass.CallInBackground(FallbackSendAckThread);
-		}
-	}
-
-	public static void StopFallbackSendAckThread()
-	{
-		sendThreadShouldRun = false;
 	}
 
 	protected void Update()
@@ -152,7 +78,7 @@ internal class PhotonHandler : Photon.MonoBehaviour, IPhotonPeerListener
 		}
 		else
 		{
-			if (PhotonNetwork.connectionStateDetailed == PeerStates.PeerCreated || PhotonNetwork.connectionStateDetailed == PeerStates.Disconnected || PhotonNetwork.offlineMode || !PhotonNetwork.isMessageQueueRunning)
+			if (PhotonNetwork.connectionStateDetailed == PeerState.PeerCreated || PhotonNetwork.connectionStateDetailed == PeerState.Disconnected || PhotonNetwork.offlineMode || !PhotonNetwork.isMessageQueueRunning)
 			{
 				return;
 			}
@@ -178,6 +104,123 @@ internal class PhotonHandler : Photon.MonoBehaviour, IPhotonPeerListener
 				}
 				nextSendTickCount = num + updateInterval;
 			}
+		}
+	}
+
+	protected void OnLevelWasLoaded(int level)
+	{
+		PhotonNetwork.networkingPeer.NewSceneLoaded();
+		PhotonNetwork.networkingPeer.SetLevelInPropsIfSynced(Application.loadedLevelName);
+	}
+
+	protected void OnJoinedRoom()
+	{
+		PhotonNetwork.networkingPeer.LoadLevelIfSynced();
+	}
+
+	protected void OnCreatedRoom()
+	{
+		PhotonNetwork.networkingPeer.SetLevelInPropsIfSynced(Application.loadedLevelName);
+	}
+
+	public static void StartFallbackSendAckThread()
+	{
+		if (!sendThreadShouldRun)
+		{
+			sendThreadShouldRun = true;
+			SupportClass.CallInBackground(FallbackSendAckThread);
+		}
+	}
+
+	public static void StopFallbackSendAckThread()
+	{
+		sendThreadShouldRun = false;
+	}
+
+	public static bool FallbackSendAckThread()
+	{
+		if (sendThreadShouldRun && PhotonNetwork.networkingPeer != null)
+		{
+			PhotonNetwork.networkingPeer.SendAcksOnly();
+		}
+		return sendThreadShouldRun;
+	}
+
+	public void DebugReturn(DebugLevel level, string message)
+	{
+		switch (level)
+		{
+		case DebugLevel.ERROR:
+			Debug.LogError(message);
+			return;
+		case DebugLevel.WARNING:
+			Debug.LogWarning(message);
+			return;
+		case DebugLevel.INFO:
+			if (PhotonNetwork.logLevel >= PhotonLogLevel.Informational)
+			{
+				Debug.Log(message);
+				return;
+			}
+			break;
+		}
+		if (level == DebugLevel.ALL && PhotonNetwork.logLevel == PhotonLogLevel.Full)
+		{
+			Debug.Log(message);
+		}
+	}
+
+	public void OnOperationResponse(OperationResponse operationResponse)
+	{
+	}
+
+	public void OnStatusChanged(StatusCode statusCode)
+	{
+	}
+
+	public void OnEvent(EventData photonEvent)
+	{
+	}
+
+	protected internal static void PingAvailableRegionsAndConnectToBest()
+	{
+		SP.StartCoroutine(SP.PingAvailableRegionsCoroutine(true));
+	}
+
+	internal IEnumerator PingAvailableRegionsCoroutine(bool connectToBest)
+	{
+		BestRegionCodeCurrently = CloudRegionCode.none;
+		while (PhotonNetwork.networkingPeer.AvailableRegions == null)
+		{
+			if (PhotonNetwork.connectionStateDetailed != PeerState.ConnectingToNameServer && PhotonNetwork.connectionStateDetailed != PeerState.ConnectedToNameServer)
+			{
+				Debug.LogError("Call ConnectToNameServer to ping available regions.");
+				yield break;
+			}
+			Debug.Log(string.Concat("Waiting for AvailableRegions. State: ", PhotonNetwork.connectionStateDetailed, " Server: ", PhotonNetwork.Server, " PhotonNetwork.networkingPeer.AvailableRegions ", PhotonNetwork.networkingPeer.AvailableRegions != null));
+			yield return new WaitForSeconds(0.25f);
+		}
+		if (PhotonNetwork.networkingPeer.AvailableRegions == null || PhotonNetwork.networkingPeer.AvailableRegions.Count == 0)
+		{
+			Debug.LogError("No regions available. Are you sure your appid is valid and setup?");
+			yield break;
+		}
+		PhotonPingManager pingManager = new PhotonPingManager();
+		foreach (Region region in PhotonNetwork.networkingPeer.AvailableRegions)
+		{
+			SP.StartCoroutine(pingManager.PingSocket(region));
+		}
+		while (!pingManager.Done)
+		{
+			yield return new WaitForSeconds(0.1f);
+		}
+		Region best = pingManager.BestRegion;
+		BestRegionCodeCurrently = best.Code;
+		BestRegionCodeInPreferences = best.Code;
+		Debug.Log(string.Concat("Found best region: ", best.Code, " ping: ", best.Ping, ". Calling ConnectToRegionMaster() is: ", connectToBest));
+		if (connectToBest)
+		{
+			PhotonNetwork.networkingPeer.ConnectToRegionMaster(best.Code);
 		}
 	}
 }

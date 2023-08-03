@@ -10,6 +10,31 @@ public class UILocalize : MonoBehaviour
 
 	private bool mStarted;
 
+	private void OnLocalize(Localization loc)
+	{
+		if (mLanguage != loc.currentLanguage)
+		{
+			Localize();
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (mStarted && Localization.instance != null)
+		{
+			Localize();
+		}
+	}
+
+	private void Start()
+	{
+		mStarted = true;
+		if (Localization.instance != null)
+		{
+			Localize();
+		}
+	}
+
 	public void Localize()
 	{
 		Localization instance = Localization.instance;
@@ -39,30 +64,5 @@ public class UILocalize : MonoBehaviour
 			uISprite.MakePixelPerfect();
 		}
 		mLanguage = instance.currentLanguage;
-	}
-
-	private void OnEnable()
-	{
-		if (mStarted && Localization.instance != null)
-		{
-			Localize();
-		}
-	}
-
-	private void OnLocalize(Localization loc)
-	{
-		if (mLanguage != loc.currentLanguage)
-		{
-			Localize();
-		}
-	}
-
-	private void Start()
-	{
-		mStarted = true;
-		if (Localization.instance != null)
-		{
-			Localize();
-		}
 	}
 }

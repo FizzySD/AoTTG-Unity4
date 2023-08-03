@@ -5,9 +5,9 @@ public class TweenRotation : UITweener
 {
 	public Vector3 from;
 
-	private Transform mTrans;
-
 	public Vector3 to;
+
+	private Transform mTrans;
 
 	public Transform cachedTransform
 	{
@@ -33,6 +33,11 @@ public class TweenRotation : UITweener
 		}
 	}
 
+	protected override void OnUpdate(float factor, bool isFinished)
+	{
+		cachedTransform.localRotation = Quaternion.Slerp(Quaternion.Euler(from), Quaternion.Euler(to), factor);
+	}
+
 	public static TweenRotation Begin(GameObject go, float duration, Quaternion rot)
 	{
 		TweenRotation tweenRotation = UITweener.Begin<TweenRotation>(go, duration);
@@ -44,10 +49,5 @@ public class TweenRotation : UITweener
 			tweenRotation.enabled = false;
 		}
 		return tweenRotation;
-	}
-
-	protected override void OnUpdate(float factor, bool isFinished)
-	{
-		cachedTransform.localRotation = Quaternion.Slerp(Quaternion.Euler(from), Quaternion.Euler(to), factor);
 	}
 }

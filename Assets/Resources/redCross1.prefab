@@ -9,21 +9,21 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1577309290434842}
+  m_RootGameObject: {fileID: 1662168163391073}
   m_IsPrefabParent: 1
   m_IsExploded: 0
---- !u!1 &1577309290434842
+--- !u!1 &1662168163391073
 GameObject:
   serializedVersion: 4
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_Component:
-  - 4: {fileID: 4349018644761759}
-  - 198: {fileID: 198898112608289713}
-  - 199: {fileID: 199944463528581827}
-  - 114: {fileID: 114518210236681135}
-  - 114: {fileID: 114903799006057201}
+  - 4: {fileID: 4547309776143027}
+  - 198: {fileID: 198361172342871331}
+  - 199: {fileID: 199425649937797990}
+  - 114: {fileID: 114464158705238853}
+  - 114: {fileID: 114382075623388956}
   m_Layer: 0
   m_Name: redCross1
   m_TagString: Untagged
@@ -31,24 +31,24 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4349018644761759
+--- !u!4 &4547309776143027
 Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1577309290434842}
+  m_GameObject: {fileID: 1662168163391073}
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: -11.12341, y: 0.07917833, z: 9.7125635}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!198 &198898112608289713
+--- !u!198 &198361172342871331
 ParticleSystem:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1577309290434842}
+  m_GameObject: {fileID: 1662168163391073}
   lengthInSec: 0.1
   startDelay: 0
   speed: 1
@@ -1090,19 +1090,19 @@ ParticleSystem:
     subEmitterCollision1: {fileID: 0}
     subEmitterDeath: {fileID: 0}
     subEmitterDeath1: {fileID: 0}
---- !u!199 &199944463528581827
+--- !u!199 &199425649937797990
 ParticleSystemRenderer:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1577309290434842}
+  m_GameObject: {fileID: 1662168163391073}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_LightmapIndex: 255
   m_LightmapTilingOffset: {x: 1, y: 1, z: 0, w: 0}
   m_Materials:
-  - {fileID: 2100000, guid: 757f363373fa81b498d3b53b380690b4, type: 2}
+  - {fileID: 2100000, guid: 9eebf2b78f9b5be48995dc6d002e7121, type: 2}
   m_SubsetIndices: []
   m_StaticBatchRoot: {fileID: 0}
   m_UseLightProbes: 0
@@ -1122,24 +1122,24 @@ ParticleSystemRenderer:
   m_Mesh1: {fileID: 0}
   m_Mesh2: {fileID: 0}
   m_Mesh3: {fileID: 0}
---- !u!114 &114518210236681135
+--- !u!114 &114464158705238853
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1577309290434842}
+  m_GameObject: {fileID: 1662168163391073}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a72ec263b8b746400270866c256d94e8, type: 3}
   m_Name:
   m_EditorClassIdentifier:
   CountDown: 5
---- !u!114 &114903799006057201
+--- !u!114 &114382075623388956
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1577309290434842}
+  m_GameObject: {fileID: 1662168163391073}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dbc57f5a7a2407cb7f003832c688bfd8, type: 3}

@@ -4,54 +4,35 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Button Play Animation")]
 public class UIButtonPlayAnimation : MonoBehaviour
 {
-	public string callWhenFinished;
-
-	public bool clearSelection;
+	public Animation target;
 
 	public string clipName;
 
-	public DisableCondition disableWhenFinished;
-
-	public GameObject eventReceiver;
-
-	public EnableCondition ifDisabledOnPlay;
-
-	private bool mHighlighted;
-
-	private bool mStarted;
-
-	public ActiveAnimation.OnFinished onFinished;
+	public Trigger trigger;
 
 	public Direction playDirection = Direction.Forward;
 
 	public bool resetOnPlay;
 
-	public Animation target;
+	public bool clearSelection;
 
-	public Trigger trigger;
+	public EnableCondition ifDisabledOnPlay;
 
-	private void OnActivate(bool isActive)
+	public DisableCondition disableWhenFinished;
+
+	public GameObject eventReceiver;
+
+	public string callWhenFinished;
+
+	public ActiveAnimation.OnFinished onFinished;
+
+	private bool mStarted;
+
+	private bool mHighlighted;
+
+	private void Start()
 	{
-		if (base.enabled && (trigger == Trigger.OnActivate || (trigger == Trigger.OnActivateTrue && isActive) || (trigger == Trigger.OnActivateFalse && !isActive)))
-		{
-			Play(isActive);
-		}
-	}
-
-	private void OnClick()
-	{
-		if (base.enabled && trigger == Trigger.OnClick)
-		{
-			Play(true);
-		}
-	}
-
-	private void OnDoubleClick()
-	{
-		if (base.enabled && trigger == Trigger.OnDoubleClick)
-		{
-			Play(true);
-		}
+		mStarted = true;
 	}
 
 	private void OnEnable()
@@ -82,11 +63,35 @@ public class UIButtonPlayAnimation : MonoBehaviour
 		}
 	}
 
+	private void OnClick()
+	{
+		if (base.enabled && trigger == Trigger.OnClick)
+		{
+			Play(true);
+		}
+	}
+
+	private void OnDoubleClick()
+	{
+		if (base.enabled && trigger == Trigger.OnDoubleClick)
+		{
+			Play(true);
+		}
+	}
+
 	private void OnSelect(bool isSelected)
 	{
 		if (base.enabled && (trigger == Trigger.OnSelect || (trigger == Trigger.OnSelectTrue && isSelected) || (trigger == Trigger.OnSelectFalse && !isSelected)))
 		{
 			Play(true);
+		}
+	}
+
+	private void OnActivate(bool isActive)
+	{
+		if (base.enabled && (trigger == Trigger.OnActivate || (trigger == Trigger.OnActivateTrue && isActive) || (trigger == Trigger.OnActivateFalse && !isActive)))
+		{
+			Play(isActive);
 		}
 	}
 
@@ -104,10 +109,10 @@ public class UIButtonPlayAnimation : MonoBehaviour
 		{
 			UICamera.selectedObject = null;
 		}
-		int num = (int)playDirection;
+		int num = (int) playDirection;
 		Direction direction = ((!forward) ? ((Direction)num) : playDirection);
 		ActiveAnimation activeAnimation = ActiveAnimation.Play(target, clipName, direction, ifDisabledOnPlay, disableWhenFinished);
-		if (activeAnimation != null)
+		if (!(activeAnimation == null))
 		{
 			if (resetOnPlay)
 			{
@@ -124,10 +129,5 @@ public class UIButtonPlayAnimation : MonoBehaviour
 				activeAnimation.eventReceiver = null;
 			}
 		}
-	}
-
-	private void Start()
-	{
-		mStarted = true;
 	}
 }

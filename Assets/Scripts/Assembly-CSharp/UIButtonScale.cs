@@ -3,30 +3,30 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Button Scale")]
 public class UIButtonScale : MonoBehaviour
 {
-	public float duration = 0.2f;
+	public Transform tweenTarget;
 
 	public Vector3 hover = new Vector3(1.1f, 1.1f, 1.1f);
 
-	private bool mHighlighted;
+	public Vector3 pressed = new Vector3(1.05f, 1.05f, 1.05f);
+
+	public float duration = 0.2f;
 
 	private Vector3 mScale;
 
 	private bool mStarted;
 
-	public Vector3 pressed = new Vector3(1.05f, 1.05f, 1.05f);
+	private bool mHighlighted;
 
-	public Transform tweenTarget;
-
-	private void OnDisable()
+	private void Start()
 	{
-		if (mStarted && tweenTarget != null)
+		if (!mStarted)
 		{
-			TweenScale component = tweenTarget.GetComponent<TweenScale>();
-			if (component != null)
+			mStarted = true;
+			if (tweenTarget == null)
 			{
-				component.scale = mScale;
-				component.enabled = false;
+				tweenTarget = base.transform;
 			}
+			mScale = tweenTarget.localScale;
 		}
 	}
 
@@ -38,16 +38,16 @@ public class UIButtonScale : MonoBehaviour
 		}
 	}
 
-	private void OnHover(bool isOver)
+	private void OnDisable()
 	{
-		if (base.enabled)
+		if (mStarted && tweenTarget != null)
 		{
-			if (!mStarted)
+			TweenScale component = tweenTarget.GetComponent<TweenScale>();
+			if (component != null)
 			{
-				Start();
+				component.scale = mScale;
+				component.enabled = false;
 			}
-			TweenScale.Begin(tweenTarget.gameObject, duration, (!isOver) ? mScale : Vector3.Scale(mScale, hover)).method = UITweener.Method.EaseInOut;
-			mHighlighted = isOver;
 		}
 	}
 
@@ -63,16 +63,16 @@ public class UIButtonScale : MonoBehaviour
 		}
 	}
 
-	private void Start()
+	private void OnHover(bool isOver)
 	{
-		if (!mStarted)
+		if (base.enabled)
 		{
-			mStarted = true;
-			if (tweenTarget == null)
+			if (!mStarted)
 			{
-				tweenTarget = base.transform;
+				Start();
 			}
-			mScale = tweenTarget.localScale;
+			TweenScale.Begin(tweenTarget.gameObject, duration, (!isOver) ? mScale : Vector3.Scale(mScale, hover)).method = UITweener.Method.EaseInOut;
+			mHighlighted = isOver;
 		}
 	}
 }

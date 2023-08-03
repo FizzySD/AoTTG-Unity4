@@ -5,35 +5,17 @@ public class TweenTransform : UITweener
 {
 	public Transform from;
 
+	public Transform to;
+
+	public bool parentWhenFinished;
+
+	private Transform mTrans;
+
 	private Vector3 mPos;
 
 	private Quaternion mRot;
 
 	private Vector3 mScale;
-
-	private Transform mTrans;
-
-	public bool parentWhenFinished;
-
-	public Transform to;
-
-	public static TweenTransform Begin(GameObject go, float duration, Transform to)
-	{
-		return Begin(go, duration, null, to);
-	}
-
-	public static TweenTransform Begin(GameObject go, float duration, Transform from, Transform to)
-	{
-		TweenTransform tweenTransform = UITweener.Begin<TweenTransform>(go, duration);
-		tweenTransform.from = from;
-		tweenTransform.to = to;
-		if (duration <= 0f)
-		{
-			tweenTransform.Sample(1f, true);
-			tweenTransform.enabled = false;
-		}
-		return tweenTransform;
-	}
 
 	protected override void OnUpdate(float factor, bool isFinished)
 	{
@@ -63,5 +45,23 @@ public class TweenTransform : UITweener
 				mTrans.parent = to;
 			}
 		}
+	}
+
+	public static TweenTransform Begin(GameObject go, float duration, Transform to)
+	{
+		return Begin(go, duration, null, to);
+	}
+
+	public static TweenTransform Begin(GameObject go, float duration, Transform from, Transform to)
+	{
+		TweenTransform tweenTransform = UITweener.Begin<TweenTransform>(go, duration);
+		tweenTransform.from = from;
+		tweenTransform.to = to;
+		if (duration <= 0f)
+		{
+			tweenTransform.Sample(1f, true);
+			tweenTransform.enabled = false;
+		}
+		return tweenTransform;
 	}
 }

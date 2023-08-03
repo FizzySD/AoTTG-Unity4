@@ -4,25 +4,25 @@ using System.Collections.Generic;
 [Serializable]
 public class BMGlyph
 {
-	public int advance;
-
-	public int channel;
-
-	public int height;
-
 	public int index;
 
-	public List<int> kerning;
+	public int x;
+
+	public int y;
+
+	public int width;
+
+	public int height;
 
 	public int offsetX;
 
 	public int offsetY;
 
-	public int width;
+	public int advance;
 
-	public int x;
+	public int channel;
 
-	public int y;
+	public List<int> kerning;
 
 	public int GetKerning(int previousChar)
 	{

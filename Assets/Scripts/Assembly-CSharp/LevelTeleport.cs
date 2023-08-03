@@ -2,9 +2,13 @@ using UnityEngine;
 
 public class LevelTeleport : MonoBehaviour
 {
+	public GameObject link;
+
 	public string levelname = string.Empty;
 
-	public GameObject link;
+	private void Start()
+	{
+	}
 
 	private void OnTriggerStay(Collider other)
 	{
@@ -19,10 +23,6 @@ public class LevelTeleport : MonoBehaviour
 				other.gameObject.transform.position = link.transform.position;
 			}
 		}
-	}
-
-	private void Start()
-	{
 	}
 
 	private void Update()

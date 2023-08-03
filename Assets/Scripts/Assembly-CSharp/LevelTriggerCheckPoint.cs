@@ -2,6 +2,10 @@ using UnityEngine;
 
 public class LevelTriggerCheckPoint : MonoBehaviour
 {
+	private void Start()
+	{
+	}
+
 	private void OnTriggerStay(Collider other)
 	{
 		if (other.gameObject.tag == "Player")
@@ -15,9 +19,5 @@ public class LevelTriggerCheckPoint : MonoBehaviour
 				GameObject.Find("MultiplayerManager").GetComponent<FengGameManagerMKII>().checkpoint = base.gameObject;
 			}
 		}
-	}
-
-	private void Start()
-	{
 	}
 }

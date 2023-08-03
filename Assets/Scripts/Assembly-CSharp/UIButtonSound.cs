@@ -14,19 +14,11 @@ public class UIButtonSound : MonoBehaviour
 
 	public AudioClip audioClip;
 
-	public float pitch = 1f;
-
 	public Trigger trigger;
 
 	public float volume = 1f;
 
-	private void OnClick()
-	{
-		if (base.enabled && trigger == Trigger.OnClick)
-		{
-			NGUITools.PlaySound(audioClip, volume, pitch);
-		}
-	}
+	public float pitch = 1f;
 
 	private void OnHover(bool isOver)
 	{
@@ -39,6 +31,14 @@ public class UIButtonSound : MonoBehaviour
 	private void OnPress(bool isPressed)
 	{
 		if (base.enabled && ((isPressed && trigger == Trigger.OnPress) || (!isPressed && trigger == Trigger.OnRelease)))
+		{
+			NGUITools.PlaySound(audioClip, volume, pitch);
+		}
+	}
+
+	private void OnClick()
+	{
+		if (base.enabled && trigger == Trigger.OnClick)
 		{
 			NGUITools.PlaySound(audioClip, volume, pitch);
 		}

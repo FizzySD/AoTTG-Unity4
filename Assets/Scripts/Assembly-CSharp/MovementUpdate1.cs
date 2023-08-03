@@ -2,13 +2,13 @@ using UnityEngine;
 
 public class MovementUpdate1 : MonoBehaviour
 {
-	public bool disabled;
-
 	private Vector3 lastPosition;
+
+	private Vector3 lastVelocity;
 
 	private Quaternion lastRotation;
 
-	private Vector3 lastVelocity;
+	public bool disabled;
 
 	private void Start()
 	{
@@ -19,13 +19,7 @@ public class MovementUpdate1 : MonoBehaviour
 		}
 		else if (base.networkView.isMine)
 		{
-			object[] args = new object[3]
-			{
-				base.transform.position,
-				base.transform.rotation,
-				base.transform.lossyScale
-			};
-			base.networkView.RPC("updateMovement1", RPCMode.OthersBuffered, args);
+			base.networkView.RPC("updateMovement1", RPCMode.OthersBuffered, base.transform.position, base.transform.rotation, base.transform.lossyScale);
 		}
 		else
 		{
@@ -37,13 +31,7 @@ public class MovementUpdate1 : MonoBehaviour
 	{
 		if (!disabled)
 		{
-			object[] args = new object[3]
-			{
-				base.transform.position,
-				base.transform.rotation,
-				base.transform.lossyScale
-			};
-			base.networkView.RPC("updateMovement1", RPCMode.Others, args);
+			base.networkView.RPC("updateMovement1", RPCMode.Others, base.transform.position, base.transform.rotation, base.transform.lossyScale);
 		}
 	}
 

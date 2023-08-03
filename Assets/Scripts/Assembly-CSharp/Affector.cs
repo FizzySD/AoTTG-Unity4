@@ -7,11 +7,11 @@ public class Affector
 		Node = node;
 	}
 
-	public virtual void Reset()
+	public virtual void Update()
 	{
 	}
 
-	public virtual void Update()
+	public virtual void Reset()
 	{
 	}
 }

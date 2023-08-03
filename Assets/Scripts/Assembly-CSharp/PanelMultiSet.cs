@@ -2,27 +2,27 @@ using UnityEngine;
 
 public class PanelMultiSet : MonoBehaviour
 {
-	public GameObject label_ab;
+	public GameObject label_START;
 
 	public GameObject label_BACK;
 
 	public GameObject label_choose_map;
 
-	public GameObject label_difficulty;
-
-	public GameObject label_game_time;
-
-	public GameObject label_hard;
+	public GameObject label_server_name;
 
 	public GameObject label_max_player;
 
 	public GameObject label_max_time;
 
+	public GameObject label_game_time;
+
+	public GameObject label_difficulty;
+
 	public GameObject label_normal;
 
-	public GameObject label_server_name;
+	public GameObject label_hard;
 
-	public GameObject label_START;
+	public GameObject label_ab;
 
 	private int lang = -1;
 

@@ -17,25 +17,25 @@ public class UITable : MonoBehaviour
 
 	public Direction direction;
 
-	public bool hideInactive = true;
-
-	public bool keepWithinPanel;
-
-	private List<Transform> mChildren = new List<Transform>();
-
-	private UIDraggablePanel mDrag;
-
-	private UIPanel mPanel;
-
-	private bool mStarted;
-
-	public OnReposition onReposition;
-
 	public Vector2 padding = Vector2.zero;
+
+	public bool sorted;
+
+	public bool hideInactive = true;
 
 	public bool repositionNow;
 
-	public bool sorted;
+	public bool keepWithinPanel;
+
+	public OnReposition onReposition;
+
+	private UIPanel mPanel;
+
+	private UIDraggablePanel mDrag;
+
+	private bool mStarted;
+
+	private List<Transform> mChildren = new List<Transform>();
 
 	public List<Transform> children
 	{
@@ -48,7 +48,7 @@ public class UITable : MonoBehaviour
 				for (int i = 0; i < transform.childCount; i++)
 				{
 					Transform child = transform.GetChild(i);
-					if (child != null && child.gameObject != null && (!hideInactive || NGUITools.GetActive(child.gameObject)))
+					if ((bool)child && (bool)child.gameObject && (!hideInactive || NGUITools.GetActive(child.gameObject)))
 					{
 						mChildren.Add(child);
 					}
@@ -62,44 +62,9 @@ public class UITable : MonoBehaviour
 		}
 	}
 
-	private void LateUpdate()
+	public static int SortByName(Transform a, Transform b)
 	{
-		if (repositionNow)
-		{
-			repositionNow = false;
-			Reposition();
-		}
-	}
-
-	public void Reposition()
-	{
-		if (mStarted)
-		{
-			Transform target = base.transform;
-			mChildren.Clear();
-			List<Transform> list = children;
-			if (list.Count > 0)
-			{
-				RepositionVariableSize(list);
-			}
-			if (mDrag != null)
-			{
-				mDrag.UpdateScrollbars(true);
-				mDrag.RestrictWithinBounds(true);
-			}
-			else if (mPanel != null)
-			{
-				mPanel.ConstrainTargetToBounds(target, true);
-			}
-			if (onReposition != null)
-			{
-				onReposition();
-			}
-		}
-		else
-		{
-			repositionNow = true;
-		}
+		return string.Compare(a.name, b.name);
 	}
 
 	private void RepositionVariableSize(List<Transform> children)
@@ -164,9 +129,35 @@ public class UITable : MonoBehaviour
 		}
 	}
 
-	public static int SortByName(Transform a, Transform b)
+	public void Reposition()
 	{
-		return string.Compare(a.name, b.name);
+		if (mStarted)
+		{
+			Transform target = base.transform;
+			mChildren.Clear();
+			List<Transform> list = children;
+			if (list.Count > 0)
+			{
+				RepositionVariableSize(list);
+			}
+			if (mDrag != null)
+			{
+				mDrag.UpdateScrollbars(true);
+				mDrag.RestrictWithinBounds(true);
+			}
+			else if (mPanel != null)
+			{
+				mPanel.ConstrainTargetToBounds(target, true);
+			}
+			if (onReposition != null)
+			{
+				onReposition();
+			}
+		}
+		else
+		{
+			repositionNow = true;
+		}
 	}
 
 	private void Start()
@@ -178,5 +169,14 @@ public class UITable : MonoBehaviour
 			mDrag = NGUITools.FindInParents<UIDraggablePanel>(base.gameObject);
 		}
 		Reposition();
+	}
+
+	private void LateUpdate()
+	{
+		if (repositionNow)
+		{
+			repositionNow = false;
+			Reposition();
+		}
 	}
 }
